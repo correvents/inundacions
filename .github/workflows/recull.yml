@@ -8,6 +8,9 @@ on:
       hores:
         description: "Hores enrere que es demanen a l'ACA (fins a ~2000 per recuperar l'històric de 3 mesos)"
         default: "6"
+      hores_radar:
+        description: "Hores enrere de radar (màx. 24, el que guarda OPERA)"
+        default: "1"
 
 concurrency:
   group: recull
@@ -25,6 +28,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests
+      - run: pip install requests numpy h5py pyproj shapely
       - name: Aforador i pluviòmetre de l'ACA
         run: python3 scripts/aca_aforador.py --config config/ridaura.json --hores "${{ github.event.inputs.hores || '6' }}"
+      - name: Pluja del radar OPERA sobre la conca
+        if: always()
+        run: python3 scripts/radar_conca.py --config config/ridaura.json --hores "${{ github.event.inputs.hores_radar || '1' }}"

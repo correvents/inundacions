@@ -6,10 +6,11 @@ Cal SUPABASE_URL i SUPABASE_SECRET_KEY a l'entorn (secrets de GitHub Actions).
 
 Ús:  python3 scripts/aca_aforador.py --config config/ridaura.json [--hores 6]
      (--hores 72 per recuperar històric la primera vegada; l'ACA en guarda uns 3 mesos)"""
-import argparse, json, os, sys, time
+import argparse, json, sys, time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import requests
+from sb import insereix
 
 API = "https://aplicacions.aca.gencat.cat/sdim2/apirest"
 FMT = "%d/%m/%YT%H:%M:%S"
@@ -51,16 +52,8 @@ def llegeix(sensor, provider, ini, fi):
 
 
 def desa(conca, var, mesures):
-    files = [{"conca": conca, "var": var, "temps": datetime.fromtimestamp(ms / 1000, timezone.utc).isoformat(), "valor": v}
-             for ms, v in mesures.items()]
-    clau = os.environ["SUPABASE_SECRET_KEY"]
-    for i in range(0, len(files), 500):
-        r = requests.post(os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/observacions", json=files[i:i + 500], timeout=60,
-                          headers={"apikey": clau, "Authorization": f"Bearer {clau}", "Content-Profile": "inundacions",
-                                   "Prefer": "resolution=ignore-duplicates,return=minimal"})
-        if not r.ok:
-            sys.exit(f"Supabase: HTTP {r.status_code} {r.text[:300]}")
-    return len(files)
+    return insereix("observacions", [{"conca": conca, "var": var, "temps": datetime.fromtimestamp(ms / 1000, timezone.utc).isoformat(),
+                                       "valor": v} for ms, v in mesures.items()])
 
 
 def main():
