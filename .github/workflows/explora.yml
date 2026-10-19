@@ -1,0 +1,36 @@
+name: Explora (temporal)
+on:
+  workflow_dispatch:
+jobs:
+  explora:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests h5py
+      - name: Arxiu OPERA
+        run: |
+          python3 - <<'PY'
+          import requests, re, h5py
+          S="https://s3.waw3-1.cloudferro.com/openradar-archive"
+          for p in ["", "2026/", "2026/10/", "2026/10/04/"]:
+              x=requests.get(S,params={"list-type":2,"prefix":p,"delimiter":"/","max-keys":50},timeout=60).text
+              print("PREFIX",repr(p), re.findall(r"<Prefix>([^<]+)</Prefix>",x)[:50], re.findall(r"<Key>([^<]+)</Key>",x)[:20])
+          x=requests.get(S,params={"list-type":2,"prefix":"2026/10/04/","max-keys":1000},timeout=60).text
+          ks=re.findall(r"<Key>([^<]+)</Key>",x); print(len(ks)); print("\n".join(ks[:60]))
+          for k in ks:
+              if k.endswith(".h5") and ("1000" in k or True):
+                  open("a.h5","wb").write(requests.get(S+"/"+k,timeout=120).content)
+                  print("FILE",k)
+                  with h5py.File("a.h5") as h:
+                      h.visititems(lambda n,o: print(n, getattr(o,"shape",""), dict(o.attrs)))
+                      print(dict(h["where"].attrs))
+                  break
+          PY
+      - name: MITECO capes de cabals
+        run: |
+          curl -s "https://gis.miteco.gob.es/geoserver/wfs?service=WFS&request=GetCapabilities" | grep -oiE "<Name>[^<]*(caud|q_?max|caumax|cuenca|subcuen)[^<]*</Name>" | sort -u | head -80
+          curl -s "https://wms.mapama.gob.es/sig/Agua/CaudalesMax/wms.aspx?request=GetCapabilities&service=WMS" | grep -oE "<Name>[^<]*</Name>" | head -40
+          curl -s "https://wms.mapama.gob.es/sig/Agua/Caudales/wms.aspx?request=GetCapabilities&service=WMS" | grep -oE "<Name>[^<]*</Name>" | head -40
