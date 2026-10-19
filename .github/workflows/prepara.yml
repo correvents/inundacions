@@ -2,6 +2,10 @@ name: Prepara capes estàtiques
 
 on:
   workflow_dispatch:
+    inputs:
+      nomes:
+        description: "Només les capes que comencen així (buit = totes, amb OSM)"
+        default: ""
 
 permissions:
   contents: write
@@ -17,7 +21,7 @@ jobs:
           python-version: "3.12"
       - run: pip install requests pyproj
       - name: Zones inundables i elements sensibles
-        run: python3 scripts/prepara_zones.py --config config/ridaura.json
+        run: python3 scripts/prepara_zones.py --config config/ridaura.json --nomes "${{ inputs.nomes }}"
       - name: Desa
         run: |
           git config user.name "github-actions[bot]"

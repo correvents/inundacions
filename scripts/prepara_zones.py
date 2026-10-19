@@ -20,6 +20,11 @@ CAPES = {
     "aca_T50": (ACA, "vishid:Zones_inundables_T50"),
     "aca_T100": (ACA, "vishid:Zones_inundables_T100"),
     "aca_T500": (ACA, "vishid:Zones_inundables_T500"),
+    "aca_cabals": (ACA, "vishid:Tramificacio_cabals"),
+    "aca_cabals_Q10": (ACA, "vishid:Tramificacio_cabals_Q10"),
+    "aca_cabals_Q50": (ACA, "vishid:Tramificacio_cabals_Q50"),
+    "aca_cabals_Q100": (ACA, "vishid:Tramificacio_cabals_Q100"),
+    "aca_cabals_Q500": (ACA, "vishid:Tramificacio_cabals_Q500"),
     "snczi_punts_risc_T10": (MITECO, "agua:ZIF_RiesgoInundacion_Q10"),
     "snczi_punts_risc_T100": (MITECO, "agua:Zif_riesgoinundacion_q100"),
     "snczi_punts_risc_T500": (MITECO, "agua:Zif_riesgoinundacion_q500"),
@@ -92,17 +97,21 @@ def osm_a_geojson(j):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
+    ap.add_argument("--nomes", default="", help="només les capes que comencen així (p. ex. aca_cabals); sense OSM")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
     bbox = cfg["bbox_zones"]
     dest = Path("data") / cfg["conca"] / "zones"; dest.mkdir(parents=True, exist_ok=True)
     errors = 0
-    for nom, (url, capa) in CAPES.items():
+    capes = {k: v for k, v in CAPES.items() if k.startswith(a.nomes)}
+    for nom, (url, capa) in capes.items():
         j = wfs(url, capa, bbox)
         if j is None:
             errors += 1; continue
         (dest / f"{nom}.geojson").write_text(json.dumps(j, ensure_ascii=False, separators=(",", ":")))
         print(f"{nom}: {len(j.get('features', []))} elements")
+    if a.nomes:
+        return 1 if errors == len(capes) else 0
     j = osm(bbox)
     if j is None:
         errors += 1
