@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evolució d'un episodi · Ridaura</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root { --vora: #dde3ea; --suau: #5b6b7b; }
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #f4f6f8; color: #1b2733; }
+  #app { display: flex; flex-direction: column; height: 100%; }
+  #barra { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 12px; background: #fff; border-bottom: 1px solid var(--vora); }
+  #barra h1 { font-size: 16px; margin: 0; }
+  #barra select, #barra button { padding: 5px 8px; border: 1px solid var(--vora); border-radius: 6px; background: #fff; font-weight: 600; color: #1b2733; }
+  #barra button.actiu { background: #1b2733; color: #fff; }
+  #hora { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 130px; }
+  #barra label { font-size: 13px; }
+  #mapes { flex: 1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 4px; padding: 4px; min-height: 0; }
+  .cel { position: relative; border: 1px solid var(--vora); border-radius: 6px; overflow: hidden; background: #fff; }
+  .cel .m { position: absolute; inset: 0; }
+  .titol { position: absolute; z-index: 1000; left: 8px; top: 6px; background: #fffe; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: 700; box-shadow: 0 1px 3px #0002; max-width: 75%; }
+  .titol .ll { font-weight: 400; font-size: 11px; color: var(--suau); }
+  .titol .ll span { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 2px 0 6px; vertical-align: middle; }
+  .titol select { font-size: 12px; margin-top: 2px; }
+  #peu { background: #fff; border-top: 1px solid var(--vora); padding: 4px 12px 6px; }
+  canvas#graf { width: 100%; height: 110px; display: block; cursor: pointer; }
+  .nota { color: var(--suau); font-size: 12px; }
+  a { color: #0b4f8a; }
+  .pixelat { image-rendering: pixelated; }
+  .carrega { position: absolute; z-index: 2000; left: 50%; top: 40%; transform: translateX(-50%); background: #fff; padding: 10px 16px; border-radius: 8px; box-shadow: 0 2px 8px #0003; }
+  @media (max-width: 760px) { #mapes { grid-template-columns: 1fr; grid-template-rows: repeat(4, 60vw); overflow-y: auto; } #app { height: auto; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="barra">
+    <h1>Evolució d'un episodi</h1>
+    <select id="episodi"></select>
+    <span id="hora">–</span>
+    <button id="play">▶ Reprodueix</button>
+    <select id="vel"><option value="900">lent</option><option value="450" selected>normal</option><option value="150">ràpid</option></select>
+    <label>Acumulat <select id="finestra"><option value="0" selected>des de l'inici</option><option value="1">última hora</option><option value="3">últimes 3 h</option><option value="6">últimes 6 h</option></select></label>
+    <label>El terreny absorbeix <b id="via"></b> <input type="range" id="ia" min="0" max="200" step="5" style="width:110px;vertical-align:middle"></label>
+    <span class="nota"><a href="pluja.html">eina de pluja</a> · <a href="./">visor</a></span>
+  </div>
+  <div id="mapes">
+    <div class="cel"><div class="m" id="m0"></div><div class="titol">1. Radar en aquest moment<div class="ll" id="ll0"></div></div></div>
+    <div class="cel"><div class="m" id="m1"></div><div class="titol">2. Pluja acumulada<div class="ll" id="ll1"></div></div></div>
+    <div class="cel"><div class="m" id="m2"></div><div class="titol">3. Aigua que escola (no l'absorbeix el terreny)<div class="ll" id="ll2"></div></div></div>
+    <div class="cel"><div class="m" id="m3"></div><div class="titol"><select id="vista3"><option value="sim">4. Aigua al carrer ara (simulació 2D)</option><option value="d8">4. Cap on corre i on s'embassa (relleu)</option></select>
+      <div class="ll" id="ll3"></div></div></div>
+  </div>
+  <div id="peu">
+    <canvas id="graf"></canvas>
+    <div class="nota" id="nota">Barres: pluja mitjana a la zona cada 15 min (radar corregit). Fes clic a la gràfica per anar a un moment. Les fletxes indiquen cap on baixa l'aigua pel pendent; el gruix, quanta.</div>
+  </div>
+</div>
+<div class="carrega" id="carrega">Carregant el relleu…</div>
+<script>
+const $ = id => document.getElementById(id);
+const BASE = 'data/ridaura/';
+const DR = [-1, -1, 0, 1, 1, 1, 0, -1], DC = [0, 1, 1, 1, 0, -1, -1, -1];   // 0=N 1=NE 2=E 3=SE 4=S 5=SO 6=O 7=NO
+const ESCALA = 2;
+let G, R, EP, ES, FACT, IDX, PREMSA, SIM, N, A, z, zf, dir, urba, ridx, rcv, ordre, comp, compCel, compIni, nComp, terra;
+let cumR, mitjana, fi = 0, res = null;
+
+const hora = t => new Date(t + 'Z').toLocaleString('ca-ES', { timeZone: 'Europe/Madrid', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' });
+const horaCurta = t => new Date(t + 'Z').toLocaleTimeString('ca-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' });
+const fmt = (x, d = 1) => x.toLocaleString('ca-ES', { maximumFractionDigits: d, minimumFractionDigits: d });
+
+// quatre mapes amb la mateixa vista: moure'n un mou els altres
+const ATR = '© ICGC · Relleu: IGN · Radar: EUMETNET OPERA · Pluja: Meteocat, ACA';
+const mapes = [0, 1, 2, 3].map(k => {
+  const m = L.map('m' + k, { zoomControl: k === 0, attributionControl: k === 3 }).setView([41.815, 3.0], 13);
+  L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', { maxZoom: 19, attribution: ATR, opacity: 0.55 }).addTo(m);
+  m.createPane('aigua').style.zIndex = 450; m.createPane('fletxes').style.zIndex = 460; m.createPane('premsa').style.zIndex = 470;
+  return m;
+});
+let sincronitzant = false;
+mapes.forEach(m => m.on('move', () => {
+  if (sincronitzant) return; sincronitzant = true;
+  mapes.forEach(o => o !== m && o.setView(m.getCenter(), m.getZoom(), { animate: false }));
+  sincronitzant = false;
+}));
+const capes = [null, null, null, null];
+function posa(k, url, lim, pixelat) {
+  if (capes[k] && capes[k]._lim === lim) { capes[k].setUrl(url); return; }
+  if (capes[k]) mapes[k].removeLayer(capes[k]);
+  capes[k] = L.imageOverlay(url, lim, { pane: 'aigua', interactive: false, opacity: 0.85, className: pixelat ? 'pixelat' : '' }).addTo(mapes[k]); capes[k]._lim = lim;
+}
+
+function prepara(bin) {
+  const cap = nom => { const c = G.capes.find(c => c.nom === nom); const T = c.tipus.endsWith('u2') ? Uint16Array : Uint8Array;
+    return new T(bin, c.offset, c.bytes / T.BYTES_PER_ELEMENT); };
+  N = G.nf * G.nc; A = G.pas_m * G.pas_m;
+  z = cap('z_cm'); zf = cap('zomplert_cm'); dir = cap('dir'); urba = cap('urba'); ridx = cap('radar');
+  terra = new Uint8Array(N); for (let i = 0; i < N; i++) terra[i] = z[i] !== 65535;
+  // receptor de cada cel·la i ordre topològic (de capçalera cap avall)
+  rcv = new Int32Array(N).fill(-1);
+  const entra = new Int32Array(N);
+  for (let i = 0; i < N; i++) {
+    const d = dir[i]; if (d > 7 || !terra[i]) continue;
+    const r = Math.floor(i / G.nc) + DR[d], c = i % G.nc + DC[d];
+    if (r < 0 || r >= G.nf || c < 0 || c >= G.nc) continue;
+    const j = r * G.nc + c; if (!terra[j]) continue;
+    rcv[i] = j; entra[j]++;
+  }
+  ordre = new Int32Array(N); let n = 0, k = 0;
+  for (let i = 0; i < N; i++) if (!entra[i]) ordre[n++] = i;
+  while (k < n) { const j = rcv[ordre[k++]]; if (j >= 0 && --entra[j] === 0) ordre[n++] = j; }
+  // clotades: cel·les on el relleu omplert supera el terreny en 5 cm o més, agrupades per veïnatge
+  comp = new Int32Array(N).fill(-1); nComp = 0;
+  const pila = [], llista = [];
+  for (let i = 0; i < N; i++) {
+    if (comp[i] >= 0 || !terra[i] || zf[i] - z[i] < 5) continue;
+    comp[i] = nComp; pila.push(i);
+    while (pila.length) {
+      const p = pila.pop(); llista.push(p); const r = Math.floor(p / G.nc), c = p % G.nc;
+      for (let d = 0; d < 8; d++) {
+        const rr = r + DR[d], cc = c + DC[d]; if (rr < 0 || rr >= G.nf || cc < 0 || cc >= G.nc) continue;
+        const q = rr * G.nc + cc; if (comp[q] < 0 && terra[q] && zf[q] - z[q] >= 5) { comp[q] = nComp; pila.push(q); }
+      }
+    }
+    nComp++;
+  }
+  // cel·les de cada clotada, contigües: compCel[compIni[k] .. compIni[k+1])
+  compIni = new Int32Array(nComp + 1);
+  for (const p of llista) compIni[comp[p] + 1]++;
+  for (let k = 0; k < nComp; k++) compIni[k + 1] += compIni[k];
+  compCel = new Int32Array(llista.length); const pos = compIni.slice(0, nComp);
+  for (const p of llista) compCel[pos[comp[p]]++] = p;
+  // punts de referència: es desplacen a la cel·la de més drenatge del voltant (el riu del relleu de 20 m)
+  const acc = new Float64Array(N).fill(1);
+  for (let k = 0; k < N; k++) { const i = ordre[k]; if (rcv[i] >= 0) acc[rcv[i]] += acc[i]; }
+  G.cel = {};
+  for (const [nom, [r0, c0]] of Object.entries(G.punts)) {
+    let millor = r0 * G.nc + c0;
+    for (let r = r0 - 10; r <= r0 + 10; r++) for (let c = c0 - 10; c <= c0 + 10; c++)
+      if (r >= 0 && r < G.nf && c >= 0 && c < G.nc && acc[r * G.nc + c] > acc[millor]) millor = r * G.nc + c;
+    G.cel[nom] = millor;
+  }
+  G.areaKm2 = Object.fromEntries(Object.entries(G.cel).map(([k, i]) => [k, acc[i] * A / 1e6]));
+}
+
+function factorsEstacio(ES) {
+  const t = ES.temps_utc.map(x => Date.parse(x + 'Z'));
+  return R.temps.map(x => {
+    const tf = Date.parse(x + 'Z'); let p = 0, r = 0;
+    t.forEach((tt, k) => { if (tt > tf - 3600e3 && tt <= tf) { p += ES.pluja_pluviometre_mm[k] || 0; r += ES.pluja_radar_conca_mm[k] || 0; } });
+    return r > 0.5 ? Math.min(Math.max(p / r, 0.3), 4) : 1;
+  });
+}
+
+const RAMPA_Q = [[0.02, [198, 219, 239, 150]], [0.1, [107, 174, 214, 210]], [0.5, [33, 113, 181, 235]], [2, [8, 81, 156, 250]], [10, [8, 48, 107, 255]], [50, [12, 12, 70, 255]]];
+const RAMPA_H = [[0.05, [252, 197, 192, 170]], [0.2, [250, 159, 181, 210]], [0.5, [221, 52, 151, 235]], [1, [174, 1, 126, 250]], [2, [73, 0, 106, 255]]];
+const RAMPA_MM = [[1, [255, 255, 204, 120]], [10, [161, 218, 180, 170]], [30, [65, 182, 196, 190]], [60, [44, 127, 184, 210]], [100, [37, 52, 148, 225]], [150, [122, 1, 119, 235]]];
+const color = (v, rampa) => { let c = null; for (const [l, col] of rampa) if (v >= l) c = col; return c; };
+
+const RAMPA_RATE = [[1, [198, 219, 239, 200]], [5, [66, 146, 198, 230]], [15, [44, 162, 95, 240]], [30, [254, 196, 79, 245]], [50, [240, 59, 32, 250]], [80, [122, 1, 119, 255]]];
+const RAMPA_ACUM = [[5, [198, 219, 239, 200]], [25, [66, 146, 198, 230]], [50, [44, 162, 95, 240]], [100, [254, 196, 79, 245]], [150, [240, 59, 32, 250]], [200, [122, 1, 119, 255]], [250, [40, 0, 40, 255]]];
+
+
+const llegenda = (rampa, unitat) => unitat + rampa.map(([l, c]) => `<span style="background:rgba(${c[0]},${c[1]},${c[2]},${c[3] / 255})"></span>>${l}`).join('');
+
+Promise.all([
+  fetch(BASE + 'web/graella.json').then(r => r.json()),
+  fetch(BASE + 'web/graella.bin').then(r => r.arrayBuffer()),
+  fetch(BASE + 'episodis/index.json').then(r => r.json()),
+  fetch(BASE + 'episodis/premsa.geojson').then(r => r.json()),
+]).then(async ([g, bin, idx, premsa]) => {
+  G = g; IDX = idx; PREMSA = premsa;
+  $('episodi').innerHTML = IDX.episodis.map(e => `<option value="${e.id}">${e.titol}</option>`).join('');
+  prepara(bin);
+  const q = new URLSearchParams(location.search).get('episodi');
+  await carregaEpisodi(IDX.episodis.find(e => e.id === q) || IDX.episodis[0]);
+  $('carrega').remove();
+  mapes[0].fitBounds([[41.78, 2.95], [41.85, 3.095]]);
+  $('episodi').onchange = () => { reprodueix(false); carregaEpisodi(IDX.episodis.find(e => e.id === $('episodi').value)); };
+  $('finestra').onchange = calcula; $('vista3').onchange = calcula;
+  $('ia').oninput = () => { $('via').textContent = $('ia').value + ' mm'; calcula(); };
+  $('play').onclick = () => reprodueix(!rellotge);
+  $('graf').onclick = ev => { const r = $('graf').getBoundingClientRect(); fi = Math.min(Math.max(Math.floor((ev.clientX - r.left - 30) / ((r.width - 30) / R.temps.length)), 0), R.temps.length - 1); reprodueix(false); calcula(); };
+  window.addEventListener('resize', () => res && graf());
+  mapes[3].on('zoomend', () => res && fletxes(3));
+}).catch(e => { $('carrega').textContent = 'No s\'ha pogut carregar: ' + e.message; });
+
+let EPI, capesPremsa = [];
+async function carregaEpisodi(e) {
+  EPI = e; $('episodi').value = e.id;
+  R = await fetch(BASE + 'episodis/' + e.radar).then(r => r.json());
+  EP = e.episodi ? await fetch(BASE + 'episodis/' + e.episodi).then(r => r.json()) : null;
+  ES = await fetch(BASE + 'episodis/' + e.id + '_estacio.json').then(r => r.ok ? r.json() : null).catch(() => null);
+  FACT = EP ? G.factor_radar : ES ? factorsEstacio(ES) : R.temps.map(() => 1);
+  SIM = await fetch(BASE + 'sim2d/' + e.id + '/index.json').then(r => r.ok ? r.json() : null).catch(() => null);
+  $('vista3').value = SIM ? 'sim' : 'd8'; $('vista3').options[0].disabled = !SIM;
+  if (SIM) SIM.fotogrames.forEach(f => { const im = new Image(); im.src = BASE + 'sim2d/' + e.id + '/' + f.png; });   // precàrrega
+  $('ia').value = e.ia_mm ?? 60; $('via').textContent = $('ia').value + ' mm';
+  const nR = R.lons.length * R.lats.length, nF = R.temps.length;
+  cumR = new Float32Array((nF + 1) * nR);
+  for (let f = 0; f < nF; f++) for (let r = 0; r < nR; r++) cumR[(f + 1) * nR + r] = cumR[f * nR + r] + R.mm[f][r] * FACT[f];
+  const pes = new Float64Array(nR); let tot = 0;
+  for (let i = 0; i < N; i++) if (terra[i] && ridx[i] !== 65535) { pes[ridx[i]]++; tot++; }
+  mitjana = R.temps.map((_, f) => { let s = 0; for (let r = 0; r < nR; r++) s += pes[r] * R.mm[f][r] * FACT[f]; return s / tot; });
+  // carrers de la premsa, a tots els mapes
+  capesPremsa.forEach((c, k) => mapes[k].removeLayer(c));
+  const fc = { type: 'FeatureCollection', features: PREMSA.features.filter(f => f.properties.episodi === e.id) };
+  capesPremsa = mapes.map(m => L.geoJSON(fc, { pane: 'premsa', style: { color: '#e31a1c', weight: 4, opacity: 0.8, dashArray: '2 6' },
+    onEachFeature: (f, l) => l.bindTooltip('Premsa: ' + f.properties.nom) }).addTo(m));
+  // comença al moment de més pluja
+  fi = mitjana.indexOf(Math.max(...mitjana));
+  calcula();
+}
+
+let rellotge = null;
+function reprodueix(on) {
+  clearTimeout(rellotge); rellotge = null;
+  $('play').textContent = on ? '⏸ Atura' : '▶ Reprodueix';
+  if (!on) return;
+  if (fi >= R.temps.length - 1) fi = 0;
+  const pas = () => { calcula(); if (fi >= R.temps.length - 1) return reprodueix(false); fi++; rellotge = setTimeout(pas, +$('vel').value); };
+  pas();
+}
+
+function calcula() {
+  $('hora').textContent = hora(R.temps[fi]);
+  const h = +$('finestra').value, ini = h ? Math.max(fi - h * 4 + 1, 0) : 0;
+  const nR = R.lons.length * R.lats.length, a0 = ini * nR, a1 = (fi + 1) * nR, ia = +$('ia').value;
+  const segons = (fi - ini + 1) * R.interval_min * 60;
+  const pluja = new Float32Array(N), escola = new Float32Array(N), V = new Float64Array(N);
+  const E = (p, i) => Math.max(p - (urba[i] ? 5 : ia), 0);
+  for (let i = 0; i < N; i++) {
+    if (!terra[i] || ridx[i] === 65535) continue;
+    const pa = cumR[a0 + ridx[i]], pb = cumR[a1 + ridx[i]];
+    pluja[i] = pb - pa; escola[i] = E(pb, i) - E(pa, i); V[i] = escola[i] / 1000 * A;
+  }
+  const cap = new Float64Array(nComp), guard = new Float64Array(nComp);
+  for (let k = 0; k < nComp; k++) for (let j = compIni[k]; j < compIni[k + 1]; j++) cap[k] += (zf[compCel[j]] - z[compCel[j]]) / 100 * A;
+  for (let k = 0; k < N; k++) {
+    const i = ordre[k], c = comp[i], j = rcv[i];
+    if (c >= 0 && (j < 0 || comp[j] !== c)) { const g = Math.min(V[i], cap[c] - guard[c]); guard[c] += g; V[i] -= g; }
+    if (j >= 0) V[j] += V[i];
+  }
+  const calat = new Float32Array(N);
+  for (let k = 0; k < nComp; k++) {
+    if (guard[k] < 1) continue;
+    let lo = 1e9, hi = -1e9;
+    for (let j = compIni[k]; j < compIni[k + 1]; j++) { lo = Math.min(lo, z[compCel[j]]); hi = Math.max(hi, zf[compCel[j]]); }
+    lo /= 100; hi /= 100;
+    for (let it = 0; it < 30; it++) {
+      const Lv = (lo + hi) / 2; let v = 0;
+      for (let j = compIni[k]; j < compIni[k + 1]; j++) v += Math.max(Lv - z[compCel[j]] / 100, 0) * A;
+      if (v > guard[k]) hi = Lv; else lo = Lv;
+    }
+    for (let j = compIni[k]; j < compIni[k + 1]; j++) { const p = compCel[j], hh = lo - z[p] / 100; if (hh > 0) calat[p] = hh; }
+  }
+  res = { pluja, escola, V, calat, segons };
+  const txt = h ? `les últimes ${h} h` : "l'inici de l'episodi";
+  // 1. radar instantani (mm/h, corregit)
+  radarAra(0);
+  $('ll0').innerHTML = llegenda(RAMPA_RATE, `${horaCurta(R.temps[fi])}, mm/h:`);
+  // 2 i 3. pluja i escolament a la graella de 20 m
+  graella(1, i => res.pluja[i], RAMPA_MM); $('ll1').innerHTML = llegenda(RAMPA_MM, `des de ${txt}, mm:`);
+  graella(2, i => res.escola[i], RAMPA_MM); $('ll2').innerHTML = llegenda(RAMPA_MM, `des de ${txt}, mm (absorbeix ${ia} mm; construït 5 mm):`);
+  // 4. simulació 2D en aquest moment o el càlcul pel relleu, amb les fletxes del pendent
+  const fr = SIM && $('vista3').value === 'sim' ? SIM.fotogrames.filter(f => f.temps <= R.temps[fi]).pop() : null;
+  if (SIM && $('vista3').value === 'sim') {
+    if (fr) posa(3, BASE + 'sim2d/' + EPI.id + '/' + fr.png, SIM.limits, false); else if (capes[3]) { mapes[3].removeLayer(capes[3]); capes[3] = null; }
+    $('ll3').innerHTML = llegenda(SIM.llegenda_calat_m.map((l, k) => [l, [[189, 215, 238, 120], [107, 174, 214, 170], [33, 113, 181, 200], [8, 69, 148, 220], [63, 0, 125, 235]][k]]), 'calat (m):') +
+      ' · fletxes: per on baixa l\'aigua';
+  } else {
+    aiguaD8(3);
+    $('ll3').innerHTML = llegenda(RAMPA_Q, 'cabal mitjà (m³/s):') + '<br>' + llegenda(RAMPA_H, 'embassada (m):');
+  }
+  fletxes(3);
+  graf();
+}
+
+function radarAra(k) {
+  const nx = R.lons.length, ny = R.lats.length, nR = nx * ny;
+  const cv = document.createElement('canvas'); cv.width = nx; cv.height = ny;
+  const cx = cv.getContext('2d'), img = cx.createImageData(nx, ny);
+  for (let r = 0; r < nR; r++) {
+    const col = color(R.mm[fi][r] * FACT[fi] * 60 / R.interval_min, RAMPA_RATE); if (!col) continue;
+    img.data.set(col, ((ny - 1 - Math.floor(r / nx)) * nx + r % nx) * 4);
+  }
+  cx.putImageData(img, 0, 0);
+  const m = R.pas_graus / 2;
+  if (!radarAra.lim) radarAra.lim = [[R.lats[0] - m, R.lons[0] - m], [R.lats[ny - 1] + m, R.lons[nx - 1] + m]];
+  posa(k, cv.toDataURL(), radarAra.lim, true);
+}
+function pinta(k, colorDe) {
+  const W = G.nc * ESCALA, H = G.nf * ESCALA, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const cx = cv.getContext('2d'), img = cx.createImageData(W, H), px = img.data;
+  for (let i = 0; i < N; i++) {
+    if (!terra[i]) continue; const col = colorDe(i); if (!col) continue;
+    const r = Math.floor(i / G.nc), c = i % G.nc;
+    for (let y = r * ESCALA; y < (r + 1) * ESCALA; y++) for (let x = c * ESCALA; x < (c + 1) * ESCALA; x++) px.set(col, (y * W + x) * 4);
+  }
+  cx.putImageData(img, 0, 0);
+  posa(k, cv.toDataURL(), G.limits, false);
+}
+const graella = (k, v, rampa) => pinta(k, i => color(v(i), rampa));
+const aiguaD8 = k => pinta(k, i => res.calat[i] >= 0.05 ? color(res.calat[i], RAMPA_H) : color(res.V[i] / res.segons, RAMPA_Q));
+
+// fletxes: a cada bloc de B×B cel·les (més petit com més zoom), la de més cabal; la direcció és la del recorregut de l'aigua 5 cel·les avall
+let capaFletxes = null;
+function fletxes(k) {
+  if (capaFletxes) mapes[k].removeLayer(capaFletxes);
+  const B = Math.max(3, Math.round(12 / 2 ** Math.max(mapes[k].getZoom() - 13, 0))), ll = [], [[s, w], [n, e]] = G.limits, dy = (n - s) / G.nf, dx = (e - w) / G.nc;
+  const pos = i => [n - (Math.floor(i / G.nc) + 0.5) * dy, w + (i % G.nc + 0.5) * dx];
+  for (let r0 = 0; r0 < G.nf; r0 += B) for (let c0 = 0; c0 < G.nc; c0 += B) {
+    let m = -1;
+    for (let r = r0; r < Math.min(r0 + B, G.nf); r++) for (let c = c0; c < Math.min(c0 + B, G.nc); c++) { const i = r * G.nc + c; if (terra[i] && (m < 0 || res.V[i] > res.V[m])) m = i; }
+    if (m < 0) continue;
+    const q = res.V[m] / res.segons; if (q < 0.1) continue;
+    let j = m; for (let p = 0; p < 5 && rcv[j] >= 0; p++) j = rcv[j];
+    if (j === m) continue;
+    const a = pos(m), b = pos(j), ang = Math.atan2(b[0] - a[0], (b[1] - a[1]) * Math.cos(0.73)), L0 = dy * B * 0.75;
+    const f = [a[0] + L0 * Math.sin(ang), a[1] + L0 * Math.cos(ang) / Math.cos(0.73)];
+    const cap = d => [f[0] - L0 * 0.35 * Math.sin(ang + d), f[1] - L0 * 0.35 * Math.cos(ang + d) / Math.cos(0.73)];
+    const gruix = Math.min(1 + Math.log10(q / 0.1) * 1.2, 4.5);
+    ll.push(L.polyline([a, f], { weight: gruix }), L.polyline([cap(0.5), f, cap(-0.5)], { weight: gruix }));
+  }
+  capaFletxes = L.featureGroup(ll.map(p => p.setStyle({ color: '#1b1b1b', opacity: 0.7, pane: 'fletxes', interactive: false })));
+  capaFletxes.addTo(mapes[k]);
+}
+
+function graf() {
+  const cv = $('graf'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr; const cx = cv.getContext('2d'); cx.scale(dpr, dpr);
+  const nF = mitjana.length, mx = Math.max(...mitjana) * 1.1 || 1, ample = (W - 30) / nF, base = H - 16;
+  mitjana.forEach((v, f) => { cx.fillStyle = f <= fi ? '#2171b5' : '#a8c4de'; const h = v / mx * (base - 4); cx.fillRect(30 + f * ample + 0.5, base - h, Math.max(ample - 1, 1), h); });
+  // cabal a l'aforador (4/10) o simulat (2D), a l'eix de la dreta
+  const serie = EP ? EP.temps_utc.map((t, k) => [t, EP.q_aforador_obs[k]]) : SIM ? SIM.fotogrames.map((f, k) => [f.temps, SIM.q_aforador_sim[k]]) : [];
+  const t0 = Date.parse(R.temps[0] + 'Z') - R.interval_min * 6e4, t1 = Date.parse(R.temps[nF - 1] + 'Z'), qmx = Math.max(1, ...serie.map(p => p[1] || 0)) * 1.1;
+  if (serie.length) {
+    cx.strokeStyle = '#d35400'; cx.lineWidth = 1.5; cx.beginPath(); let on = false;
+    serie.forEach(([t, q]) => { const x = 30 + (Date.parse(t + 'Z') - t0) / (t1 - t0) * (W - 30); if (q == null || x < 30 || x > W) return;
+      const y = base - Math.max(q, 0) / qmx * (base - 4); on ? cx.lineTo(x, y) : cx.moveTo(x, y); on = true; });
+    cx.stroke(); cx.fillStyle = '#d35400'; cx.font = '10px system-ui'; cx.textAlign = 'right';
+    cx.fillText(`${EP ? 'Ridaura mesurat' : 'Ridaura simulat'} (màx. ${fmt(qmx / 1.1, 0)} m³/s)`, W - 4, 10);
+  }
+  const x = 30 + (fi + 0.5) * ample; cx.strokeStyle = '#e31a1c'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(x, 0); cx.lineTo(x, base); cx.stroke();
+  cx.fillStyle = '#5b6b7b'; cx.font = '10px system-ui'; cx.textAlign = 'right';
+  for (const v of [0, Math.round(mx / 2), Math.round(mx)]) cx.fillText(v, 26, base - v / mx * (base - 4) + 3);
+  cx.textAlign = 'center';
+  const cada = nF > 200 ? 24 : nF > 100 ? 6 : 3, ultim = { x: -99 };
+  R.temps.forEach((t, f) => { const xx = 30 + (f + 0.5) * ample; if (t.endsWith(':00') && +t.slice(11, 13) % cada === 0 && xx - ultim.x > 34) {
+    cx.fillText(cada >= 24 ? new Date(t + 'Z').toLocaleDateString('ca-ES', { day: 'numeric', month: 'numeric' }) : horaCurta(t), xx, H - 3); ultim.x = xx; } });
+  cx.textAlign = 'left'; cx.fillText('mm', 0, 9);
+}
+</script>
+</body>
+</html>
