@@ -15,6 +15,12 @@ on:
       ia_urba:
         description: "Llindar de pèrdues de les zones construïdes (mm)"
         default: "5"
+      perdua_natural:
+        description: "Infiltració del terreny natural un cop superat el llindar (mm/h)"
+        default: "12"
+      clavegueram:
+        description: "Capacitat dels embornals a les zones construïdes (mm/h)"
+        default: "30"
 
 permissions:
   contents: write
@@ -42,7 +48,8 @@ jobs:
           EP=""; [ -n "${{ matrix.ep.episodi }}" ] && EP="--episodi data/ridaura/episodis/${{ matrix.ep.episodi }}"
           python3 scripts/simula_2d.py --config config/ridaura.json --mdt /tmp/relleu/mdt.tif --id "${{ matrix.ep.id }}" \
             --radar "data/ridaura/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ inputs.pas }}" \
-            --ia-natural "${{ matrix.ep.ia }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}"
+            --ia-natural "${{ matrix.ep.ia }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}" \
+            --perdua-natural "${{ inputs.perdua_natural }}" --clavegueram "${{ inputs.clavegueram }}"
       - name: Desa
         run: |
           git config user.name "github-actions[bot]"
