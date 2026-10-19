@@ -207,8 +207,8 @@ def main():
         neta = np.maximum(pluja_acum - ia, 0.0)
         h += (neta - neta_ant) / 1000
         neta_ant = neta
-        # les lleres on ja corre aigua (> --h-llera m) tenen el fons saturat: no hi perden
-        np.maximum(h - np.where((pluja_acum >= ia) & (h < a.h_llera), sorti * dt, 0.0), 0.0, out=h)
+        # al terreny natural, les lleres on ja corre aigua (> --h-llera m) tenen el fons saturat i no hi infiltren; el clavegueram sí que drena
+        np.maximum(h - np.where((pluja_acum >= ia) & (urba | (h < a.h_llera)), sorti * dt, 0.0), 0.0, out=h)
         pas_temps(z, h, qx, qy, n, dx, dt, actiu)
         np.maximum(hmax, h, out=hmax)
         t15[(h > 0.15) & ~np.isfinite(t15)] = t_seg / 60
