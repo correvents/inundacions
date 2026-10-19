@@ -34,7 +34,7 @@
 </div>
 <script>
 const mapa = L.map('mapa').setView([41.815, 2.99], 12);
-L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', {
+L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=topografic&STYLE=default&FORMAT=image/jpeg&TILEMATRIXSET=MON3857NW&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
   maxZoom: 18, attribution: '© Institut Cartogràfic i Geològic de Catalunya'
 }).addTo(mapa);
 
