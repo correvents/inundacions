@@ -60,7 +60,7 @@
 <script>
 const COLOR = { 10: '#c0392b', 50: '#e67e22', 100: '#f1c40f', 500: '#5dade2' };
 const mapa = L.map('mapa').setView([41.815, 3.02], 13);
-L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=topografic&STYLE=default&FORMAT=image/jpeg&TILEMATRIXSET=MON3857NW&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', {
   maxZoom: 19, attribution: '© ICGC · © OpenStreetMap · Zones inundables: ACA · Radar: EUMETNET OPERA · Aforador: ACA'
 }).addTo(mapa);
 mapa.createPane('radar').style.zIndex = 450;
