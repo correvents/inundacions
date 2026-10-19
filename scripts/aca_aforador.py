@@ -58,7 +58,8 @@ def desa(conca, var, mesures):
         r = requests.post(os.environ["SUPABASE_URL"].rstrip("/") + "/rest/v1/observacions", json=files[i:i + 500], timeout=60,
                           headers={"apikey": clau, "Authorization": f"Bearer {clau}", "Content-Profile": "inundacions",
                                    "Prefer": "resolution=ignore-duplicates,return=minimal"})
-        r.raise_for_status()
+        if not r.ok:
+            sys.exit(f"Supabase: HTTP {r.status_code} {r.text[:300]}")
     return len(files)
 
 
