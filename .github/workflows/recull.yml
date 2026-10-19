@@ -1,0 +1,30 @@
+name: Recull dades
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      hores:
+        description: "Hores enrere que es demanen a l'ACA (fins a ~2000 per recuperar l'històric de 3 mesos)"
+        default: "6"
+
+concurrency:
+  group: recull
+  cancel-in-progress: false
+
+jobs:
+  recull:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Aforador i pluviòmetre de l'ACA
+        run: python3 scripts/aca_aforador.py --config config/ridaura.json --hores "${{ github.event.inputs.hores || '6' }}"

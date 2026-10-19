@@ -22,9 +22,19 @@ L'episodi del 3-4/10/2026 va fer passar el riu de 30 a 300 m³/s en 2 h, de mane
 5. Visor web (GitHub Pages)
 6. Validació amb episodis històrics
 
+## Funcionament
+
+- **GitHub Actions** (`.github/workflows/recull.yml`) recull les dades cada 10 minuts i fa els càlculs.
+- **Supabase** (projecte minairo, esquema `inundacions`) guarda els resultats: `observacions`, `pluja_conca`, `previsions_cabal`, `avisos`. Lectura pública; escriptura només amb la clau secreta.
+- **GitHub Pages** serveix el visor, que llegeix de Supabase.
+
+Secrets del repo (Settings → Secrets and variables → Actions): `SUPABASE_URL`, `SUPABASE_SECRET_KEY`.
+
 ## Estructura
 
 - `index.html`: visor
+- `config/ridaura.json`: aforador, sensors i llindars de la conca
+- `scripts/aca_aforador.py`: recull el nivell, el cabal i la pluja de l'aforador de l'ACA
 - `data/ridaura/conca.geojson`: conca a la desembocadura, conca a l'aforador i xarxa de drenatge
 - `scripts/retalla_mde.py`, `scripts/delimita_conca.py`, `scripts/dibuixa_conca.py`: delimitació de la conca
 - `docs/`: recerca de models i rieres litorals de risc
