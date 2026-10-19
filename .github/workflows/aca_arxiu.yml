@@ -1,0 +1,35 @@
+name: Arxiu de l'ACA (tots els sensors)
+
+on:
+  workflow_dispatch:
+    inputs:
+      dies:
+        description: "Dies enrere que es demanen (l'ACA en guarda uns 90)"
+        default: "100"
+      max:
+        description: "Només els N primers sensors (0 = tots)"
+        default: "0"
+
+permissions:
+  contents: read
+
+jobs:
+  arxiu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Descarrega
+        run: python3 scripts/aca_arxiu.py --dest /tmp/aca --dies "${{ inputs.dies }}" --max "${{ inputs.max }}" --fils 8
+      - name: Empaqueta
+        run: tar -C /tmp -czf /tmp/aca_arxiu.tar.gz aca && ls -la /tmp/aca_arxiu.tar.gz
+      # artefacte privat del workflow (només amb accés al repo); es copia a la carpeta del projecte
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aca_arxiu
+          path: /tmp/aca_arxiu.tar.gz
+          retention-days: 30
