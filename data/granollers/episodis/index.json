@@ -1,0 +1,16 @@
+{
+ "episodis": [
+  {
+   "id": "2026-10-04",
+   "titol": "3-5 d'octubre de 2026: el Congost es desborda a Granollers",
+   "resum": "361 mm en dos dies, 75 mm en una hora. Esvoranc al carrer Josep Umbert, hospital, passos soterrats de les Rondes i centenars de baixos.",
+   "radar": "2026-10-03_radar.json",
+   "api_mm": 42,
+   "ia_mm": 108,
+   "perdua_mm_h": 12,
+   "estacio_api": "YM"
+  }
+ ],
+ "sense_radar": [],
+ "pendents_de_radar": []
+}
