@@ -49,6 +49,8 @@
         <button data-h="1">1 h</button><button data-h="3">3 h</button><button data-h="6">6 h</button>
         <button data-h="12">12 h</button><button data-h="0">tota la tempesta</button>
       </div>
+      <div class="botons"><button id="play">▶ Reprodueix</button>
+        <select id="vel" style="width:auto"><option value="900">lent</option><option value="450" selected>normal</option><option value="200">ràpid</option></select></div>
       <canvas id="graf"></canvas>
       <div class="nota">Pluja mitjana a la zona cada 15 min. Arrossega sobre la gràfica per triar la franja que vulguis.</div>
       <label class="ctl">Final de la franja <b id="vfi"></b><input type="range" id="fi" min="0"></label>
@@ -145,7 +147,7 @@ Promise.all([
   $('fi').max = $('ini').max = R.temps.length - 1;
   triaDurada(6);
   for (const b of document.querySelectorAll('#durades button')) b.onclick = () => triaDurada(+b.dataset.h);
-  $('fi').oninput = () => { fi = +$('fi').value; if (durada !== null) ini = durada ? Math.max(fi - durada * 4 + 1, 0) : 0; if (ini > fi) ini = fi; calcula(); };
+  $('fi').oninput = () => { reprodueix(false); fi = +$('fi').value; if (durada !== null) ini = durada ? Math.max(fi - durada * 4 + 1, 0) : 0; if (ini > fi) ini = fi; calcula(); };
   $('ini').oninput = () => { ini = +$('ini').value; if (ini > fi) fi = ini; marcaDurada(null); calcula(); };
   for (const id of ['estat', 'ia', 'mul', 'capa']) $(id).oninput = calcula;
   const opac = () => { $('vopac').textContent = Math.round($('opac').value * 100) + ' %'; if (capa) capa.setOpacity(+$('opac').value); };
@@ -153,6 +155,7 @@ Promise.all([
   const ropac = () => { $('vropac').textContent = Math.round($('ropac').value * 100) + ' %'; if (capaRadar) capaRadar.setOpacity(+$('ropac').value); };
   $('ropac').oninput = ropac; ropac();
   $('radar').oninput = radar;
+  $('play').onclick = () => reprodueix(!rellotge);
   $('corregeix').onchange = () => { pluges(); calcula(); };
   arrossega();
   mapa.fitBounds(G.limits);
@@ -231,6 +234,22 @@ function triaDurada(h) {
 function marcaDurada(h) {
   durada = h;
   for (const b of document.querySelectorAll('#durades button')) b.classList.toggle('actiu', h !== null && +b.dataset.h === h);
+}
+
+// reproducció: el final de la franja avança 15 min cada pas; amb una durada triada la franja llisca, si no s'allarga
+let rellotge = null;
+function reprodueix(on) {
+  clearTimeout(rellotge); rellotge = null;
+  $('play').textContent = on ? '⏸ Atura' : '▶ Reprodueix';
+  if (!on) return;
+  if (fi >= R.temps.length - 1) { fi = durada ? Math.min(durada * 4 - 1, R.temps.length - 1) : ini; if (durada) ini = 0; }
+  const pas = () => {
+    calculaAra();
+    if (fi >= R.temps.length - 1) return reprodueix(false);
+    fi++; if (durada) ini = Math.max(fi - durada * 4 + 1, 0);
+    rellotge = setTimeout(pas, +$('vel').value);
+  };
+  pas();
 }
 
 let pendent = false;
