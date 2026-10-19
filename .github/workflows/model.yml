@@ -26,6 +26,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install requests numpy scipy matplotlib
+      - name: Exporta l'episodi
+        run: PYTHONPATH=scripts python3 scripts/model_cabal.py --config config/ridaura.json --des "${{ inputs.des }}" --fins "${{ inputs.fins }}" --exporta "data/ridaura/episodi_$(echo ${{ inputs.des }} | cut -c1-10).csv"
       - name: Calibratge amb el radar
         run: PYTHONPATH=scripts python3 scripts/model_cabal.py --config config/ridaura.json --des "${{ inputs.des }}" --fins "${{ inputs.fins }}" --font radar
       - name: Calibratge amb el pluviòmetre

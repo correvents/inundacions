@@ -10,7 +10,7 @@ Paràmetres calibrats: P0 (mm), k (h) i n (1–5). El factor del radar f es fixa
 el radar va donar 195 mm a la conca i el pluviòmetre de l'ACA 198 mm); amb un sol episodi P0 i f no es poden separar.
 
 Ús:  python3 scripts/model_cabal.py --config config/ridaura.json --des 2026-10-03T00:00 --fins 2026-10-05T00:00
-     (llegeix Supabase; amb --csv fitxer.csv llegeix temps,pluja_mm,cabal_m3s d'un CSV)
+     (llegeix Supabase; amb --csv llegeix un CSV fet amb --exporta)
 Desa els paràmetres a config/<conca>_model_<font>.json i la gràfica a data/<conca>/calibratge_<font>.png."""
 import argparse, csv, json, sys
 from datetime import datetime, timedelta, timezone
@@ -83,11 +83,11 @@ def llegeix_supabase(cfg, ini, fi, font="radar"):
             {datetime.fromisoformat(r["temps"]): r["valor"] for r in qo})
 
 
-def llegeix_csv(path):
+def llegeix_csv(path, font):
     pl, qo = {}, {}
     for r in csv.DictReader(open(path)):
-        t = datetime.fromisoformat(r["temps"])
-        if r.get("pluja_mm"): pl[t] = float(r["pluja_mm"])
+        t = datetime.fromisoformat(r["temps"]).replace(tzinfo=timezone.utc)
+        if r.get(f"pluja_{font}_mm"): pl[t] = float(r[f"pluja_{font}_mm"])
         if r.get("cabal_m3s"): qo[t] = float(r["cabal_m3s"])
     return pl, qo
 
@@ -100,12 +100,20 @@ def main():
     ap.add_argument("--csv")
     ap.add_argument("--factor-radar", type=float, default=1.0)
     ap.add_argument("--font", choices=["radar", "pluviometre"], default="radar")
+    ap.add_argument("--exporta", help="només desa un CSV amb temps, pluja radar, pluja pluviòmetre i cabal, i acaba")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
     ini = datetime.fromisoformat(a.des).replace(tzinfo=timezone.utc)
     fi = datetime.fromisoformat(a.fins).replace(tzinfo=timezone.utc)
-    pl, qo = llegeix_csv(a.csv) if a.csv else llegeix_supabase(cfg, ini, fi, a.font)
     temps = [ini + timedelta(minutes=DT * i) for i in range(int((fi - ini).total_seconds() // (DT * 60)) + 1)]
+    if a.exporta:
+        rad, qo = llegeix_supabase(cfg, ini, fi, "radar"); plu, _ = llegeix_supabase(cfg, ini, fi, "pluviometre")
+        with open(a.exporta, "w", newline="") as fh:
+            w = csv.writer(fh); w.writerow(["temps", "pluja_radar_mm", "pluja_pluviometre_mm", "cabal_m3s"])
+            for t in temps:
+                w.writerow([t.strftime("%Y-%m-%dT%H:%M"), rad.get(t, ""), plu.get(t, ""), qo.get(t, "")])
+        return 0
+    pl, qo = llegeix_csv(a.csv, a.font) if a.csv else llegeix_supabase(cfg, ini, fi, a.font)
     pluja = np.array([pl.get(t, 0.0) for t in temps])
     obs = np.array([qo.get(t, np.nan) for t in temps])
     print(f"{len(pl)} passos de radar ({pluja.sum():.1f} mm), {np.isfinite(obs).sum()} de cabal (pic {np.nanmax(obs):.1f} m³/s)")
