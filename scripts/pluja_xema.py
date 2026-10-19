@@ -31,7 +31,7 @@ def main():
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
     d = Path("data") / cfg["conca"] / "xema"; d.mkdir(parents=True, exist_ok=True)
-    lat0, lon0 = 41.81, 3.03                             # plana de Platja d'Aro
+    lat0, lon0 = cfg.get("centre", [41.81, 3.03])       # per defecte, la plana de Platja d'Aro
     est = socrata("yqwd-vj5e", {"$limit": 5000})
     km = lambda e: math.hypot((float(e["latitud"]) - lat0) * 111, (float(e["longitud"]) - lon0) * 111 * math.cos(math.radians(lat0)))
     prop = sorted([dict(e, km=round(km(e), 1)) for e in est if km(e) <= a.radi_km], key=lambda e: e["km"])

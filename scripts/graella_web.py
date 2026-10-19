@@ -36,6 +36,8 @@ def main():
     ap.add_argument("--pas", type=float, default=20)
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
+    global CAIXA
+    CAIXA = cfg.get("caixa_web", cfg.get("caixa", CAIXA))
     dest = Path("data") / cfg["conca"] / "web"; dest.mkdir(parents=True, exist_ok=True)
 
     with rasterio.open(a.mdt) as f:
@@ -114,8 +116,9 @@ def main():
     e4, n4 = to_ll.transform(tr.c + nc * tr.a, tr.f)
     to_utm = Transformer.from_crs(4326, crs, always_xy=True)
     punts = {}
-    for nom, (lon, lat) in {"aforador": (cfg["aforador"]["lon"], cfg["aforador"]["lat"]), "desembocadura": (3.0671, 41.8051),
-                            "fenals": (3.0712, 41.8194)}.items():
+    punts_cfg = {"aforador": (cfg["aforador"]["lon"], cfg["aforador"]["lat"]), "desembocadura": (3.0671, 41.8051),
+                 "fenals": (3.0712, 41.8194)} if cfg["conca"] == "ridaura" else {k: tuple(v) for k, v in cfg["punts"].items()}
+    for nom, (lon, lat) in punts_cfg.items():
         x, y = to_utm.transform(lon, lat)
         punts[nom] = [int((tr.f - y) // tr.a), int((x - tr.c) // tr.a)]
     (dest / "graella.json").write_text(json.dumps({

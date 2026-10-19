@@ -1,0 +1,34 @@
+{
+ "conca": "granollers",
+ "nom": "Congost (Granollers)",
+ "centre": [
+  41.608,
+  2.288
+ ],
+ "caixa": [
+  2.2,
+  41.57,
+  2.4,
+  41.72
+ ],
+ "caixa_radar": [
+  2.17,
+  41.54,
+  2.43,
+  41.75
+ ],
+ "aforador": {
+  "codi": "",
+  "nom": "Congost a Granollers (punt provisional)",
+  "lat": 41.605,
+  "lon": 2.29
+ },
+ "punts": {
+  "aforador": [
+   2.29,
+   41.605
+  ]
+ },
+ "estacio_api": "",
+ "nota": "Aiguats 4-5/10/2026; 361 mm en 2 dies, 75 mm/h a Granollers. Aforador ACA pendent d'identificar a l'arxiu."
+}

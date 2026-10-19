@@ -23,6 +23,8 @@ def main():
     ap.add_argument("--interval", type=int, default=15, help="minuts de cada fotograma")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
+    global CAIXA
+    CAIXA = cfg.get("caixa_radar", CAIXA)
     ini = datetime.fromisoformat(a.des).replace(tzinfo=timezone.utc)
     fi = datetime.fromisoformat(a.fins).replace(tzinfo=timezone.utc)
     lons = np.round(np.arange(CAIXA[0], CAIXA[2] + 1e-9, PAS), 4)

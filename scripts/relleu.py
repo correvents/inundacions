@@ -79,6 +79,8 @@ def main():
     ap.add_argument("--nomes-mdt", action="store_true", help="només prepara /tmp/relleu/mdt.tif (per a la simulació 2D)")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
+    global CAIXA
+    CAIXA = cfg.get("caixa", CAIXA)
     d = Path("data") / cfg["conca"]
     TMP.mkdir(parents=True, exist_ok=True)
 

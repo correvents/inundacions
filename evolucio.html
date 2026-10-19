@@ -58,7 +58,8 @@
 <div class="carrega" id="carrega">Carregant el relleu…</div>
 <script>
 const $ = id => document.getElementById(id);
-const BASE = 'data/ridaura/';
+const CONCA = new URLSearchParams(location.search).get('conca') || 'ridaura';
+const BASE = 'data/' + CONCA + '/';
 const DR = [-1, -1, 0, 1, 1, 1, 0, -1], DC = [0, 1, 1, 1, 0, -1, -1, -1];   // 0=N 1=NE 2=E 3=SE 4=S 5=SO 6=O 7=NO
 const ESCALA = 2;
 let G, R, EP, ES, FACT, IDX, PREMSA, SIM, N, A, z, zf, dir, urba, ridx, rcv, ordre, comp, compCel, compIni, nComp, terra;
@@ -182,7 +183,7 @@ Promise.all([
   const q = new URLSearchParams(location.search).get('episodi');
   await carregaEpisodi(IDX.episodis.find(e => e.id === q) || IDX.episodis[0]);
   $('carrega').remove();
-  mapes[0].fitBounds([[41.78, 2.95], [41.85, 3.095]]);
+  mapes[0].fitBounds(CONCA === 'ridaura' ? [[41.78, 2.95], [41.85, 3.095]] : G.limits);
   $('episodi').onchange = () => { reprodueix(false); carregaEpisodi(IDX.episodis.find(e => e.id === $('episodi').value)); };
   $('vista3').onchange = calcula;
   $('play').onclick = () => reprodueix(!rellotge);

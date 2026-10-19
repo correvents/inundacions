@@ -1,0 +1,60 @@
+name: Conca nova (radar, estacions, relleu i graella)
+
+on:
+  workflow_dispatch:
+    inputs:
+      conca:
+        description: "Nom de la conca (config/<conca>.json)"
+        required: true
+      episodis:
+        description: 'Llista JSON [{"id","titol","resum","des","fins"}] (des/fins en UTC)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  conca:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy pandas h5py pyproj shapely rasterio pysheds pillow numba
+      - name: Estacions XEMA properes
+        run: python3 scripts/pluja_xema.py --config config/${{ inputs.conca }}.json
+      - name: Radar, correcció amb estacions i índex
+        env:
+          CONCA: ${{ inputs.conca }}
+          EPISODIS: ${{ inputs.episodis }}
+        run: |
+          python3 - <<'PY'
+          import json, subprocess, sys
+          import os; c = os.environ["CONCA"]; eps = json.loads(os.environ["EPISODIS"])
+          idx = []
+          for e in eps:
+              radar = f"{e['des'][:10]}_radar.json"
+              subprocess.run([sys.executable, "scripts/radar_graella.py", "--config", f"config/{c}.json", "--des", e["des"], "--fins", e["fins"]],
+                             check=True, env={**__import__('os').environ, "PYTHONPATH": "scripts"})
+              subprocess.run([sys.executable, "scripts/correccio_estacio.py", "--config", f"config/{c}.json", "--radar", radar, "--id", e["id"]], check=True)
+              idx += ["--episodi", json.dumps({"id": e["id"], "titol": e["titol"], "resum": e.get("resum", ""), "radar": radar})]
+          subprocess.run([sys.executable, "scripts/index_episodis.py", "--config", f"config/{c}.json"] + idx, check=True)
+          PY
+      - name: Relleu i graella del visor
+        run: |
+          python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas 10 --nomes-mdt
+          FIRST=$(python3 -c "import json;print(json.load(open('data/${{ inputs.conca }}/episodis/index.json'))['episodis'][0]['id'])")
+          RADAR=$(python3 -c "import json;print(json.load(open('data/${{ inputs.conca }}/episodis/index.json'))['episodis'][0]['radar'])")
+          PYTHONPATH=scripts python3 scripts/graella_web.py --config config/${{ inputs.conca }}.json --mdt /tmp/relleu/mdt.tif \
+            --radar data/${{ inputs.conca }}/episodis/$RADAR --episodi data/${{ inputs.conca }}/episodis/${FIRST}_estacio.json
+      - name: Desa
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && exit 0
+          git commit -m "Conca ${{ inputs.conca }}: radar, estacions, relleu i graella"
+          for i in 1 2 3 4 5 6; do git pull --rebase origin main && git push && exit 0; sleep $((i*7)); done; exit 1
