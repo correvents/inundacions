@@ -46,9 +46,10 @@
         <select id="vel"><option value="250">lent</option><option value="100" selected>normal</option><option value="40">ràpid</option></select>
       </div>
       <input type="range" id="slider" min="0" value="0">
+      <div class="nota" style="margin:4px 0"><label><input type="checkbox" id="veu2d" checked> Simulació 2D: l'aigua sobre el relleu</label> · <label><input type="checkbox" id="veuzones" checked> Zones de l'ACA i punts</label> · <label><input type="checkbox" id="veuradar" checked> Radar</label></div>
       <canvas id="graf"></canvas>
       <div class="nota llegenda" style="margin-bottom:4px">Radar (mm/h):<span style="background:#4292c6"></span>5–15<span style="background:#2ca25f"></span>15–30<span style="background:#fec44f"></span>30–50<span style="background:#f03b20"></span>50–80<span style="background:#7a0177"></span>&gt;80</div>
-      <div class="nota llegenda"><span style="background:#1b2733"></span>Ridaura a l'aforador (mesurat)<span style="background:#8e44ad"></span>Ridaura al mar (estimat)<span style="background:#16a085"></span>Fenals (estimat)<span style="background:#5dade2"></span>pluja</div>
+      <div class="nota llegenda"><span style="background:#1b2733"></span>Ridaura a l'aforador (mesurat)<span style="background:#8e44ad"></span>Ridaura al mar (estimat)<span style="background:#16a085"></span>Fenals (estimat)<span style="background:#d35400"></span>Ridaura a l'aforador (simulació 2D)<span style="background:#5dade2"></span>pluja</div>
     </div>
 
     <div class="targeta" id="estat"></div>
@@ -68,7 +69,7 @@ const hora = s => { const d = new Date(s + 'Z'); return d.toLocaleString('ca', {
 const trT = T => !T ? 'normal' : T > 500 ? '> T500' : T < 10 ? `T${Math.round(T)}` : `T${Math.round(T / 10) * 10}`;
 const radarColor = mmh => mmh < 1 ? null : mmh < 5 ? '#9ecae1' : mmh < 15 ? '#4292c6' : mmh < 30 ? '#2ca25f' : mmh < 50 ? '#fec44f' : mmh < 80 ? '#f03b20' : '#7a0177';
 
-let ep, af, zones, radar, capaZones, capaEls, capesEl = [], i = 0, timer = null, cel_les = [];
+let sim = null, capa2d = null, ep, af, zones, radar, capaZones, capaEls, capesEl = [], i = 0, timer = null, cel_les = [];
 
 Promise.all([
   fetch('data/ridaura/episodis/2026-10-04.json').then(r => r.json()),
@@ -76,8 +77,17 @@ Promise.all([
   fetch('data/ridaura/zones_per_motor.geojson').then(r => r.json()),
   fetch('data/ridaura/episodis/2026-10-03_radar.json').then(r => r.ok ? r.json() : null).catch(() => null),
   fetch('data/ridaura/conca.geojson').then(r => r.json()),
-]).then(([e, a, z, r, conca]) => {
-  ep = e; af = a; zones = z; radar = r;
+  fetch('data/ridaura/sim2d/2026-10-04/index.json').then(r => r.ok ? r.json() : null).catch(() => null),
+]).then(([e, a, z, r, conca, s2]) => {
+  ep = e; af = a; zones = z; radar = r; sim = s2;
+  if (sim) {
+    mapa.createPane('sim2d').style.zIndex = 430;
+    capa2d = L.imageOverlay('data/ridaura/sim2d/2026-10-04/' + sim.fotogrames[0].png, sim.limits, { pane: 'sim2d', opacity: 0.9 }).addTo(mapa);
+    sim.fotogrames.forEach(f => { const im = new Image(); im.src = 'data/ridaura/sim2d/2026-10-04/' + f.png; });   // precàrrega
+  }
+  document.getElementById('veu2d').onchange = () => pinta();
+  document.getElementById('veuzones').onchange = () => pinta();
+  document.getElementById('veuradar').onchange = () => pinta();
   L.geoJSON(conca.features[0], { style: { color: '#2b7bba', weight: 2, fill: false, dashArray: '4 4' }, interactive: false }).addTo(mapa);
   L.geoJSON({ type: 'FeatureCollection', features: conca.features.filter(f => f.geometry.type.includes('Line')) },
     { style: { color: '#0b4f8a', weight: 1 }, interactive: false }).addTo(mapa);
@@ -109,6 +119,9 @@ Promise.all([
     es trasllada aigües avall amb fins a ${hp.retard_aforador_mar_min} min de retard. La plana de Platja d'Aro depèn de la riera de Fenals, que no té aforador:
     el cabal s'estima amb la pluja del pluviòmetre (llindar ${hp.p0_fenals_mm} mm, temps de concentració ${hp.tc_fenals_min} min).
     Cada element s'inunda quan el període de retorn arriba al de la zona inundable de l'ACA que el toca. No inclou l'aigua que s'embassa als carrers lluny de les rieres.
+    ${sim ? `<br><br><b>Simulació 2D.</b> La pluja del radar (corregida cada hora amb el pluviòmetre) cau sobre el relleu de l'MDT de 5 m de l'IGN, agregat a cel·les de ${sim.pas_m} m.
+    El terreny natural reté els primers ${sim.hipotesis.ia_natural_mm} mm i les zones construïdes ${sim.hipotesis.ia_urba_mm} mm. L'aigua corre amb l'esquema inercial local (el de LISFLOOD-FP).
+    Calat en blau: més de 5, 15, 30 i 60 cm; lila, més de 1,2 m. La línia taronja discontínua és el cabal que surt a l'aforador i es pot comparar amb el mesurat.` : ''}
     ${radar ? '' : '<br>La pluja del radar sobre el mapa encara s\'està preparant.'}`;
   pinta();
 });
@@ -120,21 +133,26 @@ document.getElementById('vel').onchange = () => { if (timer) { atura(); juga(); 
 function pinta() {
   document.getElementById('slider').value = i;
   document.getElementById('hora').textContent = hora(ep.temps_utc[i]);
-  const tR = ep.T_ridaura_zona[i] || 0, tF = ep.T_fenals[i] || 0;
+  const tR = ep.T_ridaura_zona[i] || 0, tF = ep.T_fenals[i] || 0, veuZones = document.getElementById('veuzones').checked;
+  if (capa2d) {
+    const ti = ep.temps_utc[i], fr = sim.fotogrames.filter(f => f.temps <= ti).pop();
+    capa2d.setOpacity(document.getElementById('veu2d').checked && fr ? 0.9 : 0);
+    if (fr) capa2d.setUrl('data/ridaura/sim2d/2026-10-04/' + fr.png);
+  }
   capaZones.eachLayer(l => {
-    const p = l.feature.properties, T = p.motor === 'fenals' ? tF : tR, on = T >= p.T;
+    const p = l.feature.properties, T = p.motor === 'fenals' ? tF : tR, on = veuZones && T >= p.T;
     l.setStyle({ fillColor: COLOR[p.T], fillOpacity: on ? 0.28 : 0 });
   });
   let ara = 0;
   ep.elements.forEach((e, k) => {
-    const on = e.ini !== null && e.ini <= i && i <= e.fi, passat = e.ini !== null && i > e.fi;
+    const on = e.ini !== null && e.ini <= i && i <= e.fi, passat = veuZones && e.ini !== null && i > e.fi;
     if (on) ara++;
-    const c = on ? '#c0392b' : '#7f8c8d', vis = on || passat;
+    const c = on ? '#c0392b' : '#7f8c8d', vis = (on && veuZones) || passat;
     capesEl[k].setStyle({ color: c, fillColor: c, opacity: vis ? (on ? 1 : 0.5) : 0, fillOpacity: vis ? (on ? 0.8 : 0.3) : 0 });
   });
   if (radar) {
     const ti = ep.temps_utc[i], fr = radar.temps.findIndex(t => t >= ti);
-    const mm = fr >= 0 ? radar.mm[fr] : null;
+    const mm = fr >= 0 && document.getElementById('veuradar').checked ? radar.mm[fr] : null;
     cel_les.forEach((c, k) => { const col = mm ? radarColor(mm[k] * 60 / radar.interval_min) : null; c.setStyle({ fillColor: col || '#000', fillOpacity: col ? (col === '#9ecae1' ? 0.25 : 0.45) : 0 }); });
   }
   const pl = ep.pluja_pluviometre_mm, acum = pl.slice(0, i + 1).reduce((a, b) => a + (b || 0), 0);
@@ -163,6 +181,11 @@ function grafic() {
   g.fillStyle = 'rgba(93,173,226,0.6)';
   ep.pluja_pluviometre_mm.forEach((p, k) => { const h = Math.min(p * 12, 100) / 100 * (H - 28) * 0.45; if (h > 0) g.fillRect(x(k), 10, Math.max((W - 36) / n, 1), h); });
   const linia = (v, col) => { g.strokeStyle = col; g.lineWidth = 1.6; g.beginPath(); let s = false; v.forEach((q, k) => { if (q === null) { s = false; return; } s ? g.lineTo(x(k), y(q)) : g.moveTo(x(k), y(q)); s = true; }); g.stroke(); };
+  if (sim) {   // hidrograma de la simulació 2D (cada 10 min) a l'aforador
+    g.strokeStyle = '#d35400'; g.lineWidth = 1.6; g.setLineDash([4, 3]); g.beginPath(); let s2 = false;
+    sim.fotogrames.forEach((f, k) => { const kk = ep.temps_utc.indexOf(f.temps); if (kk < 0) return; const q = Math.max(sim.q_aforador_sim[k], 0); s2 ? g.lineTo(x(kk), y(q)) : g.moveTo(x(kk), y(q)); s2 = true; });
+    g.stroke(); g.setLineDash([]);
+  }
   linia(ep.q_desembocadura_est, '#8e44ad'); linia(ep.q_fenals_est, '#16a085'); linia(ep.q_aforador_obs, '#1b2733');
   g.strokeStyle = '#c0392b'; g.lineWidth = 1; g.beginPath(); g.moveTo(x(i), 8); g.lineTo(x(i), H - 18); g.stroke();
   g.fillStyle = '#5b6b7b'; g.fillText('m³/s', 2, 9);
