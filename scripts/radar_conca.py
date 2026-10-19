@@ -31,13 +31,22 @@ def claus(s3, ini, fi):
     while h <= fi:
         xml = requests.get(s3, params={"list-type": 2, "prefix": h.strftime("%Y/%m/%d/OPERA/COMP/OPERA@%Y%m%dT%H")}, timeout=30).text
         for k in re.findall(r"<Key>([^<]+)</Key>", xml):
-            m = re.search(r"OPERA@(\d{8}T\d{4})@0@DBZH\.h5$", k)
+            m = re.search(r"OPERA@(\d{8}T\d{4})@0@DBZH(_QIND)?\.h5$", k)      # els anys antics porten _QIND
             if m:
                 t = datetime.strptime(m.group(1), "%Y%m%dT%H%M").replace(tzinfo=timezone.utc)
                 if ini < t <= fi:
                     out[t] = k
         h += timedelta(hours=1)
     return out
+
+
+def durades(ts, defecte=5):
+    """Minuts que representa cada compost: l'interval fins al següent (5 min ara, 15 min en anys antics)."""
+    ts = sorted(ts)
+    d = {t: min(max(int((b - t).total_seconds() // 60), 1), 15) for t, b in zip(ts, ts[1:])}
+    if ts:
+        d[ts[-1]] = d[ts[-2]] if len(ts) > 1 else defecte
+    return d
 
 
 def punts(geom):
@@ -51,8 +60,13 @@ def punts(geom):
 def mostreja(h5, lon, lat):
     """dBZ a cada punt; NaN = sense cobertura; -inf = cobertura sense eco."""
     with h5py.File(h5, "r") as h:
-        ds = h["dataset1/data1/data"]
-        wt, wh = h["dataset1/data1/what"].attrs, h["where"].attrs
+        grup = "dataset1/data1"
+        for g in h["dataset1"]:                  # el compost DBZH_QIND porta també la capa de qualitat
+            q = h[f"dataset1/{g}/what"].attrs.get("quantity") if f"dataset1/{g}/what" in h else None
+            if q is not None and (q.decode() if isinstance(q, bytes) else str(q)) == "DBZH":
+                grup = f"dataset1/{g}"
+        ds = h[grup + "/data"]
+        wt, wh = h[grup + "/what"].attrs, h["where"].attrs
         gain, off, nodata, undet = (float(wt[k]) for k in ("gain", "offset", "nodata", "undetect"))
         pd = wh["projdef"].decode() if isinstance(wh["projdef"], bytes) else str(wh["projdef"])
         tr = Transformer.from_crs("EPSG:4326", CRS.from_proj4(pd), always_xy=True)
@@ -100,6 +114,7 @@ def main():
                                                                "temps": f"gt.{ini.isoformat()}",
                                                                "and": f"(temps.lte.{fi.isoformat()})"})}
     pendents = {t: k for t, k in disponibles.items() if t.strftime("%Y-%m-%dT%H:%M") not in fets}
+    minuts = durades(disponibles)
     print(f"OPERA: {len(disponibles)} compostos a la finestra, {len(pendents)} per processar")
     files, desades = [], 0
     with tempfile.TemporaryDirectory() as tmp:
@@ -111,8 +126,8 @@ def main():
                 for nom, (lon, lat) in subs.items():
                     i = mmh(mostreja(f, lon, lat))
                     ok = ~np.isnan(i)
-                    files.append({"conca": cfg["conca"], "subconca": nom, "font": "radar", "temps": t.isoformat(), "minuts": 5,
-                                  "mm": round(float(i[ok].mean()) * 5 / 60, 3) if ok.any() else None,
+                    files.append({"conca": cfg["conca"], "subconca": nom, "font": "radar", "temps": t.isoformat(), "minuts": minuts[t],
+                                  "mm": round(float(i[ok].mean()) * minuts[t] / 60, 3) if ok.any() else None,
                                   "mmh_max": round(float(i[ok].max()), 2) if ok.any() else None,
                                   "cobertura": round(float(ok.mean()), 3)})
             except Exception as e:

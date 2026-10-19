@@ -9,7 +9,7 @@ import argparse, json, sys, tempfile, urllib.parse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import numpy as np, requests
-from radar_conca import S3_ARXIU, claus, mostreja, mmh
+from radar_conca import S3_ARXIU, claus, durades, mostreja, mmh
 
 PAS = 0.01      # graus (~1 km, la resolució del radar)
 CAIXA = [2.84, 41.74, 3.12, 41.90]
@@ -29,7 +29,8 @@ def main():
     lats = np.round(np.arange(CAIXA[1], CAIXA[3] + 1e-9, PAS), 4)
     LON, LAT = np.meshgrid(lons, lats)
     disponibles = claus(S3_ARXIU, ini, fi)
-    print(f"OPERA: {len(disponibles)} compostos")
+    minuts = durades(disponibles)
+    print(f"OPERA: {len(disponibles)} compostos (cada {sorted(set(minuts.values()))} min)")
     n = int((fi - ini).total_seconds() // (a.interval * 60))
     acum = np.zeros((n, LAT.size))
     with tempfile.TemporaryDirectory() as tmp:
@@ -41,10 +42,10 @@ def main():
             try:
                 r = requests.get(S3_ARXIU + "/" + urllib.parse.quote(k, safe="/@"), timeout=120); r.raise_for_status()
                 f.write_bytes(r.content)
-                acum[i] += np.nan_to_num(mmh(mostreja(f, LON.ravel(), LAT.ravel()))) * 5 / 60
+                acum[i] += np.nan_to_num(mmh(mostreja(f, LON.ravel(), LAT.ravel()))) * minuts[t] / 60
             except Exception as e:
                 print(f"OPERA {t:%Y-%m-%d %H:%M}: {type(e).__name__} {e}")
-    out = {"font": "EUMETNET OPERA (CC BY 4.0), DBZH 5 min, Z=200R^1.6", "pas_graus": PAS, "lons": lons.tolist(), "lats": lats.tolist(),
+    out = {"font": "EUMETNET OPERA (CC BY 4.0), DBZH, Z=200R^1.6", "pas_graus": PAS, "lons": lons.tolist(), "lats": lats.tolist(),
            "interval_min": a.interval,
            "temps": [(ini + timedelta(minutes=a.interval * (i + 1))).strftime("%Y-%m-%dT%H:%M") for i in range(n)],
            "mm": [[round(float(v), 1) for v in fila] for fila in acum]}

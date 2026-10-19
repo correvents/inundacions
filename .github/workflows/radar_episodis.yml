@@ -1,0 +1,43 @@
+name: Radar d'episodis passats
+
+on:
+  workflow_dispatch:
+    inputs:
+      episodis:
+        description: 'Llista JSON d''episodis [{"des": "AAAA-MM-DDTHH:MM", "fins": "..."}] (UTC)'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        ep: ${{ fromJSON(inputs.episodis) }}
+    env:
+      SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy h5py pyproj shapely
+      - name: Graella de pluja per al visor
+        run: PYTHONPATH=scripts python3 scripts/radar_graella.py --config config/ridaura.json --des "${{ matrix.ep.des }}" --fins "${{ matrix.ep.fins }}"
+      - name: Pluja mitjana de cada subconca (Supabase)
+        run: python3 scripts/radar_conca.py --config config/ridaura.json --des "${{ matrix.ep.des }}" --fins "${{ matrix.ep.fins }}"
+      - name: Desa
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && exit 0
+          git commit -m "Radar de l'episodi ${{ matrix.ep.des }}"
+          for i in 1 2 3 4 5 6; do git pull --rebase origin main && git push && exit 0; sleep $((i*7)); done; exit 1
