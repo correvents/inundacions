@@ -26,6 +26,8 @@
   li { margin: 2px 0; }
   .nota { color: var(--suau); font-size: 12px; }
   .estat { font-weight: 700; }
+  canvas#grafprev { width: 100%; height: 150px; display: block; margin: 6px 0; }
+  .avis { border-radius: 6px; padding: 6px 8px; font-weight: 700; font-size: 14px; color: #fff; margin-bottom: 6px; }
   @media (max-width: 760px) { #app { flex-direction: column; } #panell { width: 100%; height: 48%; border-left: 0; border-top: 1px solid var(--vora); } }
 </style>
 </head>
@@ -36,6 +38,7 @@
     <h1>Ridaura · Platja d'Aro</h1>
     <div class="sub">Conca pilot del sistema de previsió de crescudes · <a href="episodi.html">reproducció del 4 d'octubre</a> · <a href="pluja.html">juga amb la pluja</a></div>
 
+    <div class="targeta" id="previsio"><h2>Previsió 3 h</h2><div class="nota">Carregant la previsió...</div></div>
     <div class="targeta" id="ara"><h2>Ara</h2><div class="nota">Carregant dades...</div></div>
 
     <div class="targeta">
@@ -159,11 +162,67 @@ async function ara() {
   document.getElementById('ara').innerHTML = html;
   // si hi ha crescuda, el mapa mostra la zona que li correspon
   const T = q.length ? periodeRetorn(q[0].valor, cfg.cabals_T.aforador) : null;
-  if (T && T >= 5 && capaZones) mostra(TS.find(t => t >= T) || 500);
+  if (T && T >= 10 && capaZones) mostra([...TS].reverse().find(t => t <= T));
 }
 const trT = T => T === null ? 'menys que la crescuda ordinària' : T > 500 ? 'més de T500' : T < 10 ? `T${T.toFixed(0)} (per sota de T10)` : `≈ T${Math.round(T / (T < 50 ? 5 : 10)) * (T < 50 ? 5 : 10)}`;
 const araSegur = () => ara().catch(() => { document.getElementById('ara').innerHTML = '<h2>Ara</h2><div class="nota">No s\'han pogut carregar les dades en directe.</div>'; });
 araSegur(); setInterval(araSegur, 5 * 60 * 1000);
+
+// previsió: l'última execució de scripts/previsio.py (cada 10 min)
+const NIVELL = [['Sense crescuda prevista', '#2e8b57'], ['Crescuda ordinària', '#5dade2'], ['Avís T10', '#c0392b'], ['Avís T50', '#e67e22'], ['Avís T100', '#8e0000'], ['Avís T500', '#4a0000']];
+async function previsio() {
+  if (!cfg) cfg = await fetch('config/ridaura.json').then(r => r.json());
+  const darrer = await sb('previsions_cabal', { select: 'run', conca: 'eq.ridaura', order: 'run.desc', limit: 1 });
+  if (!darrer.length) { document.getElementById('previsio').innerHTML = '<h2>Previsió 3 h</h2><div class="nota">Encara no hi ha cap previsió.</div>'; return; }
+  const run = darrer[0].run;
+  const [files, obs, avis] = await Promise.all([
+    sb('previsions_cabal', { select: 'punt,temps,cabal_m3s', conca: 'eq.ridaura', run: 'eq.' + run, order: 'temps' }),
+    sb('observacions', { select: 'temps,valor', conca: 'eq.ridaura', var: 'eq.cabal_m3s', temps: 'gte.' + new Date(new Date(run) - 6 * 3600e3).toISOString(), order: 'temps' }),
+    sb('avisos', { select: 'temps,nivell,motiu', conca: 'eq.ridaura', order: 'temps.desc', limit: 1 }),
+  ]);
+  const punt = n => files.filter(f => f.punt === n);
+  const t0 = new Date(run), fut = n => punt(n).filter(f => new Date(f.temps) > t0);
+  const max = n => fut(n).reduce((m, f) => Math.max(m, f.cabal_m3s), 0);
+  const hora = t => new Date(t).toLocaleTimeString('ca', { hour: '2-digit', minute: '2-digit' });
+  const T = (q, qt) => trT(periodeRetorn(q, qt));
+  const FEN = { QMCO: 15.6, Q10: 40.52, Q50: 71.35, Q100: 86.74, Q500: 126.52 };
+  const nv = avis.length ? avis[0].nivell : 0;
+  let html = `<h2>Previsió 3 h</h2><div class="avis" style="background:${NIVELL[nv][1]}">${NIVELL[nv][0]}</div>
+    <canvas id="grafprev"></canvas>
+    <div class="nota" style="margin-bottom:6px"><span class="xip" style="background:#1b2733"></span>mesurat <span class="xip" style="background:#2b7bba"></span>previst sense més pluja <span class="xip" style="background:#c0392b"></span>si plou 1 h més com l'última hora</div>
+    <div class="fila"><span>Ridaura a l'aforador, màxim previst</span><span>${max('aforador').toFixed(0)} m³/s · ${T(max('aforador'), cfg.cabals_T.aforador)}</span></div>
+    <div class="fila"><span>&nbsp;&nbsp;si continua plovent</span><span>${max('aforador_continua').toFixed(0)} m³/s · ${T(max('aforador_continua'), cfg.cabals_T.aforador)}</span></div>
+    <div class="fila"><span>Ridaura al mar</span><span>${max('desembocadura').toFixed(0)} m³/s · ${T(max('desembocadura'), cfg.cabals_T.desembocadura)}</span></div>
+    <div class="fila"><span>Riera de Fenals (centre)</span><span>${max('fenals').toFixed(0)} m³/s · ${T(max('fenals'), FEN)}</span></div>
+    <div class="nota">${avis.length ? avis[0].motiu + '<br>' : ''}Càlcul de les ${hora(run)} amb el pluviòmetre de l'ACA i el model calibrat amb l'episodi del 4/10 (provisional: només un episodi).</div>`;
+  document.getElementById('previsio').innerHTML = html;
+  // gràfica
+  const cv = document.getElementById('grafprev'), dpr = devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr; const cx = cv.getContext('2d'); cx.scale(dpr, dpr);
+  const tmin = +t0 - 6 * 3600e3, tmax = +t0 + 3 * 3600e3;
+  const qmax = Math.max(10, cfg.cabals_T.aforador.QMCO, ...files.filter(f => f.punt.startsWith('aforador')).map(f => f.cabal_m3s), ...obs.map(o => o.valor)) * 1.1;
+  const X = t => 30 + (new Date(t) - tmin) / (tmax - tmin) * (W - 34), Y = q => H - 14 - q / qmax * (H - 20);
+  cx.font = '10px system-ui'; cx.fillStyle = '#5b6b7b';
+  for (const [k, c] of [['QMCO', '#5dade2'], ['Q10', '#c0392b'], ['Q50', '#e67e22'], ['Q100', '#8e0000']]) {
+    const q = cfg.cabals_T.aforador[k]; if (q > qmax) continue;
+    cx.strokeStyle = c; cx.setLineDash([3, 3]); cx.beginPath(); cx.moveTo(30, Y(q)); cx.lineTo(W - 4, Y(q)); cx.stroke();
+    cx.fillStyle = c; cx.fillText(k === 'QMCO' ? 'ordinària' : 'T' + k.slice(1), 32, Y(q) - 2);
+  }
+  cx.setLineDash([]);
+  cx.strokeStyle = '#999'; cx.beginPath(); cx.moveTo(X(t0), 4); cx.lineTo(X(t0), H - 14); cx.stroke();
+  cx.fillStyle = '#5b6b7b'; cx.textAlign = 'center'; cx.fillText('ara', X(t0), H - 2);
+  cx.fillText(hora(tmin), 40, H - 2); cx.fillText(hora(tmax), W - 20, H - 2);
+  cx.textAlign = 'right'; cx.fillText(Math.round(qmax / 1.1), 27, 12); cx.fillText('0', 27, H - 14);
+  const linia = (pts, c, w) => { if (!pts.length) return; cx.strokeStyle = c; cx.lineWidth = w; cx.beginPath(); pts.forEach(([t, q], i) => i ? cx.lineTo(X(t), Y(q)) : cx.moveTo(X(t), Y(q))); cx.stroke(); cx.lineWidth = 1; };
+  linia(fut('aforador_continua').map(f => [f.temps, f.cabal_m3s]), '#c0392b', 1.5);
+  linia(punt('aforador').map(f => [f.temps, f.cabal_m3s]), '#2b7bba', 2);
+  linia(obs.map(o => [o.temps, o.valor]), '#1b2733', 2);
+  // el mapa mostra la zona del pitjor període de retorn previst
+  const Tp = periodeRetorn(Math.max(max('aforador'), max('aforador_continua')), cfg.cabals_T.aforador);
+  if (Tp && Tp >= 10 && capaZones) mostra([...TS].reverse().find(t => t <= Tp));
+}
+const previsioSegur = () => previsio().catch(() => { document.getElementById('previsio').innerHTML = '<h2>Previsió 3 h</h2><div class="nota">No s\'ha pogut carregar la previsió.</div>'; });
+previsioSegur(); setInterval(previsioSegur, 5 * 60 * 1000);
 </script>
 </body>
 </html>
