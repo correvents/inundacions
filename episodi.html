@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Episodi del 4 d'octubre · Ridaura</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root { --vora: #dde3ea; --suau: #5b6b7b; }
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #f4f6f8; color: #1b2733; }
+  #app { display: flex; height: 100%; }
+  #mapa { flex: 1; }
+  #panell { width: 380px; padding: 14px 16px; overflow-y: auto; background: #fff; border-left: 1px solid var(--vora); box-sizing: border-box; }
+  h1 { font-size: 18px; margin: 0 0 2px; }
+  h2 { font-size: 14px; margin: 0 0 6px; }
+  .sub { color: var(--suau); font-size: 13px; margin-bottom: 12px; }
+  .targeta { border: 1px solid var(--vora); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  .fila { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 2px 0; }
+  .fila span:last-child { font-weight: 600; text-align: right; }
+  .hora { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .controls { display: flex; gap: 6px; align-items: center; margin: 6px 0; }
+  .controls button { padding: 6px 12px; border: 1px solid #1b2733; background: #1b2733; color: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; }
+  .controls select { padding: 5px; border: 1px solid var(--vora); border-radius: 6px; }
+  input[type=range] { width: 100%; }
+  canvas { width: 100%; height: 170px; display: block; }
+  ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
+  li { margin: 2px 0; }
+  .nota { color: var(--suau); font-size: 12px; }
+  .llegenda span { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: middle; }
+  a { color: #0b4f8a; }
+  @media (max-width: 760px) { #app { flex-direction: column; } #panell { width: 100%; height: 52%; border-left: 0; border-top: 1px solid var(--vora); } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="mapa"></div>
+  <div id="panell">
+    <h1>Episodi del 4 d'octubre de 2026</h1>
+    <div class="sub">Reconstrucció pas a pas amb dades reals · <a href="./">tornar al visor</a></div>
+
+    <div class="targeta">
+      <div class="hora" id="hora">–</div>
+      <div class="controls">
+        <button id="play">▶ Reprodueix</button>
+        <select id="vel"><option value="250">lent</option><option value="100" selected>normal</option><option value="40">ràpid</option></select>
+      </div>
+      <input type="range" id="slider" min="0" value="0">
+      <canvas id="graf"></canvas>
+      <div class="nota llegenda"><span style="background:#1b2733"></span>Ridaura a l'aforador (mesurat)<span style="background:#8e44ad"></span>Ridaura al mar (estimat)<span style="background:#16a085"></span>Fenals (estimat)<span style="background:#5dade2"></span>pluja</div>
+    </div>
+
+    <div class="targeta" id="estat"></div>
+    <div class="targeta"><h2>S'acaba d'inundar</h2><ul id="nous"></ul></div>
+    <div class="targeta nota" id="hipotesis"></div>
+  </div>
+</div>
+<script>
+const COLOR = { 10: '#c0392b', 50: '#e67e22', 100: '#f1c40f', 500: '#5dade2' };
+const mapa = L.map('mapa').setView([41.815, 3.02], 13);
+L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=topografic&STYLE=default&FORMAT=image/jpeg&TILEMATRIXSET=MON3857NW&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+  maxZoom: 19, attribution: '© ICGC · © OpenStreetMap · Zones inundables: ACA · Radar: EUMETNET OPERA · Aforador: ACA'
+}).addTo(mapa);
+mapa.createPane('radar').style.zIndex = 450;
+
+const hora = s => { const d = new Date(s + 'Z'); return d.toLocaleString('ca', { weekday: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Madrid' }); };
+const trT = T => !T ? 'normal' : T > 500 ? '> T500' : T < 10 ? `T${Math.round(T)}` : `T${Math.round(T / 10) * 10}`;
+const radarColor = mmh => mmh < 1 ? null : mmh < 5 ? '#9ecae1' : mmh < 15 ? '#4292c6' : mmh < 30 ? '#2ca25f' : mmh < 50 ? '#fec44f' : mmh < 80 ? '#f03b20' : '#7a0177';
+
+let ep, af, zones, radar, capaZones, capaEls, capesEl = [], i = 0, timer = null, cel_les = [];
+
+Promise.all([
+  fetch('data/ridaura/episodis/2026-10-04.json').then(r => r.json()),
+  fetch('data/ridaura/afectats.geojson').then(r => r.json()),
+  fetch('data/ridaura/zones_per_motor.geojson').then(r => r.json()),
+  fetch('data/ridaura/episodis/2026-10-03_radar.json').then(r => r.ok ? r.json() : null).catch(() => null),
+  fetch('data/ridaura/conca.geojson').then(r => r.json()),
+]).then(([e, a, z, r, conca]) => {
+  ep = e; af = a; zones = z; radar = r;
+  L.geoJSON(conca.features[0], { style: { color: '#2b7bba', weight: 2, fill: false, dashArray: '4 4' }, interactive: false }).addTo(mapa);
+  L.geoJSON({ type: 'FeatureCollection', features: conca.features.filter(f => f.geometry.type.includes('Line')) },
+    { style: { color: '#0b4f8a', weight: 1 }, interactive: false }).addTo(mapa);
+  L.marker([41.81814, 2.97912]).bindPopup("Aforador ACA · Santa Cristina d'Aro").addTo(mapa);
+  capaZones = L.geoJSON(zones, { style: { weight: 0, fillOpacity: 0 }, interactive: false }).addTo(mapa);
+  // un element del mapa per cada punt afectat; es pinta quan està inundat
+  af.features.forEach((f, k) => {
+    const l = L.geoJSON(f, {
+      style: { weight: f.geometry.type.includes('Line') ? 3 : 1, color: '#1b2733', fillOpacity: 0, opacity: 0 },
+      pointToLayer: (_, ll) => L.circleMarker(ll, { radius: 6, weight: 1, opacity: 0, fillOpacity: 0 })
+    }).bindPopup(() => {
+      const el = ep.elements[k];
+      return `<b>${f.properties.nom || f.properties.categoria}</b><br>${f.properties.categoria}<br>Zona T${f.properties.T} · ${el.motor === 'fenals' ? 'riera de Fenals' : 'Ridaura'}` +
+        (el.ini !== null ? `<br>S'inunda: <b>${hora(ep.temps_utc[el.ini])}</b><br>Deixa d'estar-ho: ${hora(ep.temps_utc[el.fi])}` : '<br>No s\'inunda en aquest episodi');
+    }).addTo(mapa);
+    capesEl.push(l);
+  });
+  if (radar) {
+    const h = radar.pas_graus / 2;
+    radar.lats.forEach(lat => radar.lons.forEach(lon => {
+      cel_les.push(L.rectangle([[lat - h, lon - h], [lat + h, lon + h]], { pane: 'radar', weight: 0, fillOpacity: 0, interactive: false }).addTo(mapa));
+    }));
+  }
+  const s = document.getElementById('slider'); s.max = ep.temps_utc.length - 1;
+  s.oninput = () => { i = +s.value; pinta(); };
+  document.getElementById('play').onclick = () => timer ? atura() : juga();
+  const hp = ep.hipotesis;
+  document.getElementById('hipotesis').innerHTML = `<b>Com està fet.</b> El Ridaura es mou amb el cabal mesurat a l'aforador de Santa Cristina, i el seu període de retorn
+    es trasllada aigües avall amb fins a ${hp.retard_aforador_mar_min} min de retard. La plana de Platja d'Aro depèn de la riera de Fenals, que no té aforador:
+    el cabal s'estima amb la pluja del pluviòmetre (llindar ${hp.p0_fenals_mm} mm, temps de concentració ${hp.tc_fenals_min} min).
+    Cada element s'inunda quan el període de retorn arriba al de la zona inundable de l'ACA que el toca. No inclou l'aigua que s'embassa als carrers lluny de les rieres.
+    ${radar ? '' : '<br>La pluja del radar sobre el mapa encara s\'està preparant.'}`;
+  pinta();
+});
+
+function juga() { document.getElementById('play').textContent = '❚❚ Pausa'; timer = setInterval(() => { if (i >= ep.temps_utc.length - 1) return atura(); i++; pinta(); }, +document.getElementById('vel').value); }
+function atura() { clearInterval(timer); timer = null; document.getElementById('play').textContent = '▶ Reprodueix'; }
+document.getElementById('vel').onchange = () => { if (timer) { atura(); juga(); } };
+
+function pinta() {
+  document.getElementById('slider').value = i;
+  document.getElementById('hora').textContent = hora(ep.temps_utc[i]);
+  const tR = ep.T_ridaura_zona[i] || 0, tF = ep.T_fenals[i] || 0;
+  capaZones.eachLayer(l => {
+    const p = l.feature.properties, T = p.motor === 'fenals' ? tF : tR, on = T >= p.T;
+    l.setStyle({ fillColor: COLOR[p.T], fillOpacity: on ? 0.28 : 0 });
+  });
+  let ara = 0;
+  ep.elements.forEach((e, k) => {
+    const on = e.ini !== null && e.ini <= i && i <= e.fi, passat = e.ini !== null && i > e.fi;
+    if (on) ara++;
+    const c = on ? '#c0392b' : '#7f8c8d', vis = on || passat;
+    capesEl[k].setStyle({ color: c, fillColor: c, opacity: vis ? (on ? 1 : 0.5) : 0, fillOpacity: vis ? (on ? 0.8 : 0.3) : 0 });
+  });
+  if (radar) {
+    const ti = ep.temps_utc[i], fr = radar.temps.findIndex(t => t >= ti);
+    const mm = fr >= 0 ? radar.mm[fr] : null;
+    cel_les.forEach((c, k) => { const col = mm ? radarColor(mm[k] * 60 / radar.interval_min) : null; c.setStyle({ fillColor: col || '#000', fillOpacity: col ? 0.55 : 0 }); });
+  }
+  const pl = ep.pluja_pluviometre_mm, acum = pl.slice(0, i + 1).reduce((a, b) => a + (b || 0), 0);
+  const f = (v, d = 0) => v === null || v === undefined ? '–' : (+v).toFixed(d);
+  document.getElementById('estat').innerHTML = `
+    <div class="fila"><span>Pluja ara (pluviòmetre)</span><span>${f(pl[i] * 12)} mm/h</span></div>
+    <div class="fila"><span>Pluja acumulada des de les 20 h del dia 3</span><span>${f(acum)} mm</span></div>
+    <div class="fila"><span>Ridaura a Santa Cristina (mesurat)</span><span>${f(ep.q_aforador_obs[i])} m³/s · ${trT(ep.T_aforador[i])}</span></div>
+    <div class="fila"><span>Ridaura a la desembocadura (estimat)</span><span>${f(ep.q_desembocadura_est[i])} m³/s · ${trT(ep.T_desembocadura[i])}</span></div>
+    <div class="fila"><span>Riera de Fenals (estimat)</span><span>${f(ep.q_fenals_est[i])} m³/s · ${trT(ep.T_fenals[i])}</span></div>
+    <div class="fila"><span>Elements inundats ara</span><span>${ara} de ${ep.elements.length}</span></div>`;
+  const nous = ep.elements.map((e, k) => [e, k]).filter(([e]) => e.ini !== null && e.ini <= i && e.ini > i - 12)
+    .map(([e, k]) => af.features[k].properties).filter(p => p.nom);
+  const unics = [...new Map(nous.map(p => [p.nom, p])).values()];
+  document.getElementById('nous').innerHTML = unics.length ? unics.slice(0, 25).map(p => `<li>${p.nom} <span class="nota">(${p.categoria})</span></li>`).join('') : '<li class="nota">Res a l\'última hora</li>';
+  grafic();
+}
+
+function grafic() {
+  const c = document.getElementById('graf'), dpr = window.devicePixelRatio || 1, W = c.clientWidth, H = c.clientHeight;
+  c.width = W * dpr; c.height = H * dpr; const g = c.getContext('2d'); g.scale(dpr, dpr); g.clearRect(0, 0, W, H);
+  const n = ep.temps_utc.length, x = k => 30 + k / (n - 1) * (W - 36), qmax = 520, y = q => H - 18 - q / qmax * (H - 28);
+  g.font = '10px system-ui'; g.fillStyle = '#5b6b7b'; g.strokeStyle = '#dde3ea';
+  [0, 100, 200, 300, 400, 500].forEach(q => { g.beginPath(); g.moveTo(30, y(q)); g.lineTo(W - 6, y(q)); g.stroke(); g.fillText(q, 2, y(q) + 3); });
+  // pluja (barres des de dalt, mm/h, escala 0–100)
+  g.fillStyle = 'rgba(93,173,226,0.6)';
+  ep.pluja_pluviometre_mm.forEach((p, k) => { const h = Math.min(p * 12, 100) / 100 * (H - 28) * 0.45; if (h > 0) g.fillRect(x(k), 10, Math.max((W - 36) / n, 1), h); });
+  const linia = (v, col) => { g.strokeStyle = col; g.lineWidth = 1.6; g.beginPath(); let s = false; v.forEach((q, k) => { if (q === null) { s = false; return; } s ? g.lineTo(x(k), y(q)) : g.moveTo(x(k), y(q)); s = true; }); g.stroke(); };
+  linia(ep.q_desembocadura_est, '#8e44ad'); linia(ep.q_fenals_est, '#16a085'); linia(ep.q_aforador_obs, '#1b2733');
+  g.strokeStyle = '#c0392b'; g.lineWidth = 1; g.beginPath(); g.moveTo(x(i), 8); g.lineTo(x(i), H - 18); g.stroke();
+  g.fillStyle = '#5b6b7b'; g.fillText('m³/s', 2, 9);
+  [0, Math.floor(n / 2), n - 1].forEach(k => { const t = hora(ep.temps_utc[k]); g.fillText(t.slice(-5), Math.min(x(k) - 12, W - 34), H - 4); });
+}
+window.onresize = () => ep && grafic();
+</script>
+</body>
+</html>
