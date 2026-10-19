@@ -1,0 +1,9 @@
+{
+ "descripcio": "Llindars d'inundació urbana a Castell-Platja d'Aro (xàfecs, pluja llarga i temporal de llevant), ajustats el 19/10/2026 amb 79 episodis de pluja forta 2009-2026 (estació XEMA de Castell d'Aro) etiquetats amb premsa i actuacions dels Bombers per 'Inundació d'aigua' (≥ 3 = inundació; ≤ 1 = no). Encerta 23 de 24 inundacions; avisa en 18 dels 55 episodis sense inundació coneguda (molts són dubtosos: els Bombers no hi van, però potser sí la brigada municipal). Provisional.",
+ "avis_si_qualsevol": [
+  {"nom": "xàfec", "pluja_30min_mm": 15, "on": "carrers punt_baix (data/ridaura/model/carrers.csv)"},
+  {"nom": "pluja llarga", "pluja_episodi_mm": 70, "on": "punts baixos, soterranis i barri de la Coma"},
+  {"nom": "temporal de llevant", "onatge_m": 2.8, "direccio_graus": [45, 135], "pluja_episodi_mm": 40, "on": "s'Agaró, passeig marítim, desembocadures"}
+ ],
+ "fonts": {"pluja": "data/ridaura/xema/DO.csv", "etiquetes": "data/ridaura/model/episodis_etiquetes.csv", "mar": "data/ridaura/model/mar_horari.csv (Open-Meteo: ERA5 fins al 2021)"}
+}
