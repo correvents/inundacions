@@ -27,6 +27,21 @@ jobs:
         run: python3 scripts/aca_arxiu.py --dest /tmp/aca --dies "${{ inputs.dies }}" --max "${{ inputs.max }}" --fils 8
       - name: Empaqueta
         run: tar -C /tmp -czf /tmp/aca_arxiu.tar.gz aca && ls -la /tmp/aca_arxiu.tar.gz
+      - name: Puja al bucket privat de Supabase (un fitxer per proveïdor, < 50 MB)
+        env:
+          SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          DIA=$(date -u +%Y-%m-%d)
+          cd /tmp/aca
+          puja() {
+            curl -sS -f -X POST "$SUPABASE_URL/storage/v1/object/arxiu-inundacions/aca/$DIA/$1" \
+              -H "Authorization: Bearer $SUPABASE_SECRET_KEY" -H "apikey: $SUPABASE_SECRET_KEY" \
+              -H "x-upsert: true" -H "Content-Type: $2" --data-binary @"$3" -o /dev/null && echo "pujat $1 ($(stat -c %s "$3") bytes)"
+          }
+          puja sensors.csv text/csv sensors.csv
+          gzip -c cataleg.json > /tmp/cataleg.json.gz && puja cataleg.json.gz application/gzip /tmp/cataleg.json.gz
+          for p in */; do p=${p%/}; tar -cf /tmp/$p.tar "$p"; puja "$p.tar" application/x-tar /tmp/$p.tar; done
       # artefacte privat del workflow (només amb accés al repo); es copia a la carpeta del projecte
       - uses: actions/upload-artifact@v4
         with:
