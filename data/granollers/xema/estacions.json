@@ -1,0 +1,488 @@
+[
+ {
+  "codi_estacio": "YM",
+  "nom_estacio": "Granollers",
+  "codi_tipus": "A",
+  "latitud": "41.60929",
+  "longitud": "2.29847",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.29847,
+    41.60929
+   ]
+  },
+  "emplacament": "Parc del Puig de les Tres Torres",
+  "altitud": "211",
+  "codi_municipi": "80961",
+  "nom_municipi": "Granollers",
+  "codi_comarca": "41",
+  "nom_comarca": "Vallès Oriental",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "2",
+  "nom_estat_ema": "Operativa",
+  "data_inici": "2019-09-17T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "560",
+  ":@computed_region_wvic_k925": "22",
+  "km": 0.9
+ },
+ {
+  "codi_estacio": "KX",
+  "nom_estacio": "la Roca del Vallès - ETAP Cardedeu",
+  "codi_tipus": "A",
+  "latitud": "41.61865",
+  "longitud": "2.36114",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.36114,
+    41.61865
+   ]
+  },
+  "emplacament": "Planta tractament d'Aigües Ter - Llobregat",
+  "altitud": "164",
+  "codi_municipi": "81810",
+  "nom_municipi": "La Roca del Vallès",
+  "codi_comarca": "41",
+  "nom_comarca": "Vallès Oriental",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "2",
+  "nom_estat_ema": "Operativa",
+  "data_inici": "1996-01-05T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "939",
+  ":@computed_region_wvic_k925": "22",
+  "km": 6.2
+ },
+ {
+  "codi_estacio": "XG",
+  "nom_estacio": "Parets del Vallès",
+  "codi_tipus": "A",
+  "latitud": "41.5673",
+  "longitud": "2.22615",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.22615,
+    41.5673
+   ]
+  },
+  "emplacament": "CEIP Pau Vila",
+  "altitud": "118",
+  "codi_municipi": "81593",
+  "nom_municipi": "Parets del Vallès",
+  "codi_comarca": "41",
+  "nom_comarca": "Vallès Oriental",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "2",
+  "nom_estat_ema": "Operativa",
+  "data_inici": "2008-10-30T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "695",
+  ":@computed_region_wvic_k925": "22",
+  "km": 6.8
+ },
+ {
+  "codi_estacio": "WE",
+  "nom_estacio": "Vilanova del Vallès",
+  "codi_tipus": "A",
+  "latitud": "41.5444",
+  "longitud": "2.30014",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.30014,
+    41.5444
+   ]
+  },
+  "emplacament": "Mas Casa Alta",
+  "altitud": "126",
+  "codi_municipi": "89024",
+  "nom_municipi": "Vilanova del Vallès",
+  "codi_comarca": "41",
+  "nom_comarca": "Vallès Oriental",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "1",
+  "nom_estat_ema": "Desmantellada",
+  "data_inici": "2000-07-05T00:00:00.000",
+  "data_fi": "2025-05-05T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "702",
+  ":@computed_region_wvic_k925": "22",
+  "km": 7.1
+ },
+ {
+  "codi_estacio": "CM",
+  "nom_estacio": "Montmeló",
+  "codi_tipus": "A",
+  "latitud": "41.54911",
+  "longitud": "2.24546",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.24546,
+    41.54911
+   ]
+  },
+  "emplacament": "Torreta de Can Campanyà",
+  "altitud": "75.2",
+  "codi_municipi": "81350",
+  "nom_municipi": "Montmeló",
+  "codi_comarca": "41",
+  "nom_comarca": "Vallès Oriental",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "1",
+  "nom_estat_ema": "Desmantellada",
+  "data_inici": "1996-01-23T00:00:00.000",
+  "data_fi": "2006-03-22T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "736",
+  ":@computed_region_wvic_k925": "22",
+  "km": 7.4
+ },
+ {
+  "codi_estacio": "VW",
+  "nom_estacio": "Caldes de Montbui - Torre Marimon",
+  "codi_tipus": "A",
+  "latitud": "41.61235",
+  "longitud": "2.17099",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.17099,
+    41.61235
+   ]
+  },
+  "emplacament": "Finca Torre Marimon",
+  "altitud": "164.5",
+  "codi_municipi": "80333",
+  "nom_municipi": "Caldes de Montbui",
+  "codi_comarca": "41",
+  "nom_comarca": "Vallès Oriental",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "1",
+  "nom_estat_ema": "Desmantellada",
+  "data_inici": "1990-12-23T00:00:00.000",
+  "data_fi": "2007-03-08T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "758",
+  ":@computed_region_wvic_k925": "22",
+  "km": 9.7
+ },
+ {
+  "codi_estacio": "X9",
+  "nom_estacio": "Caldes de Montbui",
+  "codi_tipus": "A",
+  "latitud": "41.61264",
+  "longitud": "2.1683",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.1683,
+    41.61264
+   ]
+  },
+  "emplacament": "Torre Marimon",
+  "altitud": "177",
+  "codi_municipi": "80333",
+  "nom_municipi": "Caldes de Montbui",
+  "codi_comarca": "41",
+  "nom_comarca": "Vallès Oriental",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "2",
+  "nom_estat_ema": "Operativa",
+  "data_inici": "2007-03-08T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "758",
+  ":@computed_region_wvic_k925": "22",
+  "km": 9.9
+ },
+ {
+  "codi_estacio": "UP",
+  "nom_estacio": "Cabrils",
+  "codi_tipus": "A",
+  "latitud": "41.51773",
+  "longitud": "2.37702",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.37702,
+    41.51773
+   ]
+  },
+  "emplacament": "IRTA Cabrils, crta. de Vilassar a Cabrils, s/n",
+  "altitud": "81",
+  "codi_municipi": "80305",
+  "nom_municipi": "Cabrils",
+  "codi_comarca": "21",
+  "nom_comarca": "Maresme",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "2",
+  "nom_estat_ema": "Operativa",
+  "data_inici": "1995-11-27T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "712",
+  ":@computed_region_wvic_k925": "25",
+  "km": 12.4
+ },
+ {
+  "codi_estacio": "UQ",
+  "nom_estacio": "Dosrius - PN Montnegre Corredor",
+  "codi_tipus": "A",
+  "latitud": "41.61991",
+  "longitud": "2.44532",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.44532,
+    41.61991
+   ]
+  },
+  "emplacament": "Parc Natural del Corredor. Masia Can Bosc",
+  "altitud": "462",
+  "codi_municipi": "80752",
+  "nom_municipi": "Dosrius",
+  "codi_comarca": "21",
+  "nom_comarca": "Maresme",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "2",
+  "nom_estat_ema": "Operativa",
+  "data_inici": "1996-08-09T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "477",
+  ":@computed_region_wvic_k925": "25",
+  "km": 13.1
+ },
+ {
+  "codi_estacio": "DD",
+  "nom_estacio": "Vilassar de Mar",
+  "codi_tipus": "A",
+  "latitud": "41.51175",
+  "longitud": "2.38674",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.38674,
+    41.51175
+   ]
+  },
+  "emplacament": "Soc.Civil d'Aigües \"La Mina Vella\"",
+  "altitud": "44.5",
+  "codi_municipi": "82191",
+  "nom_municipi": "Vilassar de Mar",
+  "codi_comarca": "21",
+  "nom_comarca": "Maresme",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "1",
+  "nom_estat_ema": "Desmantellada",
+  "data_inici": "1998-05-04T00:00:00.000",
+  "data_fi": "2015-01-16T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "522",
+  ":@computed_region_wvic_k925": "25",
+  "km": 13.5
+ },
+ {
+  "codi_estacio": "YV",
+  "nom_estacio": "Mataró",
+  "codi_tipus": "A",
+  "latitud": "41.54518",
+  "longitud": "2.43322",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.43322,
+    41.54518
+   ]
+  },
+  "emplacament": "Parc de Rafael Alberti, Estació MeteoMar",
+  "altitud": "88",
+  "codi_municipi": "81213",
+  "nom_municipi": "Mataró",
+  "codi_comarca": "21",
+  "nom_comarca": "Maresme",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "2",
+  "nom_estat_ema": "Operativa",
+  "data_inici": "2025-06-11T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "701",
+  ":@computed_region_wvic_k925": "25",
+  "km": 13.9
+ },
+ {
+  "codi_estacio": "DH",
+  "nom_estacio": "Badalona - Mas Ram",
+  "codi_tipus": "A",
+  "latitud": "41.47638",
+  "longitud": "2.25213",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.25213,
+    41.47638
+   ]
+  },
+  "emplacament": "Urb. Mas Ram - Escola Pere Vergès",
+  "altitud": "126",
+  "codi_municipi": "80155",
+  "nom_municipi": "Badalona",
+  "codi_comarca": "13",
+  "nom_comarca": "Barcelonès",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "1",
+  "nom_estat_ema": "Desmantellada",
+  "data_inici": "1998-03-23T00:00:00.000",
+  "data_fi": "2005-09-08T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "531",
+  ":@computed_region_wvic_k925": "29",
+  "km": 14.9
+ },
+ {
+  "codi_estacio": "VX",
+  "nom_estacio": "Tagamanent - PN del Montseny",
+  "codi_tipus": "A",
+  "latitud": "41.7476",
+  "longitud": "2.3029",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.3029,
+    41.7476
+   ]
+  },
+  "emplacament": "Can Bellver - Serrat de Bellver. Parc Natural del Montseny",
+  "altitud": "1030",
+  "codi_municipi": "82763",
+  "nom_municipi": "Tagamanent",
+  "codi_comarca": "41",
+  "nom_comarca": "Vallès Oriental",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "2",
+  "nom_estat_ema": "Operativa",
+  "data_inici": "1996-01-04T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "818",
+  ":@computed_region_wvic_k925": "22",
+  "km": 15.5
+ },
+ {
+  "codi_estacio": "WU",
+  "nom_estacio": "Badalona - Museu",
+  "codi_tipus": "A",
+  "latitud": "41.45215",
+  "longitud": "2.24757",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.24757,
+    41.45215
+   ]
+  },
+  "emplacament": "Museu",
+  "altitud": "42",
+  "codi_municipi": "80155",
+  "nom_municipi": "Badalona",
+  "codi_comarca": "13",
+  "nom_comarca": "Barcelonès",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "2",
+  "nom_estat_ema": "Operativa",
+  "data_inici": "2005-09-21T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "531",
+  ":@computed_region_wvic_k925": "29",
+  "km": 17.6
+ },
+ {
+  "codi_estacio": "XF",
+  "nom_estacio": "Sabadell - Parc Agrari",
+  "codi_tipus": "A",
+  "latitud": "41.56568",
+  "longitud": "2.06955",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.06955,
+    41.56568
+   ]
+  },
+  "emplacament": "Parc Agrari",
+  "altitud": "259",
+  "codi_municipi": "81878",
+  "nom_municipi": "Sabadell",
+  "codi_comarca": "40",
+  "nom_comarca": "Vallès Occidental",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "2",
+  "nom_estat_ema": "Operativa",
+  "data_inici": "2008-10-23T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "660",
+  ":@computed_region_wvic_k925": "26",
+  "km": 18.7
+ },
+ {
+  "codi_estacio": "VT",
+  "nom_estacio": "Cerdanyola del Vallès",
+  "codi_tipus": "A",
+  "latitud": "41.48401",
+  "longitud": "2.12745",
+  "geocoded_column": {
+   "type": "Point",
+   "coordinates": [
+    2.12745,
+    41.48401
+   ]
+  },
+  "emplacament": "Parc Tecnològic del Vallès. Masia Can Fatjó del Molí",
+  "altitud": "84",
+  "codi_municipi": "82665",
+  "nom_municipi": "Cerdanyola del Vallès",
+  "codi_comarca": "40",
+  "nom_comarca": "Vallès Occidental",
+  "codi_provincia": "8",
+  "nom_provincia": "Barcelona",
+  "codi_xarxa": "1",
+  "nom_xarxa": "XEMA",
+  "codi_estat_ema": "1",
+  "nom_estat_ema": "Desmantellada",
+  "data_inici": "1998-05-15T00:00:00.000",
+  "data_fi": "2014-01-03T00:00:00.000",
+  ":@computed_region_bh64_c7uy": "570",
+  ":@computed_region_wvic_k925": "26",
+  "km": 19.2
+ }
+]
