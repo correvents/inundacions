@@ -80,6 +80,54 @@
     "https://www.gerio.cat/noticia/un-fort-xafec-inunda-el-centre-de-platja-daro-afectant-baixos-i-vehicles",
     "https://www.tvcostabrava.com/laia-campos/societat/meteo/platja-daro-fa-balanc-de-les-inundacions-dahir-la-tarda"
    ]
+  },
+  {
+   "id": "2020-01-21",
+   "titol": "19-23 de gener de 2020: temporal Gloria",
+   "radar": "2020-01-19_radar.json",
+   "ia_mm": 30,
+   "resum": "Temporal marítim i de pluja de diversos dies. Les crescudes del Ridaura erosionen el talús del marge dret a Santa Cristina (camí del Golf), reparat el 2021.",
+   "carrers": [],
+   "llocs": [
+    "Talús del Ridaura al Golf Costa Brava (Santa Cristina)"
+   ],
+   "fonts": [
+    "https://www.gerio.cat/noticia/1349055/santa-cristina-daro-inicia-les-obres-per-reparar-lescullera-del-riu-ridaura-danyat-pel-glo"
+   ]
+  },
+  {
+   "id": "2019-10-22",
+   "titol": "22 d'octubre de 2019: llevantada",
+   "radar": "2019-10-22_radar.json",
+   "ia_mm": 60,
+   "resum": "A les 16:30 la Policia Local tanca tots els carrers del centre. Carrer Doctor Fleming i el centre de s'Agaró, inundats.",
+   "carrers": [
+    "Avinguda del Doctor Fleming"
+   ],
+   "llocs": [
+    "Centre de s'Agaró"
+   ],
+   "fonts": [
+    "https://www.gerio.cat/noticia/854586/platja-daro-tanca-els-carrers-del-centre-inundats-per-la-llevantada"
+   ]
+  },
+  {
+   "id": "2018-11-18",
+   "titol": "18 de novembre de 2018: temporal i crescuda del Ridaura",
+   "radar": "2018-11-17_radar.json",
+   "ia_mm": 60,
+   "resum": "Més de 37 mm de matinada. Inundacions al nucli urbà, a l'entorn del Magic Park i de la comissaria de la Policia Local; forta pujada del Ridaura i accessos a la llera tancats; barri de la Coma (Castell d'Aro).",
+   "carrers": [
+    "Carrer de la Coma"
+   ],
+   "llocs": [
+    "Policia Local",
+    "Entorn del Magic Park",
+    "Accessos al Ridaura"
+   ],
+   "fonts": [
+    "https://news.rpa.cat/2018/11/18/el-temporal-de-pluja-provoca-inundacions-talls-de-carreteres-i-una-pujada-forta-del-cabal-del-ridaura-a-castell-platja-daro-i-sagaro/"
+   ]
   }
  ],
  "sense_radar": [
@@ -100,9 +148,5 @@
    ]
   }
  ],
- "pendents_de_radar": [
-  "2020-01-21",
-  "2019-10-22",
-  "2018-11-18"
- ]
+ "pendents_de_radar": []
 }
