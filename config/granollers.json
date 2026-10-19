@@ -46,5 +46,6 @@
    "provider": "AFORAMENT-EST",
    "var": "cabal_m3s"
   }
- ]
+ ],
+ "aforador_mode": "caixa"
 }

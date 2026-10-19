@@ -215,7 +215,12 @@ def main():
         t_seg += dt; t = ini + timedelta(seconds=t_seg)
         if t >= proxim:
             nom = f"{proxim:%d%H%M}.png"; png(h, nom)
-            q = float(sum(qx[r, gc] for r in tf) * dx)
+            if cfg.get("aforador_mode") == "caixa":       # cabal que surt d'una caixa al voltant del punt, sigui quina sigui la direcció del curs
+                k = max(int(150 // dx), 1); r0, r1, c0, c1 = max(gr - k, 1), min(gr + k, nf - 2), max(gc - k, 1), min(gc + k, nc - 2)
+                q = float((np.maximum(qx[r0:r1 + 1, c1], 0).sum() + np.maximum(-qx[r0:r1 + 1, c0 - 1], 0).sum() +
+                           np.maximum(qy[r1, c0:c1 + 1], 0).sum() + np.maximum(-qy[r0 - 1, c0:c1 + 1], 0).sum()) * dx)
+            else:
+                q = float(sum(qx[r, gc] for r in tf) * dx)
             fotos.append({"temps": proxim.strftime("%Y-%m-%dT%H:%M"), "png": nom}); hidro.append(round(q, 1))
             print(f"{proxim:%d %H:%M} dt {dt:.2f} s, calat màx {hm:.2f} m, cabal aforador {q:.1f} m³/s, inundat >15 cm {(h > 0.15).sum() * dx * dx / 1e6:.2f} km² ({time.time() - rellotge:.0f} s)")
             proxim += timedelta(minutes=a.cada)
