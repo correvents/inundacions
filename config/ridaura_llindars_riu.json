@@ -1,0 +1,7 @@
+{
+ "descripcio": "Pluja mitjana a la conca de l'aforador (35,6 km²) que porta el Ridaura a cada cabal de l'ACA, un cop el sòl ja ha absorbit el llindar inicial. Model: llindar inicial Ia + pèrdua contínua phi + 2 embassaments no lineals (model_cabal.simula). Ajustat el 19/10/2026 amb dos episodis amb la pluja de l'estació XEMA de Castell d'Aro ×1,14: 4/10/2026 (304 m³/s, sim 290) i 17-20/1/2026 (28,6 m³/s, sim 26-28). Validat: cap altre dels 89 episodis 2009-2026 arriba a QMCO, igual que la premsa (cap desbordament des del 2005). Provisional.",
+ "parametres": {"Ia_mm": [100, 160], "phi_mm_h": 12, "K": 200, "m": 1.261, "n": 2, "factor_estacio_a_conca": 1.14},
+ "cabals_m3s": {"QMCO": 37, "Q10": 51.6, "Q50": 151.8, "Q100": 199, "Q500": 341.7},
+ "pluja_mm_sol_xop": {"1h": [16, 17, 28, 34, 51], "2h": [31, 34, 55, 64, 93], "3h": [47, 52, 82, 96, 140], "6h": [94, 103, 164, 192, 279], "12h": [188, 206, 328, 385, 558], "24h": [377, 412, 655, 770, 1116]},
+ "ordre": ["QMCO", "Q10", "Q50", "Q100", "Q500"]
+}
