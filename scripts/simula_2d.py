@@ -8,8 +8,8 @@ amb el pendent de la superfície de l'aigua i la fricció de Manning, i la làmi
     de l'aforador coincideixi amb el pluviòmetre de l'ACA (el radar infravalora els nuclis convectius).
   - Pèrdues: llindar per cel·la. Terreny natural: --ia-natural mm (calibrat amb l'aforador el 3-4/10/2026).
     Zones construïdes (ESA WorldCover 2021, classe 50): --ia-urba mm.
-  - Fricció: n de Manning 0,06 natural, 0,02 construït.
-  - Mar i fora del domini: l'aigua surt.
+  - Fricció: n de Manning (--n-natural, --n-urba).
+  - Mar i vores del domini: l'aigua surt.
 Sortides (data/<conca>/sim2d/<data>/): un PNG de calat cada --cada minuts en lat/lon, calat màxim, l'hidrograma simulat a
 l'aforador (per validar-lo amb l'observat) i index.json.
 
@@ -92,6 +92,8 @@ def main():
     ap.add_argument("--pas", type=float, default=20)
     ap.add_argument("--ia-natural", type=float, default=150)
     ap.add_argument("--ia-urba", type=float, default=5)
+    ap.add_argument("--n-natural", type=float, default=0.06, help="n de Manning del terreny natural")
+    ap.add_argument("--n-urba", type=float, default=0.02, help="n de Manning de les zones construïdes")
     ap.add_argument("--cada", type=int, default=10, help="minuts entre fotogrames")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
@@ -125,7 +127,7 @@ def main():
             print(f"WorldCover E{lon0:03d}: {type(e).__name__} {e}")
     print(f"Construït: {urba.mean() * 100:.1f} % del domini")
     ia = np.where(urba, a.ia_urba, a.ia_natural)
-    n = np.where(urba, 0.02, 0.06)
+    n = np.where(urba, a.n_urba, a.n_natural)
 
     # pluja: graella del radar a la reixa, amb correcció horària amb el pluviòmetre
     to_ll = Transformer.from_crs(crs, 4326, always_xy=True)
@@ -156,6 +158,7 @@ def main():
 
     h = np.zeros((nf, nc)); qx = np.zeros((nf, nc)); qy = np.zeros((nf, nc))
     actiu = ~mar
+    actiu[0, :] = actiu[-1, :] = actiu[:, 0] = actiu[:, -1] = False   # vores del domini obertes: l'aigua surt
     pluja_acum = np.zeros((nf, nc)); neta_ant = np.zeros((nf, nc))
     hmax = np.zeros((nf, nc))
     ini = temps_rad[0] - timedelta(minutes=rad["interval_min"])
@@ -205,7 +208,7 @@ def main():
     png(hmax, "maxim.png")
     (dest / "index.json").write_text(json.dumps({
         "limits": [[s, w], [nn, e]], "pas_m": dx, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png",
-        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "manning": {"natural": 0.06, "construit": 0.02},
+        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "manning": {"natural": a.n_natural, "construit": a.n_urba},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2]}, ensure_ascii=False))
     print(f"Fet en {time.time() - rellotge:.0f} s: {len(fotos)} fotogrames")

@@ -9,6 +9,9 @@ on:
       ia_natural:
         description: "Llindar de pèrdues del terreny natural (mm)"
         default: "150"
+      n_natural:
+        description: "n de Manning del terreny natural"
+        default: "0.1"
       ia_urba:
         description: "Llindar de pèrdues de les zones construïdes (mm)"
         default: "5"
@@ -29,7 +32,7 @@ jobs:
       - name: Relleu
         run: python3 scripts/relleu.py --config config/ridaura.json --pas 10 --nomes-mdt
       - name: Simulació
-        run: python3 scripts/simula_2d.py --config config/ridaura.json --mdt /tmp/relleu/mdt.tif --radar data/ridaura/episodis/2026-10-03_radar.json --episodi data/ridaura/episodis/2026-10-04.json --pas "${{ inputs.pas }}" --ia-natural "${{ inputs.ia_natural }}" --ia-urba "${{ inputs.ia_urba }}"
+        run: python3 scripts/simula_2d.py --config config/ridaura.json --mdt /tmp/relleu/mdt.tif --radar data/ridaura/episodis/2026-10-03_radar.json --episodi data/ridaura/episodis/2026-10-04.json --pas "${{ inputs.pas }}" --ia-natural "${{ inputs.ia_natural }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}"
       - name: Desa
         run: |
           git config user.name "github-actions[bot]"
