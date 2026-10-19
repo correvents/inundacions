@@ -1,0 +1,214 @@
+{
+ "descripcio": "Relació Z-R del radar OPERA ajustada amb les estacions XEMA de Castell d'Aro i Cassà en els episodis d'inundació i pluja forta (calibra_zr.py)",
+ "llindar_dbz": 38.0,
+ "estratiforme": {
+  "a": 50,
+  "b": 1.6
+ },
+ "convectiva": {
+  "a": 2000,
+  "b": 1.4
+ },
+ "error_tipic_factor": {
+  "marshall_palmer": 1.63,
+  "ajustada": 1.28
+ },
+ "mostres": [
+  {
+   "episodi": "2026-10-04",
+   "estacio": "DO",
+   "mm_estacio": 173,
+   "mm_marshall_palmer": 188,
+   "mm_ajustada": 129
+  },
+  {
+   "episodi": "2026-10-04",
+   "estacio": "UN",
+   "mm_estacio": 131,
+   "mm_marshall_palmer": 149,
+   "mm_ajustada": 115
+  },
+  {
+   "episodi": "2026-05-18",
+   "estacio": "DO",
+   "mm_estacio": 55,
+   "mm_marshall_palmer": 38,
+   "mm_ajustada": 38
+  },
+  {
+   "episodi": "2026-05-18",
+   "estacio": "UN",
+   "mm_estacio": 24,
+   "mm_marshall_palmer": 16,
+   "mm_ajustada": 36
+  },
+  {
+   "episodi": "2026-01-20",
+   "estacio": "DO",
+   "mm_estacio": 143,
+   "mm_marshall_palmer": 28,
+   "mm_ajustada": 68
+  },
+  {
+   "episodi": "2026-01-20",
+   "estacio": "UN",
+   "mm_estacio": 92,
+   "mm_marshall_palmer": 39,
+   "mm_ajustada": 92
+  },
+  {
+   "episodi": "2024-09-23",
+   "estacio": "DO",
+   "mm_estacio": 51,
+   "mm_marshall_palmer": 125,
+   "mm_ajustada": 54
+  },
+  {
+   "episodi": "2024-09-23",
+   "estacio": "UN",
+   "mm_estacio": 28,
+   "mm_marshall_palmer": 91,
+   "mm_ajustada": 39
+  },
+  {
+   "episodi": "2020-01-21",
+   "estacio": "DO",
+   "mm_estacio": 91,
+   "mm_marshall_palmer": 56,
+   "mm_ajustada": 115
+  },
+  {
+   "episodi": "2020-01-21",
+   "estacio": "UN",
+   "mm_estacio": 247,
+   "mm_marshall_palmer": 78,
+   "mm_ajustada": 161
+  },
+  {
+   "episodi": "2019-10-22",
+   "estacio": "DO",
+   "mm_estacio": 75,
+   "mm_marshall_palmer": 149,
+   "mm_ajustada": 97
+  },
+  {
+   "episodi": "2019-10-22",
+   "estacio": "UN",
+   "mm_estacio": 109,
+   "mm_marshall_palmer": 148,
+   "mm_ajustada": 103
+  },
+  {
+   "episodi": "2018-11-18",
+   "estacio": "DO",
+   "mm_estacio": 45,
+   "mm_marshall_palmer": 46,
+   "mm_ajustada": 73
+  },
+  {
+   "episodi": "2018-11-18",
+   "estacio": "UN",
+   "mm_estacio": 101,
+   "mm_marshall_palmer": 42,
+   "mm_ajustada": 92
+  },
+  {
+   "episodi": "2025-11-06",
+   "estacio": "DO",
+   "mm_estacio": 37,
+   "mm_marshall_palmer": 40,
+   "mm_ajustada": 37
+  },
+  {
+   "episodi": "2025-11-06",
+   "estacio": "UN",
+   "mm_estacio": 31,
+   "mm_marshall_palmer": 55,
+   "mm_ajustada": 49
+  },
+  {
+   "episodi": "2025-05-05",
+   "estacio": "DO",
+   "mm_estacio": 43,
+   "mm_marshall_palmer": 28,
+   "mm_ajustada": 45
+  },
+  {
+   "episodi": "2025-05-05",
+   "estacio": "UN",
+   "mm_estacio": 16,
+   "mm_marshall_palmer": 40,
+   "mm_ajustada": 45
+  },
+  {
+   "episodi": "2024-02-26",
+   "estacio": "DO",
+   "mm_estacio": 44,
+   "mm_marshall_palmer": 42,
+   "mm_ajustada": 49
+  },
+  {
+   "episodi": "2024-02-26",
+   "estacio": "UN",
+   "mm_estacio": 35,
+   "mm_marshall_palmer": 20,
+   "mm_ajustada": 34
+  },
+  {
+   "episodi": "2023-09-15",
+   "estacio": "DO",
+   "mm_estacio": 64,
+   "mm_marshall_palmer": 78,
+   "mm_ajustada": 58
+  },
+  {
+   "episodi": "2023-09-15",
+   "estacio": "UN",
+   "mm_estacio": 23,
+   "mm_marshall_palmer": 44,
+   "mm_ajustada": 48
+  },
+  {
+   "episodi": "2019-09-21",
+   "estacio": "DO",
+   "mm_estacio": 93,
+   "mm_marshall_palmer": 60,
+   "mm_ajustada": 51
+  },
+  {
+   "episodi": "2019-09-21",
+   "estacio": "UN",
+   "mm_estacio": 43,
+   "mm_marshall_palmer": 33,
+   "mm_ajustada": 38
+  },
+  {
+   "episodi": "2018-10-10",
+   "estacio": "DO",
+   "mm_estacio": 85,
+   "mm_marshall_palmer": 51,
+   "mm_ajustada": 44
+  },
+  {
+   "episodi": "2018-10-10",
+   "estacio": "UN",
+   "mm_estacio": 24,
+   "mm_marshall_palmer": 23,
+   "mm_ajustada": 32
+  },
+  {
+   "episodi": "2016-09-14",
+   "estacio": "DO",
+   "mm_estacio": 45,
+   "mm_marshall_palmer": 81,
+   "mm_ajustada": 49
+  },
+  {
+   "episodi": "2016-09-14",
+   "estacio": "UN",
+   "mm_estacio": 41,
+   "mm_marshall_palmer": 69,
+   "mm_ajustada": 44
+  }
+ ]
+}

@@ -75,7 +75,7 @@
       <div class="nota">150 mm és el que va absorbir la conca el 4/10 (sòls secs després de l'estiu). Amb sòls molls, 20–50 mm. Zones construïdes: 5 mm.</div>
       <label class="ctl">Multiplicador de la pluja <b id="vmul"></b>
         <input type="range" id="mul" min="0.5" max="3" step="0.1" value="1"></label>
-      <label class="ctl" style="font-weight:normal"><input type="checkbox" id="corregeix" checked> Corregir el radar amb el pluviòmetre (hora a hora)</label>
+      <label class="ctl" style="font-weight:normal"><input type="checkbox" id="corregeix" checked> Corregir el radar hora a hora amb <span id="fontcorr">el pluviòmetre</span></label>
       <label class="ctl">Què es dibuixa
         <select id="capa">
           <option value="aigua" selected>Cap on corre l'aigua i on s'embassa</option>
@@ -173,16 +173,28 @@ Promise.all([
 
 // episodi: radar en graella i, si n'hi ha, la sèrie de l'aforador i el pluviòmetre (per corregir el radar)
 let EPI;
+// factor de cada fotograma: pluja de les estacions / pluja del radar sobre les estacions, a l'hora anterior (com simula_2d.py)
+function factorsEstacio(ES) {
+  const t = ES.temps_utc.map(x => Date.parse(x + 'Z'));
+  return R.temps.map(x => {
+    const tf = Date.parse(x + 'Z'); let p = 0, r = 0;
+    t.forEach((tt, k) => { if (tt > tf - 3600e3 && tt <= tf) { p += ES.pluja_pluviometre_mm[k] || 0; r += ES.pluja_radar_conca_mm[k] || 0; } });
+    return r > 0.5 ? Math.min(Math.max(p / r, 0.3), 4) : 1;
+  });
+}
 async function carregaEpisodi(e, recalcula = true) {
   EPI = e;
   R = await fetch(BASE + 'episodis/' + e.radar).then(r => r.json());
   EP = e.episodi ? await fetch(BASE + 'episodis/' + e.episodi).then(r => r.json()) : null;
-  FACT = EP ? G.factor_radar : R.temps.map(() => 1);
-  $('corregeix').disabled = !EP; if (!EP) $('corregeix').checked = false; else $('corregeix').checked = true;
+  // correcció del radar: el 4/10, amb el pluviòmetre de l'ACA a la conca; la resta, amb les estacions XEMA de la plana
+  const ES = EP ? null : await fetch(BASE + 'episodis/' + e.id + '_estacio.json').then(r => r.ok ? r.json() : null).catch(() => null);
+  FACT = EP ? G.factor_radar : ES ? factorsEstacio(ES) : R.temps.map(() => 1);
+  $('corregeix').disabled = !EP && !ES; $('corregeix').checked = !!(EP || ES);
+  $('fontcorr').textContent = EP ? "el pluviòmetre de l'ACA" : ES ? 'les estacions del Meteocat' : 'el pluviòmetre (no disponible)';
   $('ia').value = e.ia_mm ?? 60;
   $('premsa').innerHTML = `${e.inundacio === false ? '<b>Sense inundació segons la premsa</b> (serveix per veure fins on aguanta). ' : ''}${e.resum}<br>${e.carrers.length || e.llocs.length ? '<b>Llocs citats:</b> ' + [...e.carrers, ...e.llocs].join(' · ') + '<br>' : ''}` +
     `Fonts: ${e.fonts.map((u, k) => `<a href="${u}" target="_blank" rel="noopener">${k + 1}</a>`).join(' ')}` +
-    (EP ? '' : '<br><i>Sense dades de l\'aforador per a aquest episodi (l\'ACA només en guarda 3 mesos): radar sense corregir. L\'absorció del terreny és una suposició.</i>');
+    (EP ? '' : '<br><i>Sense dades de l\'aforador per a aquest episodi (l\'ACA només en guarda 3 mesos): ' + (ES ? 'radar corregit amb les estacions del Meteocat. ' : 'radar sense corregir. ') + 'L\'absorció del terreny és una suposició.</i>');
   $('fi').max = $('ini').max = R.temps.length - 1;
   if (recalcula) pluges();
   dibuixaPremsa();

@@ -3,7 +3,8 @@
 
 Per a cada compost de reflectivitat (DBZH, 5 min, ~1 km) que encara no sigui a Supabase:
   - mostreja la reflectivitat en una reixa de punts (~250 m) dins de cada subconca,
-  - la passa a mm/h amb Marshall-Palmer (Z = 200 R^1.6, màx. 125 mm/h),
+  - la passa a mm/h amb la relació Z-R ajustada amb les estacions (config/<conca>_zr.json, calibra_zr.py) o, als
+    episodis passats (--des), amb Marshall-Palmer (Z = 200 R^1.6); màx. 125 mm/h,
   - desa a inundacions.pluja_conca: mm caiguts en els 5 min (mitjana de la subconca), intensitat màxima i cobertura.
 L'acumulat (1/3/6/24 h) el calcula la vista inundacions.pluja_acumulada.
 El bucket de temps real només guarda les últimes 24 h; per a episodis passats es fa servir l'arxiu
@@ -91,8 +92,23 @@ def mostreja(h5, lon, lat):
     return z
 
 
-def mmh(z):
-    r = np.where(np.isfinite(z), (10 ** (np.where(np.isfinite(z), z, 0) / 10) / 200) ** (1 / 1.6), 0.0)
+def relacio_zr(conca):
+    """Relació Z-R ajustada amb les estacions (calibra_zr.py) si n'hi ha; si no, Marshall-Palmer."""
+    f = Path("config") / f"{conca}_zr.json"
+    return json.loads(f.read_text()) if f.exists() else None
+
+
+def mmh(z, zr=None):
+    """mm/h a partir de la reflectivitat (dBZ). Sense zr, Marshall-Palmer (Z = 200 R^1.6); amb zr, una relació per a la
+    pluja estratiforme i una altra per a la convectiva, separades per zr["llindar_dbz"]."""
+    zz = np.where(np.isfinite(z), z, 0)
+    lin = 10 ** (zz / 10)
+    if zr is None:
+        r = (lin / 200) ** (1 / 1.6)
+    else:
+        e, c = zr["estratiforme"], zr["convectiva"]
+        r = np.where(zz >= zr["llindar_dbz"], (lin / c["a"]) ** (1 / c["b"]), (lin / e["a"]) ** (1 / e["b"]))
+    r = np.where(np.isfinite(z), r, 0.0)
     r[np.isnan(z)] = np.nan
     return np.minimum(r, 125.0)
 
@@ -105,6 +121,7 @@ def main():
     ap.add_argument("--fins", help="final UTC (per defecte, 24 h després de --des)")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
+    ZR = None if a.des else relacio_zr(cfg["conca"])     # els episodis passats es desen amb Marshall-Palmer (calibra_zr.py en parteix)
     fc = json.loads(Path(cfg["geometria"]).read_text())
     subs = {}
     for f in fc["features"]:
@@ -132,7 +149,7 @@ def main():
                 r = requests.get(s3 + "/" + urllib.parse.quote(k, safe="/@"), timeout=120)
                 r.raise_for_status(); f.write_bytes(r.content)
                 for nom, (lon, lat) in subs.items():
-                    i = mmh(mostreja(f, lon, lat))
+                    i = mmh(mostreja(f, lon, lat), ZR)
                     ok = ~np.isnan(i)
                     files.append({"conca": cfg["conca"], "subconca": nom, "font": "radar", "temps": t.isoformat(), "minuts": minuts[t],
                                   "mm": round(float(i[ok].mean()) * minuts[t] / 60, 3) if ok.any() else None,
