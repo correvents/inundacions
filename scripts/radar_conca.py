@@ -89,7 +89,7 @@ def main():
                                                                "temps": f"gt.{ini.isoformat()}"})}
     pendents = {t: k for t, k in disponibles.items() if t.strftime("%Y-%m-%dT%H:%M") not in fets}
     print(f"OPERA: {len(disponibles)} compostos a la finestra, {len(pendents)} per processar")
-    files = []
+    files, desades = [], 0
     with tempfile.TemporaryDirectory() as tmp:
         for t, k in sorted(pendents.items()):
             f = Path(tmp) / "c.h5"
@@ -105,9 +105,11 @@ def main():
                                   "cobertura": round(float(ok.mean()), 3)})
             except Exception as e:
                 print(f"OPERA {t:%Y-%m-%d %H:%M}: {type(e).__name__} {e}")
+            if len(files) >= 24:                 # desa a mesura que avança (la finestra de 24 h és llarga)
+                desades += insereix("pluja_conca", files); files = []
     if files:
-        insereix("pluja_conca", files)
-    print(f"OPERA: {len(files)} files desades")
+        desades += insereix("pluja_conca", files)
+    print(f"OPERA: {desades} files desades")
     return 0
 
 

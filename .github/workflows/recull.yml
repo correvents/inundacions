@@ -19,7 +19,7 @@ concurrency:
 jobs:
   recull:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     env:
       SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
       SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
