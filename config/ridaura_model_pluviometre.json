@@ -1,0 +1,20 @@
+{
+  "P0_mm": 45.05,
+  "k_h": 0.256,
+  "n": 5,
+  "factor_radar": 1.0,
+  "q_base_m3s": 0.0,
+  "font_pluja": "pluviometre",
+  "punt": "aforador",
+  "area_km2": 35.593,
+  "episodi": [
+    "2026-10-03T12:00",
+    "2026-10-05T00:00"
+  ],
+  "NSE": 0.607,
+  "pic_obs_m3s": 303.7,
+  "pic_sim_m3s": 213.2,
+  "hora_pic_obs": "2026-10-04T09:25:00+00:00",
+  "hora_pic_sim": "2026-10-04T09:20:00+00:00",
+  "pluja_radar_mm": 198.0
+}
