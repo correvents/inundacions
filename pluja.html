@@ -113,6 +113,7 @@ const fons = {
   'Ortofoto': L.tileLayer(WMTS('orto'), { maxZoom: 19, attribution: ATR }),
   'Ortofoto amb carrers': L.layerGroup([L.tileLayer(WMTS('orto'), { maxZoom: 19, attribution: ATR }),
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', pane: 'etiquetes' })]),
+  'Ortofoto Esri (alternativa)': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: ATR + ' · Ortofoto: Esri' }),
   'OpenStreetMap': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: ATR }),
 };
 mapa.createPane('etiquetes').style.zIndex = 460; mapa.getPane('etiquetes').style.pointerEvents = 'none';
