@@ -100,10 +100,13 @@ def main():
 
     # relleu agregat a --pas m
     with rasterio.open(a.mdt) as f:
-        fac = a.pas / f.res[0]
-        nf, nc = int(f.height / fac), int(f.width / fac)
-        z = f.read(1, out_shape=(nf, nc), resampling=Resampling.min)   # el mínim conserva els llits
-        tr = f.transform * f.transform.scale(f.width / nc, f.height / nf)
+        fac = max(int(round(a.pas / f.res[0])), 1)
+        z0 = f.read(1)
+        nf, nc = f.height // fac, f.width // fac
+        blocs = z0[: nf * fac, : nc * fac].reshape(nf, fac, nc, fac)
+        with np.errstate(all="ignore"):
+            z = np.nanmin(np.nanmin(blocs, axis=3), axis=1)            # el mínim de cada bloc conserva els llits
+        tr = f.transform * f.transform.scale(fac, fac)
         crs = f.crs
     mar = ~np.isfinite(z)
     z = np.where(mar, 0.0, z).astype(np.float64)

@@ -104,12 +104,11 @@ def main():
         coords = f["geometry"]["coordinates"]
         if len(coords) < 2:
             continue
-        cx, cy = coords[-1]
-        fila, col = int((tr.f - cy) // a.pas), int((cx - tr.c) // a.pas)     # cel·la de sortida del tram
-        fila = min(max(fila, 0), acc.shape[0] - 1); col = min(max(col, 0), acc.shape[1] - 1)
         ll = [t.transform(x, y) for x, y in coords[:: max(1, len(coords) // 60)] + [coords[-1]]]
-        trams.append({"type": "Feature", "properties": {"area_km2": round(float(acc[fila, col]) * cel_km2, 3),
-                                                       "ordre": int(ordre[fila, col])},
+        cel = [(int((tr.f - y) // a.pas), int((x - tr.c) // a.pas)) for x, y in coords]
+        cel = [(r, c) for r, c in cel if 0 <= r < acc.shape[0] and 0 <= c < acc.shape[1]]
+        trams.append({"type": "Feature", "properties": {"area_km2": round(max(float(acc[r, c]) for r, c in cel) * cel_km2, 3),
+                                                       "ordre": int(max(ordre[r, c] for r, c in cel))},
                       "geometry": {"type": "LineString", "coordinates": [[round(x, 6), round(y, 6)] for x, y in ll]}})
     (d / "rieretes.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": trams}, separators=(",", ":")))
     print(f"rieretes: {len(trams)} trams (conca > {a.llindar_km2} km²)")
