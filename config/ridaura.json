@@ -42,5 +42,26 @@
   "codis_zones_aca": [
     "009",
     "640"
-  ]
+  ],
+  "cabals_T": {
+    "font": "ACA, Tramificació de cabals (vishid:Tramificacio_cabals), tram RIDAURA050 a l'aforador i RIDAURA160 a la desembocadura",
+    "aforador": {
+      "tram": "RIDAURA050",
+      "area_km2": 35.593,
+      "QMCO": 37,
+      "Q10": 51.6,
+      "Q50": 151.8,
+      "Q100": 199,
+      "Q500": 341.7
+    },
+    "desembocadura": {
+      "tram": "RIDAURA160",
+      "area_km2": 68.382,
+      "QMCO": 68.2,
+      "Q10": 95.5,
+      "Q50": 264.2,
+      "Q100": 333.8,
+      "Q500": 559.5
+    }
+  }
 }

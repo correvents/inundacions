@@ -58,7 +58,18 @@ L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts?SERVICE
   maxZoom: 19, attribution: '© ICGC · © OpenStreetMap · Zones inundables: ACA · Punts de risc: SNCZI (MITECO)'
 }).addTo(mapa);
 
-let tActiu = 100, capaZones, capaAfectats, afectats, resum;
+let tActiu = 100, capaZones, capaAfectats, afectats, resum, cfg;
+
+// Període de retorn equivalent a un cabal (interpolació en log T entre els cabals oficials de l'ACA)
+function periodeRetorn(q, qt) {
+  const p = [[2.33, qt.QMCO], [10, qt.Q10], [50, qt.Q50], [100, qt.Q100], [500, qt.Q500]];
+  if (q < p[0][1]) return null;
+  for (let i = 1; i < p.length; i++) if (q <= p[i][1]) {
+    const [t0, q0] = p[i - 1], [t1, q1] = p[i];
+    return Math.exp(Math.log(t0) + (q - q0) / (q1 - q0) * (Math.log(t1) - Math.log(t0)));
+  }
+  return 501;
+}
 
 fetch('data/ridaura/conca.geojson').then(r => r.json()).then(fc => {
   L.geoJSON(fc.features[0], { style: { color: '#2b7bba', weight: 2, fill: false, dashArray: '4 4' }, interactive: false }).addTo(mapa);
@@ -111,6 +122,7 @@ async function sb(taula, params) {
   return r.ok ? r.json() : [];
 }
 async function ara() {
+  if (!cfg) cfg = await fetch('config/ridaura.json').then(r => r.json());
   const [q, h, acum] = await Promise.all([
     sb('observacions', { select: 'temps,valor', conca: 'eq.ridaura', var: 'eq.cabal_m3s', order: 'temps.desc', limit: 1 }),
     sb('observacions', { select: 'temps,valor', conca: 'eq.ridaura', var: 'eq.nivell_cm', order: 'temps.desc', limit: 1 }),
@@ -123,6 +135,7 @@ async function ara() {
     html += `<div class="fila"><span>Cabal a Santa Cristina</span><span>${v.toFixed(1)} m³/s</span></div>
              <div class="fila"><span>Nivell</span><span>${h.length ? (h[0].valor / 100).toFixed(2) + ' m' : '-'}</span></div>
              <div class="fila"><span>Estat (llindars ACA)</span><span class="estat" style="color:${ll[2]}">${ll[1]}</span></div>
+             <div class="fila"><span>Període de retorn equivalent</span><span class="estat">${trT(periodeRetorn(v, cfg.cabals_T.aforador))}</span></div>
              <div class="nota">Aforador · ${hora(q[0].temps)}</div>`;
   }
   const d = acum.find(a => a.subconca === 'desembocadura');
@@ -130,8 +143,13 @@ async function ara() {
              <div class="fila"><span>6 h / 24 h</span><span>${(+d.mm_6h).toFixed(1)} / ${(+d.mm_24h).toFixed(1)} mm</span></div>
              <div class="fila"><span>Intensitat màx. última hora</span><span>${(+d.mmh_max_1h || 0).toFixed(1)} mm/h</span></div>
              <div class="nota">Radar OPERA · ${hora(d.fins)}</div></div>`;
+  html += `<div class="nota" style="margin-top:8px">Referència: el 4 d'octubre de 2026 l'aforador va arribar a 304 m³/s, ${trT(periodeRetorn(303.7, cfg.cabals_T.aforador))} segons els cabals de l'ACA (Q100 = 199, Q500 = 342 m³/s).</div>`;
   document.getElementById('ara').innerHTML = html;
+  // si hi ha crescuda, el mapa mostra la zona que li correspon
+  const T = q.length ? periodeRetorn(q[0].valor, cfg.cabals_T.aforador) : null;
+  if (T && T >= 5 && capaZones) mostra(TS.find(t => t >= T) || 500);
 }
+const trT = T => T === null ? 'menys que la crescuda ordinària' : T > 500 ? 'més de T500' : T < 10 ? `T${T.toFixed(0)} (per sota de T10)` : `≈ T${Math.round(T / (T < 50 ? 5 : 10)) * (T < 50 ? 5 : 10)}`;
 const araSegur = () => ara().catch(() => { document.getElementById('ara').innerHTML = '<h2>Ara</h2><div class="nota">No s\'han pogut carregar les dades en directe.</div>'; });
 araSegur(); setInterval(araSegur, 5 * 60 * 1000);
 </script>
