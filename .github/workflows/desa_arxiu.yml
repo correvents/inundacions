@@ -1,0 +1,39 @@
+name: Desa l'arxiu de l'ACA a Supabase (privat)
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Execució d'«Arxiu de l'ACA» que té l'artefacte aca_arxiu"
+        required: true
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  desa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: aca_arxiu
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          path: /tmp/art
+      - name: Puja al bucket privat arxiu-inundacions (un fitxer per proveïdor, < 50 MB)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          tar -xzf /tmp/art/aca_arxiu.tar.gz -C /tmp
+          DIA=$(date -u +%Y-%m-%d)
+          cd /tmp/aca
+          puja() {
+            curl -sS -f -X POST "$SUPABASE_URL/storage/v1/object/arxiu-inundacions/aca/$DIA/$1" \
+              -H "Authorization: Bearer $SUPABASE_SECRET_KEY" -H "apikey: $SUPABASE_SECRET_KEY" \
+              -H "x-upsert: true" -H "Content-Type: $2" --data-binary @"$3" -o /dev/null && echo "pujat $1 ($(stat -c %s "$3") bytes)"
+          }
+          puja sensors.csv text/csv sensors.csv
+          gzip -c cataleg.json > /tmp/cataleg.json.gz && puja cataleg.json.gz application/gzip /tmp/cataleg.json.gz
+          for p in */; do p=${p%/}; tar -cf /tmp/$p.tar "$p"; puja "$p.tar" application/x-tar /tmp/$p.tar; done
