@@ -10,8 +10,9 @@ amb el pendent de la superfície de l'aigua i la fricció de Manning, i la làmi
     Zones construïdes (ESA WorldCover 2021, classe 50): --ia-urba mm.
   - Fricció: n de Manning (--n-natural, --n-urba).
   - Mar i vores del domini: l'aigua surt.
-Sortides (data/<conca>/sim2d/<data>/): un PNG de calat cada --cada minuts en lat/lon, calat màxim, l'hidrograma simulat a
-l'aforador (per validar-lo amb l'observat) i index.json.
+Sortides (data/<conca>/sim2d/<id>/): un PNG de calat cada --cada minuts en lat/lon, calat màxim, l'hidrograma simulat a
+l'aforador (per validar-lo amb l'observat), index.json i, per al model d'inundació, dues graelles numèriques en UTM:
+calat màxim (cm) i minut en què cada cel·la supera 15 cm d'aigua.
 
 Ús:  python3 scripts/simula_2d.py --config config/ridaura.json --mdt /tmp/relleu/mdt.tif \\
          --radar data/ridaura/episodis/2026-10-03_radar.json --episodi data/ridaura/episodis/2026-10-04.json"""
@@ -88,7 +89,8 @@ def main():
     ap.add_argument("--config", required=True)
     ap.add_argument("--mdt", required=True)
     ap.add_argument("--radar", required=True)
-    ap.add_argument("--episodi", required=True)
+    ap.add_argument("--episodi", help="JSON amb pluviòmetre i radar a la conca (episodi.py) per corregir el radar; sense, radar tal qual")
+    ap.add_argument("--id", help="nom de la carpeta de sortida (per defecte, la data de l'últim fotograma)")
     ap.add_argument("--pas", type=float, default=20)
     ap.add_argument("--ia-natural", type=float, default=150)
     ap.add_argument("--ia-urba", type=float, default=5)
@@ -98,7 +100,7 @@ def main():
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
     rad = json.loads(Path(a.radar).read_text())
-    ep = json.loads(Path(a.episodi).read_text())
+    ep = json.loads(Path(a.episodi).read_text()) if a.episodi else None
 
     # relleu agregat a --pas m
     with rasterio.open(a.mdt) as f:
@@ -142,10 +144,12 @@ def main():
     frames = np.array(rad["mm"])                                  # (temps, cel·les radar) mm en interval
     temps_rad = [datetime.fromisoformat(t) for t in rad["temps"]]
     # correcció: mm del pluviòmetre / mm del radar a la conca de l'aforador, per hores
-    t_ep = [datetime.fromisoformat(t) for t in ep["temps_utc"]]
-    plv = np.array(ep["pluja_pluviometre_mm"], dtype=float)
-    rdc = np.array(ep["pluja_radar_conca_mm"], dtype=float)
+    t_ep = [datetime.fromisoformat(t) for t in ep["temps_utc"]] if ep else []
+    plv = np.array(ep["pluja_pluviometre_mm"], dtype=float) if ep else None
+    rdc = np.array(ep["pluja_radar_conca_mm"], dtype=float) if ep else None
     def factor(t):
+        if not ep:
+            return 1.0
         sel = [k for k, te in enumerate(t_ep) if t - timedelta(minutes=60) < te <= t]
         p, r = np.nansum(plv[sel]), np.nansum(rdc[sel])
         return float(np.clip(p / r, 0.3, 4)) if r > 0.5 else 1.0
@@ -161,9 +165,10 @@ def main():
     actiu[0, :] = actiu[-1, :] = actiu[:, 0] = actiu[:, -1] = False   # vores del domini obertes: l'aigua surt
     pluja_acum = np.zeros((nf, nc)); neta_ant = np.zeros((nf, nc))
     hmax = np.zeros((nf, nc))
+    t15 = np.full((nf, nc), np.inf)                               # primer moment amb més de 15 cm d'aigua (min des de l'inici)
     ini = temps_rad[0] - timedelta(minutes=rad["interval_min"])
     fi = temps_rad[-1]
-    dest = Path("data") / cfg["conca"] / "sim2d" / fi.strftime("%Y-%m-%d"); dest.mkdir(parents=True, exist_ok=True)
+    dest = Path("data") / cfg["conca"] / "sim2d" / (a.id or fi.strftime("%Y-%m-%d")); dest.mkdir(parents=True, exist_ok=True)
     # sortida en lat/lon per al visor
     w, s, e, nn = rasterio.warp.transform_bounds(crs, "EPSG:4326", tr.c, tr.f - nf * dx, tr.c + nc * dx, tr.f)
     pas_g = dx / 111320
@@ -198,18 +203,24 @@ def main():
         neta_ant = neta
         pas_temps(z, h, qx, qy, n, dx, dt, actiu)
         np.maximum(hmax, h, out=hmax)
+        t15[(h > 0.15) & ~np.isfinite(t15)] = t_seg / 60
         t_seg += dt; t = ini + timedelta(seconds=t_seg)
         if t >= proxim:
-            nom = f"{proxim:%H%M}.png"; png(h, nom)
+            nom = f"{proxim:%d%H%M}.png"; png(h, nom)
             q = float(sum(qx[r, gc] for r in tf) * dx)
             fotos.append({"temps": proxim.strftime("%Y-%m-%dT%H:%M"), "png": nom}); hidro.append(round(q, 1))
             print(f"{proxim:%d %H:%M} dt {dt:.2f} s, calat màx {hm:.2f} m, cabal aforador {q:.1f} m³/s, inundat >15 cm {(h > 0.15).sum() * dx * dx / 1e6:.2f} km² ({time.time() - rellotge:.0f} s)")
             proxim += timedelta(minutes=a.cada)
     png(hmax, "maxim.png")
+    # graelles numèriques per al model d'inundació (UTM, mateixa reixa que la simulació): calat màxim en cm i minut d'inundació
+    np.minimum(np.rint(hmax * 100), 65534).astype("<u2").tofile(dest / "calat_max_cm.u2")
+    np.where(np.isfinite(t15), np.minimum(t15, 65534), 65535).astype("<u2").tofile(dest / "minut_15cm.u2")
     (dest / "index.json").write_text(json.dumps({
-        "limits": [[s, w], [nn, e]], "pas_m": dx, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png",
+        "limits": [[s, w], [nn, e]], "pas_m": dx, "inici_utc": ini.strftime("%Y-%m-%dT%H:%M"),
+        "graella_utm": {"crs": str(crs), "x0": tr.c, "y0": tr.f, "nf": nf, "nc": nc, "fitxers": {"calat_max_cm.u2": "uint16 cm",
+                        "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png",
         "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "manning": {"natural": a.n_natural, "construit": a.n_urba},
-                      "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA", "esquema": "inercial local (Bates et al. 2010)"},
+                      "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2]}, ensure_ascii=False))
     print(f"Fet en {time.time() - rellotge:.0f} s: {len(fotos)} fotogrames")
     return 0

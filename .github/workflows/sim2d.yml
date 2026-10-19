@@ -1,14 +1,14 @@
-name: Simulació 2D d'un episodi
+name: Simulació 2D d'episodis
 
 on:
   workflow_dispatch:
     inputs:
+      episodis:
+        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150}]'
+        required: true
       pas:
         description: "Mida de cel·la (m)"
         default: "20"
-      ia_natural:
-        description: "Llindar de pèrdues del terreny natural (mm)"
-        default: "150"
       n_natural:
         description: "n de Manning del terreny natural"
         default: "0.1"
@@ -23,6 +23,11 @@ jobs:
   sim:
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        ep: ${{ fromJSON(inputs.episodis) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -32,12 +37,17 @@ jobs:
       - name: Relleu
         run: python3 scripts/relleu.py --config config/ridaura.json --pas 10 --nomes-mdt
       - name: Simulació
-        run: python3 scripts/simula_2d.py --config config/ridaura.json --mdt /tmp/relleu/mdt.tif --radar data/ridaura/episodis/2026-10-03_radar.json --episodi data/ridaura/episodis/2026-10-04.json --pas "${{ inputs.pas }}" --ia-natural "${{ inputs.ia_natural }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}"
+        run: |
+          rm -rf "data/ridaura/sim2d/${{ matrix.ep.id }}"
+          EP=""; [ -n "${{ matrix.ep.episodi }}" ] && EP="--episodi data/ridaura/episodis/${{ matrix.ep.episodi }}"
+          python3 scripts/simula_2d.py --config config/ridaura.json --mdt /tmp/relleu/mdt.tif --id "${{ matrix.ep.id }}" \
+            --radar "data/ridaura/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ inputs.pas }}" \
+            --ia-natural "${{ matrix.ep.ia }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}"
       - name: Desa
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/
+          git add -A data/ridaura/sim2d
           git diff --cached --quiet && exit 0
-          git commit -m "Simulació 2D de l'episodi"
-          for i in 1 2 3 4; do git pull --rebase origin main && git push && exit 0; sleep $((i*5)); done; exit 1
+          git commit -m "Simulació 2D de l'episodi ${{ matrix.ep.id }}"
+          for i in 1 2 3 4 5 6; do git pull --rebase origin main && git push && exit 0; sleep $((i*7)); done; exit 1
