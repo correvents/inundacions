@@ -41,7 +41,7 @@
     <button id="play">▶ Reprodueix</button>
     <select id="vel"><option value="900">lent</option><option value="450" selected>normal</option><option value="150">ràpid</option></select>
     <label>Acumulat <select id="finestra"><option value="0" selected>des de l'inici</option><option value="1">última hora</option><option value="3">últimes 3 h</option><option value="6">últimes 6 h</option></select></label>
-    <label>El terreny absorbeix <b id="via"></b> <input type="range" id="ia" min="0" max="200" step="5" style="width:110px;vertical-align:middle"></label>
+    <span id="via" title="Calculat amb la pluja dels 60 dies anteriors (fix per a cada episodi)"></span>
     <span class="nota"><a href="pluja.html">eina de pluja</a> · <a href="./">visor</a></span>
   </div>
   <div id="mapes">
@@ -63,7 +63,7 @@ const BASE = 'data/ridaura/';
 const DR = [-1, -1, 0, 1, 1, 1, 0, -1], DC = [0, 1, 1, 1, 0, -1, -1, -1];   // 0=N 1=NE 2=E 3=SE 4=S 5=SO 6=O 7=NO
 const ESCALA = 2;
 let G, R, EP, ES, FACT, IDX, PREMSA, SIM, N, A, z, zf, dir, urba, ridx, rcv, ordre, comp, compCel, compIni, nComp, terra;
-let cumR, mitjana, fi = 0, res = null;
+let cumR, cumN, cumU, IA = 150, PHI = 12, mitjana, fi = 0, res = null;
 
 const hora = t => new Date(t + 'Z').toLocaleString('ca-ES', { timeZone: 'Europe/Madrid', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' });
 const horaCurta = t => new Date(t + 'Z').toLocaleTimeString('ca-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' });
@@ -178,7 +178,6 @@ Promise.all([
   mapes[0].fitBounds([[41.78, 2.95], [41.85, 3.095]]);
   $('episodi').onchange = () => { reprodueix(false); carregaEpisodi(IDX.episodis.find(e => e.id === $('episodi').value)); };
   $('finestra').onchange = calcula; $('vista3').onchange = calcula;
-  $('ia').oninput = () => { $('via').textContent = $('ia').value + ' mm'; calcula(); };
   $('play').onclick = () => reprodueix(!rellotge);
   $('graf').onclick = ev => { const r = $('graf').getBoundingClientRect(); fi = Math.min(Math.max(Math.floor((ev.clientX - r.left - 30) / ((r.width - 30) / R.temps.length)), 0), R.temps.length - 1); reprodueix(false); calcula(); };
   window.addEventListener('resize', () => res && graf());
@@ -195,10 +194,19 @@ async function carregaEpisodi(e) {
   SIM = await fetch(BASE + 'sim2d/' + e.id + '/index.json').then(r => r.ok ? r.json() : null).catch(() => null);
   $('vista3').value = SIM ? 'sim' : 'd8'; $('vista3').options[0].disabled = !SIM;
   if (SIM) SIM.fotogrames.forEach(f => { const im = new Image(); im.src = BASE + 'sim2d/' + e.id + '/' + f.png; });   // precàrrega
-  $('ia').value = e.ia_mm ?? 60; $('via').textContent = $('ia').value + ' mm';
-  const nR = R.lons.length * R.lats.length, nF = R.temps.length;
-  cumR = new Float32Array((nF + 1) * nR);
-  for (let f = 0; f < nF; f++) for (let r = 0; r < nR; r++) cumR[(f + 1) * nR + r] = cumR[f * nR + r] + R.mm[f][r] * FACT[f];
+  IA = e.ia_mm ?? 150; PHI = e.perdua_mm_h ?? 12;
+  $('via').innerHTML = `El terreny absorbeix <b>${IA} mm</b> i després ${PHI} mm/h` + (e.api_mm != null ? ` (pluja dels dies abans: ${e.api_mm} mm)` : '');
+  const nR = R.lons.length * R.lats.length, nF = R.temps.length, phiF = PHI * R.interval_min / 60;
+  cumR = new Float32Array((nF + 1) * nR); cumN = new Float32Array((nF + 1) * nR); cumU = new Float32Array((nF + 1) * nR);
+  const absN = new Float32Array(nR).fill(IA), absU = new Float32Array(nR).fill(5);
+  for (let f = 0; f < nF; f++) for (let r = 0; r < nR; r++) {
+    const p = R.mm[f][r] * FACT[f], o = (f + 1) * nR + r, a = f * nR + r;
+    cumR[o] = cumR[a] + p;
+    // terreny natural: primer omple IA, després perd PHI mm/h; construït: 5 mm i prou
+    let q = p; const u = Math.min(q, absN[r]); absN[r] -= u; q -= u; if (absN[r] <= 0) q = Math.max(q - phiF, 0);
+    cumN[o] = cumN[a] + q;
+    const v = Math.min(p, absU[r]); absU[r] -= v; cumU[o] = cumU[a] + p - v;
+  }
   const pes = new Float64Array(nR); let tot = 0;
   for (let i = 0; i < N; i++) if (terra[i] && ridx[i] !== 65535) { pes[ridx[i]]++; tot++; }
   mitjana = R.temps.map((_, f) => { let s = 0; for (let r = 0; r < nR; r++) s += pes[r] * R.mm[f][r] * FACT[f]; return s / tot; });
@@ -225,14 +233,14 @@ function reprodueix(on) {
 function calcula() {
   $('hora').textContent = hora(R.temps[fi]);
   const h = +$('finestra').value, ini = h ? Math.max(fi - h * 4 + 1, 0) : 0;
-  const nR = R.lons.length * R.lats.length, a0 = ini * nR, a1 = (fi + 1) * nR, ia = +$('ia').value;
+  const nR = R.lons.length * R.lats.length, a0 = ini * nR, a1 = (fi + 1) * nR;
   const segons = (fi - ini + 1) * R.interval_min * 60;
   const pluja = new Float32Array(N), escola = new Float32Array(N), V = new Float64Array(N);
-  const E = (p, i) => Math.max(p - (urba[i] ? 5 : ia), 0);
   for (let i = 0; i < N; i++) {
     if (!terra[i] || ridx[i] === 65535) continue;
     const pa = cumR[a0 + ridx[i]], pb = cumR[a1 + ridx[i]];
-    pluja[i] = pb - pa; escola[i] = E(pb, i) - E(pa, i); V[i] = escola[i] / 1000 * A;
+    const C = urba[i] ? cumU : cumN;
+    pluja[i] = pb - pa; escola[i] = C[a1 + ridx[i]] - C[a0 + ridx[i]]; V[i] = escola[i] / 1000 * A;
   }
   const cap = new Float64Array(nComp), guard = new Float64Array(nComp);
   for (let k = 0; k < nComp; k++) for (let j = compIni[k]; j < compIni[k + 1]; j++) cap[k] += (zf[compCel[j]] - z[compCel[j]]) / 100 * A;
@@ -261,7 +269,7 @@ function calcula() {
   $('ll0').innerHTML = llegenda(RAMPA_RATE, `${horaCurta(R.temps[fi])}, mm/h:`);
   // 2 i 3. pluja i escolament a la graella de 20 m
   graella(1, i => res.pluja[i], RAMPA_MM); $('ll1').innerHTML = llegenda(RAMPA_MM, `des de ${txt}, mm:`);
-  graella(2, i => res.escola[i], RAMPA_MM); $('ll2').innerHTML = llegenda(RAMPA_MM, `des de ${txt}, mm (absorbeix ${ia} mm; construït 5 mm):`);
+  graella(2, i => res.escola[i], RAMPA_MM); $('ll2').innerHTML = llegenda(RAMPA_MM, `des de ${txt}, mm (absorbeix ${IA} mm + ${PHI} mm/h; construït 5 mm):`);
   // 4. simulació 2D en aquest moment o el càlcul pel relleu, amb les fletxes del pendent
   const fr = SIM && $('vista3').value === 'sim' ? SIM.fotogrames.filter(f => f.temps <= R.temps[fi]).pop() : null;
   if (SIM && $('vista3').value === 'sim') {
