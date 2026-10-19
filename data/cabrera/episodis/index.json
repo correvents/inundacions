@@ -1,0 +1,16 @@
+{
+ "episodis": [
+  {
+   "id": "2026-10-17",
+   "titol": "17 d'octubre de 2026: xàfec i riera de Cabrera de Mar",
+   "resum": "60 mm en 40 minuts. La riera de Cabrera es desborda i arrossega una dona. Afecten Vilassar, Premià i Cabrils.",
+   "radar": "2026-10-17_radar.json",
+   "api_mm": 108,
+   "ia_mm": 50,
+   "perdua_mm_h": 12,
+   "estacio_api": "UP"
+  }
+ ],
+ "sense_radar": [],
+ "pendents_de_radar": []
+}
