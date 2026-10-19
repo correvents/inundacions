@@ -1,0 +1,38 @@
+name: Relleu (rieretes i zones baixes)
+
+on:
+  workflow_dispatch:
+    inputs:
+      pas:
+        description: "Mida de cel·la (m)"
+        default: "10"
+      llindar:
+        description: "Conca mínima d'una rierata (km²)"
+        default: "0.05"
+
+permissions:
+  contents: write
+
+jobs:
+  relleu:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy rasterio pyproj shapely pysheds pillow
+      - run: python3 scripts/relleu.py --config config/ridaura.json --pas "${{ inputs.pas }}" --llindar-km2 "${{ inputs.llindar }}"
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && exit 0
+          git commit -m "Relleu: rieretes i zones baixes"
+          git pull --rebase origin main && git push
+      - uses: actions/upload-artifact@v4
+        with:
+          name: relleu
+          path: /tmp/relleu/*.tif
