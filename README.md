@@ -1,0 +1,30 @@
+# Inundacions: previsió de crescudes per conca
+
+Sistema de previsió de crescudes a les rieres i rius de Catalunya. Combina la pluja observada (radar), la pluja prevista (models) i el nivell actual dels aforadors per estimar on serà l'aigua a cada moment.
+
+Inspirat en el visor ONOFRE del GRAF (pauguarquec/echotops-viewer), que mostra les dades però no fa modelització hidrològica.
+
+## Conca pilot: Ridaura (Platja d'Aro)
+
+| | A l'aforador (Santa Cristina d'Aro, ACA 171812-001) | A la desembocadura (Platja d'Aro) |
+|---|---|---|
+| Superfície | 35,3 km² | 70,7 km² |
+| Temps de concentració (Témez) | ~4,2 h | ~6,9 h |
+
+L'episodi del 3-4/10/2026 va fer passar el riu de 30 a 300 m³/s en 2 h, de manera que la resposta real en episodis intensos és més ràpida que la que dona Témez.
+
+## Pla
+
+1. ✅ Conca i xarxa de drenatge (MDE Copernicus 30 m; pendent passar a l'MDT de 5 m de l'ICGC)
+2. Dades: radar OPERA, nowcast, models AROME/WRF/ICON, aforador i pluviòmetre de l'ACA
+3. Capa 1: perill per pluja acumulada a la conca (1/3/6/24 h) comparada amb llindars
+4. Capa 2: model de cabal GR4J horari, propagació i correcció amb l'aforador
+5. Visor web (GitHub Pages)
+6. Validació amb episodis històrics
+
+## Estructura
+
+- `index.html`: visor
+- `data/ridaura/conca.geojson`: conca a la desembocadura, conca a l'aforador i xarxa de drenatge
+- `scripts/retalla_mde.py`, `scripts/delimita_conca.py`, `scripts/dibuixa_conca.py`: delimitació de la conca
+- `docs/`: recerca de models i rieres litorals de risc

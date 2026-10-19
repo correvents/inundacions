@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inundacions · Ridaura</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #f4f6f8; color: #1b2733; }
+  #app { display: flex; height: 100%; }
+  #mapa { flex: 1; }
+  #panell { width: 320px; padding: 16px; overflow-y: auto; background: #fff; border-left: 1px solid #dde3ea; box-sizing: border-box; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .sub { color: #5b6b7b; font-size: 13px; margin-bottom: 16px; }
+  .targeta { border: 1px solid #dde3ea; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  .targeta h2 { font-size: 14px; margin: 0 0 6px; }
+  .fila { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
+  .fila span:last-child { font-weight: 600; }
+  .pendent { color: #8a96a3; font-size: 13px; }
+  @media (max-width: 700px) { #app { flex-direction: column; } #panell { width: 100%; height: 45%; border-left: 0; border-top: 1px solid #dde3ea; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="mapa"></div>
+  <div id="panell">
+    <h1>Ridaura · Platja d'Aro</h1>
+    <div class="sub">Conca pilot del sistema de previsió de crescudes</div>
+    <div id="conques"></div>
+    <div class="targeta"><h2>Perill per pluja acumulada</h2><div class="pendent">Pendent (capa 1)</div></div>
+    <div class="targeta"><h2>Cabal previst</h2><div class="pendent">Pendent (capa 2)</div></div>
+  </div>
+</div>
+<script>
+const mapa = L.map('mapa').setView([41.815, 2.99], 12);
+L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', {
+  maxZoom: 18, attribution: '© Institut Cartogràfic i Geològic de Catalunya'
+}).addTo(mapa);
+
+const COLORS = ['#2b7bba', '#e08a2c'];
+fetch('data/ridaura/conca.geojson').then(r => r.json()).then(fc => {
+  const conques = fc.features.filter(f => f.geometry.type.includes('Polygon'));
+  const xarxa = fc.features.filter(f => f.geometry.type.includes('LineString'));
+  conques.forEach((f, i) => {
+    L.geoJSON(f, { style: { color: COLORS[i], weight: 2, fillOpacity: i ? 0.25 : 0.12 } })
+      .bindTooltip(f.properties.nom).addTo(mapa);
+    const p = f.properties;
+    document.getElementById('conques').insertAdjacentHTML('beforeend', `
+      <div class="targeta" style="border-left:4px solid ${COLORS[i]}">
+        <h2>${p.nom}</h2>
+        <div class="fila"><span>Superfície</span><span>${p.area_km2} km²</span></div>
+        <div class="fila"><span>Longitud del curs</span><span>${p.L_km} km</span></div>
+        <div class="fila"><span>Cota màx. / mín.</span><span>${p.zmax} / ${p.zmin} m</span></div>
+        <div class="fila"><span>Temps de concentració (Témez)</span><span>${p.tc_temez_h.toFixed(1)} h</span></div>
+      </div>`);
+  });
+  L.geoJSON({ type: 'FeatureCollection', features: xarxa }, { style: { color: '#0b4f8a', weight: 1.2 } }).addTo(mapa);
+  mapa.fitBounds(L.geoJSON(conques[0]).getBounds(), { padding: [20, 20] });
+});
+L.marker([41.81814, 2.97912]).bindPopup("Aforador ACA 171812-001<br>Santa Cristina d'Aro (Ridaura)").addTo(mapa);
+L.circleMarker([41.805, 3.0672], { radius: 7, color: '#c0392b', fillOpacity: 0.9 }).bindPopup("Desembocadura (Platja d'Aro)").addTo(mapa);
+</script>
+</body>
+</html>
