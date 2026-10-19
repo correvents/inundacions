@@ -28,6 +28,58 @@
     "https://www.gerio.cat/noticia/1757796/reobren-el-pont-de-platja-d-aro-afectat-per-una-esquerda-arran-del-desbordament-del-ridaura",
     "https://es.ara.cat/sociedad/habiamos-visto-litoral-recuperarse-estragos-trombas-agua_1_5869549.html"
    ]
+  },
+  {
+   "id": "2026-05-18",
+   "titol": "18 de maig de 2026: xàfec al centre",
+   "radar": "2026-05-18_radar.json",
+   "ia_mm": 60,
+   "resum": "Pluja intensa a migdia. L'aigua inunda l'avinguda (s'Agaró / Platja d'Aro) fins als genolls en alguns punts; comerços tancats.",
+   "carrers": [
+    "Avinguda de s'Agaró"
+   ],
+   "llocs": [],
+   "fonts": [
+    "https://www.tvcostabrava.com/redaccio/medi-ambient/el-temps/la-pluja-intensa-provoca-les-primeres-incidencies-al-baix-emporda"
+   ]
+  },
+  {
+   "id": "2026-01-20",
+   "titol": "20 de gener de 2026: temporal",
+   "radar": "2026-01-19_radar.json",
+   "ia_mm": 40,
+   "resum": "Temporal de llevant. Es tallen els carrers propers al Ridaura, el barri de la Coma i el Rec del Molí (Castell d'Aro) i la riera nord a la zona d'Aquadiver; passeig marítim tancat.",
+   "carrers": [
+    "Passeig del Ridaura",
+    "Carrer de la Coma",
+    "Passeig Marítim"
+   ],
+   "llocs": [
+    "Aquadiver (riera nord)",
+    "Rec del Molí"
+   ],
+   "fonts": [
+    "https://www.tvcostabrava.com/redaccio/societat/seguretat-/castell-daro-platja-daro-i-sagaro-suspenen-activitats-i-tanquen-carrers-pel-temporal"
+   ]
+  },
+  {
+   "id": "2024-09-23",
+   "titol": "23 de setembre de 2024: xàfec de 25 mm en 30 min",
+   "radar": "2024-09-23_radar.json",
+   "ia_mm": 60,
+   "resum": "25,3 mm en mitja hora a Castell d'Aro (18,6 en 10 min), més de 60 mm en menys d'una hora. Uns 60 comerços del centre afectats.",
+   "carrers": [
+    "Avinguda de s'Agaró"
+   ],
+   "llocs": [
+    "Rotonda de l'antic Magic Park",
+    "Sortida 314 de la C-31 (giratori dels Xais)"
+   ],
+   "fonts": [
+    "https://www.radiocapital.cat/un-aiguat-inunda-carrers-de-platja-daro-i-fa-tallar-una-sortida-de-la-c-31-2/",
+    "https://www.gerio.cat/noticia/un-fort-xafec-inunda-el-centre-de-platja-daro-afectant-baixos-i-vehicles",
+    "https://www.tvcostabrava.com/laia-campos/societat/meteo/platja-daro-fa-balanc-de-les-inundacions-dahir-la-tarda"
+   ]
   }
  ],
  "sense_radar": [
@@ -49,9 +101,6 @@
   }
  ],
  "pendents_de_radar": [
-  "2026-05-18",
-  "2026-01-20",
-  "2024-09-23",
   "2020-01-21",
   "2019-10-22",
   "2018-11-18"

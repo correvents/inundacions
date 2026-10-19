@@ -92,7 +92,10 @@ def main():
                 falten.append(f"{ep['id']}: {nom}")
     (d / "episodis" / "premsa.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": feats},
                                                               ensure_ascii=False, separators=(",", ":")))
-    disponibles = [ep for ep in EPISODIS if (d / "episodis" / ep["radar"]).exists()]
+    def te_radar(ep):                     # el fitxer existeix i no és buit (si el format de l'arxiu no s'ha pogut llegir, tot és 0)
+        f = d / "episodis" / ep["radar"]
+        return f.exists() and any(v > 0 for fila in json.loads(f.read_text())["mm"] for v in fila)
+    disponibles = [ep for ep in EPISODIS if te_radar(ep)]
     (d / "episodis" / "index.json").write_text(json.dumps({"episodis": disponibles, "sense_radar": SENSE_RADAR,
                                                            "pendents_de_radar": [ep["id"] for ep in EPISODIS if ep not in disponibles]},
                                                           ensure_ascii=False, indent=1))
