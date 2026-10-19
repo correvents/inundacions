@@ -28,7 +28,7 @@ L'episodi del 3-4/10/2026 va fer passar el riu de 30 a 300 m³/s en 2 h, de mane
 - **Supabase** (projecte minairo, esquema `inundacions`) guarda els resultats: `observacions`, `pluja_conca`, `previsions_cabal`, `avisos`. Lectura pública; escriptura només amb la clau secreta.
 - **GitHub Pages** serveix el visor, que llegeix de Supabase.
 
-Secrets del repo (Settings → Secrets and variables → Actions): `SUPABASE_URL`, `SUPABASE_SECRET_KEY`.
+Secret del repo (Settings → Secrets and variables → Actions): `SUPABASE_SECRET_KEY`.
 
 ## Estructura
 
