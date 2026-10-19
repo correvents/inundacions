@@ -1,0 +1,45 @@
+name: Aforadors ACA propers a un punt
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        required: true
+      punts:
+        description: "nom:lat:lon separats per espais"
+        default: "granollers:41.608:2.288 cabrera:41.528:2.393"
+      km:
+        default: "25"
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  lista:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: aca_arxiu
+          run-id: ${{ inputs.run_id }}
+          github-token: ${{ github.token }}
+          path: /tmp/art
+      - run: |
+          tar -xzf /tmp/art/aca_arxiu.tar.gz -C /tmp
+          python3 - <<'PY'
+          import csv, math
+          rows = list(csv.DictReader(open("/tmp/aca/sensors.csv")))
+          print("columnes:", list(rows[0].keys()), "total", len(rows))
+          for p in "${{ inputs.punts }}".split():
+              n, la, lo = p.split(":"); la, lo = float(la), float(lo)
+              print("==", n)
+              out = []
+              for r in rows:
+                  try: a, b = float(r["lat"]), float(r["lon"])
+                  except ValueError: continue
+                  km = math.hypot((a - la) * 111, (b - lo) * 111 * math.cos(math.radians(la)))
+                  if km <= float("${{ inputs.km }}") and int(r["mesures"] or 0) > 0: out.append((km, r))
+              for km, r in sorted(out, key=lambda x: x[0]):
+                  print(f"{km:5.1f} km {r['provider']} {r['sensor']} {r['tipus']} {r['unitat']} {r['descripcio'][:50]} n={r['mesures']} {r['primera'][:10]}..{r['ultima'][:10]} ({r['lat']},{r['lon']})")
+          PY
