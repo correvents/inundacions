@@ -2,12 +2,12 @@
 """Model pluja → cabal de la Ridaura a l'aforador (capa 2 del pla), calibrat amb un episodi observat.
 
 Model agregat a pas de 5 minuts, pensat per a crescudes ràpides de conques petites:
-  - pèrdues amb el llindar d'escorrentia P0 (mètode SCS, el que fa servir l'ACA):
-        E acumulada = (P - P0)² / (P + 4·P0)  si P > P0
-  - la pluja neta es propaga amb una cascada de Nash (n dipòsits lineals de constant k),
+  - pèrdues amb llindar: la conca reté tota la pluja fins a Ia mm acumulats; després escorre una fracció C
+    (el 3-4/10/2026 la Ridaura no va respondre fins a ~150 mm: sòls secs després de l'estiu),
+  - la pluja neta es propaga amb n dipòsits no lineals: Q = (S/K)^(1/m),
   - cabal de base constant (el de l'inici de l'episodi).
-Paràmetres calibrats: P0 (mm), k (h) i n (1–5). El factor del radar f es fixa (per defecte 1: el 3-4/10/2026
-el radar va donar 195 mm a la conca i el pluviòmetre de l'ACA 198 mm); amb un sol episodi P0 i f no es poden separar.
+Paràmetres calibrats: Ia (mm), C, K, m. n es prova d'1 a 2. La pluja es pot prendre del radar
+(mitjana de la conca) o del pluviòmetre de l'ACA a l'aforador (un sol punt).
 
 Ús:  python3 scripts/model_cabal.py --config config/ridaura.json --des 2026-10-03T00:00 --fins 2026-10-05T00:00
      (llegeix Supabase; amb --csv llegeix un CSV fet amb --exporta)
@@ -21,18 +21,19 @@ from scipy.optimize import minimize
 DT = 5          # minuts
 
 
-def simula(pluja, area_km2, q_base, p0, k_h, f=1.0, n=3):
+def simula(pluja, area_km2, q_base, ia, c, k, m, n=2):
     """Cabal (m³/s) a cada pas a partir de la pluja mitjana de la conca (mm per pas)."""
-    p = np.cumsum(pluja * f)
-    e = np.where(p > p0, (p - p0) ** 2 / (p + 4 * p0), 0.0)
-    neta = np.diff(e, prepend=0.0)                                   # mm per pas
+    p = np.cumsum(pluja)
+    neta = np.diff(c * np.maximum(p - ia, 0.0), prepend=0.0)          # mm per pas
     entrada = neta * area_km2 * 1000 / (DT * 60)                     # m³/s
-    a = DT / 60 / max(k_h, 1e-3)                                     # fracció que surt de cada dipòsit per pas
+    sub, h = 3, DT * 60 / 3
     s = np.zeros(n); q = np.empty_like(entrada)
     for i, x in enumerate(entrada):
         flux = x
         for j in range(n):
-            s[j] += flux; flux = s[j] * a / (1 + a); s[j] -= flux   # dipòsit lineal (implícit, estable)
+            for _ in range(sub):                                     # dS/dt = entrada - (S/K)^(1/m)
+                s[j] = max(s[j] + (flux - (s[j] / k) ** (1 / m)) * h, 0.0)
+            flux = (s[j] / k) ** (1 / m)
         q[i] = flux
     return q + q_base
 
@@ -42,25 +43,23 @@ def nse(obs, sim):
     return 1 - np.sum((obs[ok] - sim[ok]) ** 2) / np.sum((obs[ok] - obs[ok].mean()) ** 2)
 
 
-def calibra(pluja, obs, area_km2, f=1.0):
+def calibra(pluja, obs, area_km2):
     q_base = max(float(np.nanmin(obs[: 12 * 6])), 0.0) if np.isfinite(obs[: 12 * 6]).any() else 0.0
     def cost(x, n):
-        p0, k = x
-        if p0 < 1 or k < 0.05:
+        ia, c, k, m = x
+        if ia < 0 or not 0 < c <= 1 or k <= 0 or not 0.15 < m < 1.5:
             return 1e9
-        sim = simula(pluja, area_km2, q_base, p0, k, f, n)
-        ok = ~np.isnan(obs)
-        # error quadràtic + penalització del pic (el que importa per a l'avís)
-        return np.mean((obs[ok] - sim[ok]) ** 2) + 0.5 * (np.nanmax(obs) - sim.max()) ** 2 / 10
+        return -nse(obs, simula(pluja, area_km2, q_base, ia, c, k, m, n))
     millor, n_millor = None, None
-    for n in range(1, 6):
-        for p0 in (10, 40, 80):
-            for k in (0.2, 0.6, 1.5):
-                r = minimize(cost, [p0, k], args=(n,), method="Nelder-Mead", options={"maxiter": 2000, "xatol": 1e-3, "fatol": 1e-3})
-                if millor is None or r.fun < millor.fun:
-                    millor, n_millor = r, n
-    p0, k = (float(v) for v in millor.x)
-    return {"P0_mm": round(p0, 2), "k_h": round(k, 3), "n": n_millor, "factor_radar": f, "q_base_m3s": round(q_base, 3)}
+    for n in (1, 2):
+        for ia in (40, 90, 140):
+            for k in (1e4, 3e5):
+                for m in (0.3, 0.6, 1.0):
+                    r = minimize(cost, [ia, 0.6, k, m], args=(n,), method="Nelder-Mead", options={"maxiter": 600})
+                    if millor is None or r.fun < millor.fun:
+                        millor, n_millor = r, n
+    ia, c, k, m = (float(v) for v in millor.x)
+    return {"Ia_mm": round(ia, 1), "C": round(c, 3), "K": round(k, 1), "m": round(m, 3), "n": n_millor, "q_base_m3s": round(q_base, 3)}
 
 
 def llegeix_supabase(cfg, ini, fi, font="radar"):
@@ -98,7 +97,6 @@ def main():
     ap.add_argument("--des", required=True)
     ap.add_argument("--fins", required=True)
     ap.add_argument("--csv")
-    ap.add_argument("--factor-radar", type=float, default=1.0)
     ap.add_argument("--font", choices=["radar", "pluviometre"], default="radar")
     ap.add_argument("--exporta", help="només desa un CSV amb temps, pluja radar, pluja pluviòmetre i cabal, i acaba")
     a = ap.parse_args()
@@ -116,15 +114,15 @@ def main():
     pl, qo = llegeix_csv(a.csv, a.font) if a.csv else llegeix_supabase(cfg, ini, fi, a.font)
     pluja = np.array([pl.get(t, 0.0) for t in temps])
     obs = np.array([qo.get(t, np.nan) for t in temps])
-    print(f"{len(pl)} passos de radar ({pluja.sum():.1f} mm), {np.isfinite(obs).sum()} de cabal (pic {np.nanmax(obs):.1f} m³/s)")
+    print(f"{len(pl)} passos de pluja ({pluja.sum():.1f} mm), {np.isfinite(obs).sum()} de cabal (pic {np.nanmax(obs):.1f} m³/s)")
     area = cfg["cabals_T"]["aforador"]["area_km2"]
-    par = calibra(pluja, obs, area, a.factor_radar)
-    sim = simula(pluja, area, par["q_base_m3s"], par["P0_mm"], par["k_h"], par["factor_radar"], par["n"])
+    par = calibra(pluja, obs, area)
+    sim = simula(pluja, area, par["q_base_m3s"], par["Ia_mm"], par["C"], par["K"], par["m"], par["n"])
     ip_o, ip_s = int(np.nanargmax(obs)), int(np.argmax(sim))
     par.update({"font_pluja": a.font, "punt": "aforador", "area_km2": area, "episodi": [a.des, a.fins], "NSE": round(float(nse(obs, sim)), 3),
                 "pic_obs_m3s": round(float(obs[ip_o]), 1), "pic_sim_m3s": round(float(sim[ip_s]), 1),
                 "hora_pic_obs": temps[ip_o].isoformat(), "hora_pic_sim": temps[ip_s].isoformat(),
-                "pluja_radar_mm": round(float(pluja.sum()), 1)})
+                "pluja_mm": round(float(pluja.sum()), 1)})
     print(json.dumps(par, indent=2, ensure_ascii=False))
     Path(f"config/{cfg['conca']}_model_{a.font}.json").write_text(json.dumps(par, indent=2, ensure_ascii=False) + "\n")
     try:
@@ -135,7 +133,7 @@ def main():
         for nom, c in (("Q10", "#c0392b"), ("Q50", "#e67e22"), ("Q100", "#b7950b"), ("Q500", "#2e86c1")):
             ax.axhline(cfg["cabals_T"]["aforador"][nom], color=c, ls=":", lw=1); ax.text(temps[0], cfg["cabals_T"]["aforador"][nom], nom, color=c, fontsize=8, va="bottom")
         ax.set_ylabel("m³/s"); ax.legend(loc="upper right")
-        ax2 = ax.twinx(); ax2.bar(temps, pluja * par["factor_radar"] * 12, width=DT / 1440, color="tab:blue", alpha=0.4)
+        ax2 = ax.twinx(); ax2.bar(temps, pluja * 12, width=DT / 1440, color="tab:blue", alpha=0.4)
         ax2.set_ylim(ax2.get_ylim()[1] * 3, 0); ax2.set_ylabel("pluja (mm/h)")
         ax.set_title(f"Ridaura a Santa Cristina d'Aro · {a.font} · calibratge {a.des[:10]} – {a.fins[:10]} (UTC)")
         fig.tight_layout(); fig.savefig(f"data/{cfg['conca']}/calibratge_{a.font}.png", dpi=120)
