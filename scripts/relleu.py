@@ -14,7 +14,7 @@ Escriu:
   /tmp/relleu/mdt.tif (la reixa, per a la simulació 2D; no va al repo)
 
 Ús:  python3 scripts/relleu.py --config config/ridaura.json [--pas 10] [--llindar-km2 0.05]"""
-import argparse, json, sys
+import argparse, json, sys, time
 from pathlib import Path
 import numpy as np, requests
 np.in1d = np.isin                      # pysheds encara fa servir np.in1d (numpy 2)
@@ -42,7 +42,14 @@ def baixa_mdt():
             p = [("SERVICE", "WCS"), ("VERSION", "2.0.1"), ("REQUEST", "GetCoverage"), ("COVERAGEID", "Elevacion25830_5"),
                  ("SUBSET", f"x({xa:.0f},{min(xa + mida, x1):.0f})"), ("SUBSET", f"y({ya:.0f},{min(ya + mida, y1):.0f})"),
                  ("FORMAT", "image/tiff")]
-            r = requests.get(WCS, params=p, timeout=180)
+            for intent in range(5):          # el WCS de l'IGN torna 500 de tant en tant
+                try:
+                    r = requests.get(WCS, params=p, timeout=180)
+                    if r.content[:2] in (b"II", b"MM"):
+                        break
+                except requests.RequestException:
+                    pass
+                time.sleep(10 * (intent + 1))
             if r.content[:2] not in (b"II", b"MM"):
                 sys.exit(f"WCS {xa:.0f},{ya:.0f}: HTTP {r.status_code} {r.text[:300]}")
             fitxer = TMP / f"mdt5_{len(trossos)}.tif"
