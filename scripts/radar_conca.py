@@ -60,20 +60,28 @@ def punts(geom):
 def mostreja(h5, lon, lat):
     """dBZ a cada punt; NaN = sense cobertura; -inf = cobertura sense eco."""
     with h5py.File(h5, "r") as h:
-        grup = "dataset1/data1"
-        for g in h["dataset1"]:                  # el compost DBZH_QIND porta també la capa de qualitat
-            q = h[f"dataset1/{g}/what"].attrs.get("quantity") if f"dataset1/{g}/what" in h else None
-            if q is not None and (q.decode() if isinstance(q, bytes) else str(q)) == "DBZH":
-                grup = f"dataset1/{g}"
+        # ODIM: els atributs 'what' poden ser a datasetN/data1 (ara) o a datasetN (arxiu antic, amb la capa QIND a dataset2)
+        grup, wt = None, None
+        for ds_nom in [k for k in h if k.startswith("dataset")]:
+            for cami in (f"{ds_nom}/data1/what", f"{ds_nom}/what"):
+                if cami in h:
+                    q = h[cami].attrs.get("quantity")
+                    if q is not None and (q.decode() if isinstance(q, bytes) else str(q)) == "DBZH":
+                        grup, wt = f"{ds_nom}/data1", h[cami].attrs
+                        break
+            if grup:
+                break
+        if grup is None:
+            grup, wt = "dataset1/data1", h["dataset1/data1/what"].attrs
         ds = h[grup + "/data"]
-        wt, wh = h[grup + "/what"].attrs, h["where"].attrs
+        wh = h["where"].attrs
         gain, off, nodata, undet = (float(wt[k]) for k in ("gain", "offset", "nodata", "undetect"))
         pd = wh["projdef"].decode() if isinstance(wh["projdef"], bytes) else str(wh["projdef"])
         tr = Transformer.from_crs("EPSG:4326", CRS.from_proj4(pd), always_xy=True)
         xul, yul = tr.transform(float(wh["UL_lon"]), float(wh["UL_lat"]))
         X, Y = tr.transform(lon, lat)
-        col = np.rint((X - xul) / float(wh["xscale"])).astype(int)
-        row = np.rint((yul - Y) / float(wh["yscale"])).astype(int)
+        col = np.floor((X - xul) / float(wh["xscale"])).astype(int)     # UL és la cantonada del primer píxel
+        row = np.floor((yul - Y) / float(wh["yscale"])).astype(int)
         r0, c0 = row.min(), col.min()
         tros = ds[r0:row.max() + 1, c0:col.max() + 1].astype(np.float64)
     v = tros[row - r0, col - c0]
