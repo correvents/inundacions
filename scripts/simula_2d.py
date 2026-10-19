@@ -9,7 +9,7 @@ amb el pendent de la superfície de l'aigua i la fricció de Manning, i la làmi
   - Pèrdues: llindar per cel·la. Terreny natural: --ia-natural mm (calibrat amb l'aforador el 3-4/10/2026).
     Zones construïdes (ESA WorldCover 2021, classe 50): --ia-urba mm.
     Després del llindar, la làmina d'aigua de cada cel·la perd --perdua-natural mm/h (infiltració) al terreny natural i
-    --clavegueram mm/h a les zones construïdes (embornals). Així l'aigua embassada també es buida quan para de ploure.
+    --clavegueram mm/h a les zones construïdes (embornals), excepte on el calat supera --h-llera (llera saturada). Així l'aigua embassada també es buida quan para de ploure.
   - Fricció: n de Manning (--n-natural, --n-urba).
   - Mar i vores del domini: l'aigua surt.
 Sortides (data/<conca>/sim2d/<id>/): un PNG de calat cada --cada minuts en lat/lon, calat màxim, l'hidrograma simulat a
@@ -97,6 +97,7 @@ def main():
     ap.add_argument("--ia-natural", type=float, default=150)
     ap.add_argument("--ia-urba", type=float, default=5)
     ap.add_argument("--perdua-natural", type=float, default=12, help="infiltració un cop superat el llindar (mm/h)")
+    ap.add_argument("--h-llera", type=float, default=0.1, help="calat a partir del qual la cel·la és llera saturada i no infiltra (m)")
     ap.add_argument("--clavegueram", type=float, default=30, help="capacitat dels embornals a les zones construïdes (mm/h)")
     ap.add_argument("--n-natural", type=float, default=0.06, help="n de Manning del terreny natural")
     ap.add_argument("--n-urba", type=float, default=0.02, help="n de Manning de les zones construïdes")
@@ -206,7 +207,8 @@ def main():
         neta = np.maximum(pluja_acum - ia, 0.0)
         h += (neta - neta_ant) / 1000
         neta_ant = neta
-        np.maximum(h - np.where(pluja_acum >= ia, sorti * dt, 0.0), 0.0, out=h)
+        # les lleres on ja corre aigua (> --h-llera m) tenen el fons saturat: no hi perden
+        np.maximum(h - np.where((pluja_acum >= ia) & (h < a.h_llera), sorti * dt, 0.0), 0.0, out=h)
         pas_temps(z, h, qx, qy, n, dx, dt, actiu)
         np.maximum(hmax, h, out=hmax)
         t15[(h > 0.15) & ~np.isfinite(t15)] = t_seg / 60
@@ -225,7 +227,7 @@ def main():
         "limits": [[s, w], [nn, e]], "pas_m": dx, "inici_utc": ini.strftime("%Y-%m-%dT%H:%M"),
         "graella_utm": {"crs": str(crs), "x0": tr.c, "y0": tr.f, "nf": nf, "nc": nc, "fitxers": {"calat_max_cm.u2": "uint16 cm",
                         "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png",
-        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "manning": {"natural": a.n_natural, "construit": a.n_urba},
+        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "h_llera_m": a.h_llera, "manning": {"natural": a.n_natural, "construit": a.n_urba},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2]}, ensure_ascii=False))
     print(f"Fet en {time.time() - rellotge:.0f} s: {len(fotos)} fotogrames")
