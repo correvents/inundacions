@@ -29,7 +29,8 @@ CAPES = {
     "snczi_costa_T100": (MITECO, "costas:zim_laminas_q100"),
     "snczi_costa_T500": (MITECO, "costas:zim_laminas_q500"),
 }
-OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
+OVERPASS = ["https://overpass.private.coffee/api/interpreter", "https://overpass-api.de/api/interpreter",
+            "https://overpass.kumi.systems/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter"]
 
 
 def wfs(url, capa, bbox):
@@ -63,7 +64,7 @@ out geom tags;"""
             r = requests.post(u, data={"data": q}, headers=UA, timeout=300)
             if r.ok:
                 return r.json()
-            print(f"  overpass {u}: HTTP {r.status_code}")
+            print(f"  overpass {u}: HTTP {r.status_code} {r.text[:150]!r}")
         except requests.RequestException as e:
             print(f"  overpass {u}: {type(e).__name__}")
     return None
