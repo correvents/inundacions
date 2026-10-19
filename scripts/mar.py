@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Estat del mar davant de Platja d'Aro (onatge i nivell del mar) per a cada episodi de pluja.
 
-Font: Open-Meteo Marine API (reanàlisi i models d'onatge; nivell del mar amb marea i sobreelevació quan n'hi ha).
+Font: Open-Meteo Marine API: onatge de la reanàlisi ERA5 fins al 2021 i dels models operatius des del 2022; nivell del
+mar (marea i sobreelevació) només des del 2022.
 Hipòtesi a comprovar: amb mar alta o llevantada forta l'aigua de pluja no surt pel clavegueram i les rieres, i hi ha
 més inundació amb la mateixa pluja.
 Escriu data/<conca>/model/mar_horari.csv (temps UTC, onatge m, direcció, període, nivell del mar m).
@@ -13,6 +14,7 @@ import requests
 
 LAT, LON = 41.805, 3.075
 VARS = "wave_height,wave_direction,wave_period,sea_level_height_msl"
+VARS_ERA5 = "wave_height,wave_direction,wave_period"          # abans del 2022 només hi ha la reanàlisi ERA5 (sense nivell)
 
 
 def main():
@@ -28,13 +30,14 @@ def main():
         for i in range(4):
             try:
                 r = requests.get("https://marine-api.open-meteo.com/v1/marine", timeout=120, params={
-                    "latitude": LAT, "longitude": LON, "hourly": VARS, "start_date": ini, "end_date": fi, "timezone": "GMT"})
+                    "latitude": LAT, "longitude": LON, "hourly": VARS if any_ >= 2022 else VARS_ERA5,
+                    **({} if any_ >= 2022 else {"models": "era5_ocean"}), "start_date": ini, "end_date": fi, "timezone": "GMT"})
                 r.raise_for_status(); break
             except Exception as e:
                 print(any_, "reintent", e, getattr(e, "response", None) and e.response.text[:300]); time.sleep(10 * (i + 1))
         else:
             continue
-        h = r.json()["hourly"]
+        h = r.json()["hourly"]; h.setdefault("sea_level_height_msl", [None] * len(h["time"]))
         n = sum(v is not None for v in h["wave_height"]); m = sum(v is not None for v in h["sea_level_height_msl"])
         print(any_, len(h["time"]), "hores; amb onatge", n, "amb nivell", m)
         files += list(zip(h["time"], h["wave_height"], h["wave_direction"], h["wave_period"], h["sea_level_height_msl"]))
