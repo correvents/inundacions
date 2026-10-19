@@ -1,0 +1,30 @@
+name: Explora fonts (temporal)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  explora:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Capes de zones inundables (MITECO / SNCZI)
+        run: |
+          for svc in "https://gis.miteco.gob.es/geoserver/agua/wfs?service=WFS&request=GetCapabilities" \
+                     "https://gis.miteco.gob.es/geoserver/wfs?service=WFS&request=GetCapabilities" \
+                     "https://gis.miteco.gob.es/geoserver/agua/wms?service=WMS&request=GetCapabilities"; do
+            echo "=== $svc"
+            curl -sS --max-time 60 "$svc" -o caps.xml -w "HTTP %{http_code} %{size_download} bytes\n" || true
+            grep -oE "<(Name|wfs:Name)>[^<]*</(Name|wfs:Name)>" caps.xml | sed -E 's/<[^>]+>//g' | grep -iE "q10|q100|q500|lamin|inund|zi_|arpsi|dph|flujo|peligro" | sort -u | head -80 || true
+          done
+      - name: ACA (geoserveis)
+        run: |
+          for svc in "https://sig.gencat.cat/ows/AIGUA/wms?service=WMS&request=GetCapabilities" \
+                     "https://aplicacions.aca.gencat.cat/geoserver/wms?service=WMS&request=GetCapabilities" \
+                     "https://aplicacions.aca.gencat.cat/geoserver/wfs?service=WFS&request=GetCapabilities"; do
+            echo "=== $svc"
+            curl -sS --max-time 60 "$svc" -o caps.xml -w "HTTP %{http_code} %{size_download} bytes\n" || true
+            grep -oE "<(Name|wfs:Name)>[^<]*</(Name|wfs:Name)>" caps.xml | sed -E 's/<[^>]+>//g' | grep -iE "inund|zona|t10|t100|t500|risc" | sort -u | head -60 || true
+          done
+      - name: Overpass
+        run: curl -sS --max-time 60 "https://overpass-api.de/api/status" | head -5
