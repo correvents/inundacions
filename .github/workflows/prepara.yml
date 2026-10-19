@@ -29,4 +29,4 @@ jobs:
           git add data/
           git diff --cached --quiet && exit 0
           git commit -m "Capes estàtiques: zones inundables i elements sensibles"
-          git pull --rebase origin main && git push
+          for i in 1 2 3 4; do git pull --rebase origin main && git push && exit 0; sleep $((i*5)); done; exit 1

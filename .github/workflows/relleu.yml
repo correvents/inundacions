@@ -31,7 +31,7 @@ jobs:
           git add data/
           git diff --cached --quiet && exit 0
           git commit -m "Relleu: rieretes i zones baixes"
-          git pull --rebase origin main && git push
+          for i in 1 2 3 4; do git pull --rebase origin main && git push && exit 0; sleep $((i*5)); done; exit 1
       - uses: actions/upload-artifact@v4
         with:
           name: relleu
