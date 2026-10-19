@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pluja sobre el relleu · Ridaura</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root { --vora: #dde3ea; --suau: #5b6b7b; }
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #f4f6f8; color: #1b2733; }
+  #app { display: flex; height: 100%; }
+  #mapa { flex: 1; }
+  #panell { width: 390px; padding: 14px 16px; overflow-y: auto; background: #fff; border-left: 1px solid var(--vora); box-sizing: border-box; }
+  h1 { font-size: 18px; margin: 0 0 2px; }
+  h2 { font-size: 14px; margin: 0 0 6px; }
+  .sub { color: var(--suau); font-size: 13px; margin-bottom: 12px; }
+  .targeta { border: 1px solid var(--vora); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  .fila { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 2px 0; }
+  .fila span:last-child { font-weight: 600; text-align: right; }
+  .franja { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+  .botons { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+  .botons button { padding: 5px 10px; border: 1px solid var(--vora); background: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; color: #1b2733; }
+  .botons button.actiu { background: #1b2733; color: #fff; border-color: #1b2733; }
+  label.ctl { display: block; font-size: 13px; margin-top: 8px; }
+  label.ctl b { float: right; }
+  input[type=range] { width: 100%; }
+  select { padding: 5px; border: 1px solid var(--vora); border-radius: 6px; width: 100%; }
+  canvas#graf { width: 100%; height: 120px; display: block; cursor: crosshair; }
+  .nota { color: var(--suau); font-size: 12px; }
+  .llegenda span { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 3px 0 7px; vertical-align: middle; }
+  a { color: #0b4f8a; }
+  .carrega { position: absolute; z-index: 1000; left: 50%; top: 40%; transform: translateX(-50%); background: #fff; padding: 10px 16px; border-radius: 8px; box-shadow: 0 2px 8px #0003; }
+  @media (max-width: 760px) { #app { flex-direction: column; } #panell { width: 100%; height: 55%; border-left: 0; border-top: 1px solid var(--vora); } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="mapa"><div class="carrega" id="carrega">Carregant el relleu…</div></div>
+  <div id="panell">
+    <h1>Pluja sobre el relleu</h1>
+    <div class="sub">Tria una franja de pluja de l'episodi del 4 d'octubre i mira cap on corre l'aigua i on s'embassa ·
+      <a href="episodi.html">reproducció</a> · <a href="./">visor</a></div>
+
+    <div class="targeta">
+      <div class="franja" id="franja">–</div>
+      <div class="botons" id="durades">
+        <button data-h="1">1 h</button><button data-h="3">3 h</button><button data-h="6">6 h</button>
+        <button data-h="12">12 h</button><button data-h="0">tota la tempesta</button>
+      </div>
+      <canvas id="graf"></canvas>
+      <div class="nota">Pluja mitjana a la zona cada 15 min. Arrossega sobre la gràfica per triar la franja que vulguis.</div>
+      <label class="ctl">Final de la franja <b id="vfi"></b><input type="range" id="fi" min="0"></label>
+      <label class="ctl">Inici de la franja <b id="vini"></b><input type="range" id="ini" min="0"></label>
+    </div>
+
+    <div class="targeta">
+      <h2>Terreny i pluja</h2>
+      <label class="ctl">Estat del terreny abans de la franja
+        <select id="estat">
+          <option value="tempesta" selected>Ja ha plogut el que va ploure abans (episodi real)</option>
+          <option value="sec">Terreny sec: només compta aquesta franja</option>
+        </select></label>
+      <label class="ctl">Pluja que absorbeix el terreny natural <b id="via"></b>
+        <input type="range" id="ia" min="0" max="200" step="5" value="150"></label>
+      <div class="nota">150 mm és el que va absorbir la conca el 4/10 (sòls secs després de l'estiu). Amb sòls molls, 20–50 mm. Zones construïdes: 5 mm.</div>
+      <label class="ctl">Multiplicador de la pluja <b id="vmul"></b>
+        <input type="range" id="mul" min="0.5" max="3" step="0.1" value="1"></label>
+      <label class="ctl" style="font-weight:normal"><input type="checkbox" id="corregeix" checked> Corregir el radar amb el pluviòmetre (hora a hora)</label>
+      <label class="ctl">Què es dibuixa
+        <select id="capa">
+          <option value="aigua" selected>Cap on corre l'aigua i on s'embassa</option>
+          <option value="pluja">Pluja de la franja (mm)</option>
+          <option value="escola">Aigua que escola (mm)</option>
+        </select></label>
+      <div class="nota llegenda" id="llegenda"></div>
+    </div>
+
+    <div class="targeta" id="resum"></div>
+    <div class="targeta nota">
+      <b>Com es calcula.</b> Relleu: MDT de 5 m de l'IGN (LiDAR) agregat a cel·les de 20 m. Pluja: radar OPERA cada 15 min
+      corregit amb el pluviòmetre de l'ACA. A cada cel·la, la pluja que el terreny no absorbeix baixa pel pendent cap a la veïna
+      més baixa i s'acumula aigües avall; quan arriba a una clotada sense sortida l'omple fins al llindar abans de continuar.
+      El cabal és la mitjana de la franja (volum ÷ durada): no és la punta, que pot ser 2–4 vegades més alta, i no té en compte
+      el temps que l'aigua triga a baixar. Els carrers, clavegueres i murs no surten al relleu de 20 m.
+    </div>
+  </div>
+</div>
+<script>
+const mapa = L.map('mapa').setView([41.815, 3.0], 13);
+L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=topografic&STYLE=default&FORMAT=image/jpeg&TILEMATRIXSET=MON3857NW&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
+  maxZoom: 19, attribution: '© ICGC · Relleu: IGN (MDT 5 m) · Radar: EUMETNET OPERA · Pluviòmetre i aforador: ACA · Usos: ESA WorldCover'
+}).addTo(mapa);
+mapa.createPane('aigua').style.zIndex = 450;
+
+const $ = id => document.getElementById(id);
+const BASE = 'data/ridaura/';
+const DR = [0, 1, 1, 1, 0, -1, -1, -1], DC = [1, 1, 0, -1, -1, -1, 0, 1];   // 0=E 1=SE 2=S 3=SO 4=O 5=NO 6=N 7=NE
+const ESCALA = 2;                                                            // píxels per cel·la al dibuix
+let G, R, EP, N, A, z, zf, dir, urba, ridx, rcv, ordre, comp, compCel, compIni, nComp, terra;
+let cumR;            // pluja acumulada per cel·la de radar i fotograma, ja corregida: cumR[f * nR + r]
+let mitjana;         // pluja mitjana a la zona per fotograma (mm/15 min)
+let ini = 0, fi = 0, durada = 6, res = null, capa = null, marcadors = [];
+
+const hora = t => { const d = new Date(t + 'Z'); return d.toLocaleString('ca-ES', { timeZone: 'Europe/Madrid', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }); };
+const horaCurta = t => new Date(t + 'Z').toLocaleTimeString('ca-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' });
+const fmt = (x, d = 1) => x.toLocaleString('ca-ES', { maximumFractionDigits: d, minimumFractionDigits: d });
+
+Promise.all([
+  fetch(BASE + 'web/graella.json').then(r => r.json()),
+  fetch(BASE + 'web/graella.bin').then(r => r.arrayBuffer()),
+  fetch(BASE + 'episodis/2026-10-03_radar.json').then(r => r.json()),
+  fetch(BASE + 'episodis/2026-10-04.json').then(r => r.json()),
+]).then(([g, bin, rad, ep]) => {
+  G = g; R = rad; EP = ep;
+  prepara(bin);
+  $('carrega').remove();
+  fi = R.temps.findIndex(t => t >= '2026-10-04T10:00'); if (fi < 0) fi = R.temps.length - 1;
+  $('fi').max = $('ini').max = R.temps.length - 1;
+  triaDurada(6);
+  for (const b of document.querySelectorAll('#durades button')) b.onclick = () => triaDurada(+b.dataset.h);
+  $('fi').oninput = () => { fi = +$('fi').value; if (durada !== null) ini = durada ? Math.max(fi - durada * 4 + 1, 0) : 0; if (ini > fi) ini = fi; calcula(); };
+  $('ini').oninput = () => { ini = +$('ini').value; if (ini > fi) fi = ini; marcaDurada(null); calcula(); };
+  for (const id of ['estat', 'ia', 'mul', 'capa']) $(id).oninput = calcula;
+  $('corregeix').onchange = () => { pluges(); calcula(); };
+  arrossega();
+  mapa.fitBounds(G.limits);
+}).catch(e => { $('carrega').textContent = 'No s\'ha pogut carregar: ' + e.message; });
+
+function prepara(bin) {
+  const cap = nom => { const c = G.capes.find(c => c.nom === nom); const T = c.tipus.endsWith('u2') ? Uint16Array : Uint8Array;
+    return new T(bin, c.offset, c.bytes / T.BYTES_PER_ELEMENT); };
+  N = G.nf * G.nc; A = G.pas_m * G.pas_m;
+  z = cap('z_cm'); zf = cap('zomplert_cm'); dir = cap('dir'); urba = cap('urba'); ridx = cap('radar');
+  terra = new Uint8Array(N); for (let i = 0; i < N; i++) terra[i] = z[i] !== 65535;
+  // receptor de cada cel·la i ordre topològic (de capçalera cap avall)
+  rcv = new Int32Array(N).fill(-1);
+  const entra = new Int32Array(N);
+  for (let i = 0; i < N; i++) {
+    const d = dir[i]; if (d > 7 || !terra[i]) continue;
+    const r = Math.floor(i / G.nc) + DR[d], c = i % G.nc + DC[d];
+    if (r < 0 || r >= G.nf || c < 0 || c >= G.nc) continue;
+    const j = r * G.nc + c; if (!terra[j]) continue;
+    rcv[i] = j; entra[j]++;
+  }
+  ordre = new Int32Array(N); let n = 0, k = 0;
+  for (let i = 0; i < N; i++) if (!entra[i]) ordre[n++] = i;
+  while (k < n) { const j = rcv[ordre[k++]]; if (j >= 0 && --entra[j] === 0) ordre[n++] = j; }
+  // clotades: cel·les on el relleu omplert supera el terreny en 5 cm o més, agrupades per veïnatge
+  comp = new Int32Array(N).fill(-1); nComp = 0;
+  const pila = [], llista = [];
+  for (let i = 0; i < N; i++) {
+    if (comp[i] >= 0 || !terra[i] || zf[i] - z[i] < 5) continue;
+    comp[i] = nComp; pila.push(i);
+    while (pila.length) {
+      const p = pila.pop(); llista.push(p); const r = Math.floor(p / G.nc), c = p % G.nc;
+      for (let d = 0; d < 8; d++) {
+        const rr = r + DR[d], cc = c + DC[d]; if (rr < 0 || rr >= G.nf || cc < 0 || cc >= G.nc) continue;
+        const q = rr * G.nc + cc; if (comp[q] < 0 && terra[q] && zf[q] - z[q] >= 5) { comp[q] = nComp; pila.push(q); }
+      }
+    }
+    nComp++;
+  }
+  // cel·les de cada clotada, contigües: compCel[compIni[k] .. compIni[k+1])
+  compIni = new Int32Array(nComp + 1);
+  for (const p of llista) compIni[comp[p] + 1]++;
+  for (let k = 0; k < nComp; k++) compIni[k + 1] += compIni[k];
+  compCel = new Int32Array(llista.length); const pos = compIni.slice(0, nComp);
+  for (const p of llista) compCel[pos[comp[p]]++] = p;
+  // punts de referència: es desplacen a la cel·la de més drenatge del voltant (el riu del relleu de 20 m)
+  const acc = new Float64Array(N).fill(1);
+  for (let k = 0; k < N; k++) { const i = ordre[k]; if (rcv[i] >= 0) acc[rcv[i]] += acc[i]; }
+  G.cel = {};
+  for (const [nom, [r0, c0]] of Object.entries(G.punts)) {
+    let millor = r0 * G.nc + c0;
+    for (let r = r0 - 4; r <= r0 + 4; r++) for (let c = c0 - 4; c <= c0 + 4; c++)
+      if (r >= 0 && r < G.nf && c >= 0 && c < G.nc && acc[r * G.nc + c] > acc[millor]) millor = r * G.nc + c;
+    G.cel[nom] = millor;
+  }
+  G.areaKm2 = Object.fromEntries(Object.entries(G.cel).map(([k, i]) => [k, acc[i] * A / 1e6]));
+  pluges();
+}
+
+function pluges() {
+  const nR = R.lons.length * R.lats.length, nF = R.temps.length, corr = $('corregeix').checked;
+  cumR = new Float32Array((nF + 1) * nR);           // fila 0 = abans del primer fotograma
+  for (let f = 0; f < nF; f++) { const k = corr ? G.factor_radar[f] : 1;
+    for (let r = 0; r < nR; r++) cumR[(f + 1) * nR + r] = cumR[f * nR + r] + R.mm[f][r] * k; }
+  // pluja mitjana per fotograma sobre les cel·les de terra
+  const pes = new Float64Array(nR); let tot = 0;
+  for (let i = 0; i < N; i++) if (terra[i] && ridx[i] !== 65535) { pes[ridx[i]]++; tot++; }
+  mitjana = R.temps.map((_, f) => { let s = 0; for (let r = 0; r < nR; r++) s += pes[r] * R.mm[f][r] * (corr ? G.factor_radar[f] : 1); return s / tot; });
+}
+
+function triaDurada(h) {
+  durada = h; ini = h ? Math.max(fi - h * 4 + 1, 0) : 0;
+  if (!h) fi = R.temps.length - 1;
+  marcaDurada(h); calcula();
+}
+function marcaDurada(h) {
+  durada = h;
+  for (const b of document.querySelectorAll('#durades button')) b.classList.toggle('actiu', h !== null && +b.dataset.h === h);
+}
+
+let pendent = false;
+function calcula() { if (!pendent) { pendent = true; requestAnimationFrame(() => { pendent = false; calculaAra(); }); } }
+
+function calculaAra() {
+  $('fi').value = fi; $('ini').value = ini;
+  const t0 = new Date(R.temps[ini] + 'Z'); t0.setUTCMinutes(t0.getUTCMinutes() - R.interval_min);
+  const t0s = t0.toISOString().slice(0, 16);
+  $('franja').textContent = `${hora(t0s)} → ${horaCurta(R.temps[fi])}`;
+  $('vini').textContent = hora(t0s); $('vfi').textContent = hora(R.temps[fi]);
+  const ia = +$('ia').value, mul = +$('mul').value, sec = $('estat').value === 'sec';
+  $('via').textContent = ia + ' mm'; $('vmul').textContent = '×' + fmt(mul);
+  const nR = R.lons.length * R.lats.length, a0 = ini * nR, a1 = (fi + 1) * nR;
+  const segons = (fi - ini + 1) * R.interval_min * 60;
+  const pluja = new Float32Array(N), escola = new Float32Array(N), V = new Float64Array(N);
+  const E = (p, i) => Math.max(p - (urba[i] ? 5 : ia), 0);
+  let volTot = 0, maxP = 0, sumP = 0, nT = 0;
+  for (let i = 0; i < N; i++) {
+    if (!terra[i] || ridx[i] === 65535) continue;
+    const pa = cumR[a0 + ridx[i]] * mul, pb = cumR[a1 + ridx[i]] * mul, p = pb - pa;
+    const e = sec ? E(p, i) : E(pb, i) - E(pa, i);
+    pluja[i] = p; escola[i] = e; V[i] = e / 1000 * A; volTot += V[i];
+    if (p > maxP) maxP = p; sumP += p; nT++;
+  }
+  // l'aigua baixa pel pendent; a la sortida d'una clotada, primer l'omple
+  const cap = new Float64Array(nComp), guard = new Float64Array(nComp);
+  for (let k = 0; k < nComp; k++) for (let j = compIni[k]; j < compIni[k + 1]; j++) cap[k] += (zf[compCel[j]] - z[compCel[j]]) / 100 * A;
+  for (let k = 0; k < N; k++) {
+    const i = ordre[k], c = comp[i], j = rcv[i];
+    if (c >= 0 && (j < 0 || comp[j] !== c)) { const g = Math.min(V[i], cap[c] - guard[c]); guard[c] += g; V[i] -= g; }
+    if (j >= 0) V[j] += V[i];
+  }
+  // nivell de l'aigua a cada clotada amb el volum guardat
+  const calat = new Float32Array(N); let volBassals = 0, areaBassals = 0;
+  for (let k = 0; k < nComp; k++) {
+    if (guard[k] < 1) continue; volBassals += guard[k];
+    let lo = 1e9, hi = -1e9;
+    for (let j = compIni[k]; j < compIni[k + 1]; j++) { lo = Math.min(lo, z[compCel[j]]); hi = Math.max(hi, zf[compCel[j]]); }
+    lo /= 100; hi /= 100;
+    for (let it = 0; it < 30; it++) {
+      const L = (lo + hi) / 2; let v = 0;
+      for (let j = compIni[k]; j < compIni[k + 1]; j++) v += Math.max(L - z[compCel[j]] / 100, 0) * A;
+      if (v > guard[k]) hi = L; else lo = L;
+    }
+    for (let j = compIni[k]; j < compIni[k + 1]; j++) { const p = compCel[j], h = lo - z[p] / 100; if (h > 0) { calat[p] = h; if (h >= 0.1) areaBassals += A; } }
+  }
+  res = { pluja, escola, V, calat, segons };
+  dibuixa();
+  graf();
+  // resum i comparació amb l'aforador
+  const obsQ = (() => { // volum mesurat a l'aforador a la franja (sense el cabal de base d'abans de la tempesta)
+    const base = EP.q_aforador_obs[0] || 0; let v = 0;
+    EP.temps_utc.forEach((t, k) => { if (t > t0s && t <= R.temps[fi] && EP.q_aforador_obs[k] != null) v += Math.max(EP.q_aforador_obs[k] - base, 0) * EP.pas_min * 60; });
+    return v; })();
+  const fila = (a, b) => `<div class="fila"><span>${a}</span><span>${b}</span></div>`;
+  const punt = nom => res.V[G.cel[nom]];
+  $('resum').innerHTML = '<h2>Resultat de la franja</h2>' +
+    fila('Pluja mitjana / màxima', `${fmt(sumP / nT)} / ${fmt(maxP)} mm`) +
+    fila('Aigua que escola (tota la zona)', `${fmt(volTot / 1e6, 2)} hm³`) +
+    fila('Aigua retinguda a clotades', `${fmt(volBassals / 1e3, 0)} m³ · ${fmt(areaBassals / 1e4, 1)} ha amb > 10 cm`) +
+    fila(`Ridaura a l'aforador (${fmt(G.areaKm2.aforador, 0)} km²)`, `${fmt(punt('aforador') / segons)} m³/s de mitjana`) +
+    fila('&nbsp;&nbsp;mesurat a l\'aforador, mateixa franja', `${fmt(obsQ / segons)} m³/s`) +
+    fila(`Ridaura al mar (${fmt(G.areaKm2.desembocadura, 0)} km²)`, `${fmt(punt('desembocadura') / segons)} m³/s`) +
+    fila(`Riera de Fenals (${fmt(G.areaKm2.fenals, 1)} km²)`, `${fmt(punt('fenals') / segons)} m³/s`) +
+    '<div class="nota" style="margin-top:4px">Cabals mitjans de la franja: la punta pot ser 2–4 vegades més alta. L\'aigua triga 1–2 h a arribar a l\'aforador, ' +
+    'per això les franges curtes surten desquadrades amb el mesurat. Fes clic al mapa per veure una cel·la.</div>';
+}
+
+const RAMPA_Q = [[0.02, [198, 219, 239, 150]], [0.1, [107, 174, 214, 210]], [0.5, [33, 113, 181, 235]], [2, [8, 81, 156, 250]], [10, [8, 48, 107, 255]], [50, [12, 12, 70, 255]]];
+const RAMPA_H = [[0.05, [252, 197, 192, 170]], [0.2, [250, 159, 181, 210]], [0.5, [221, 52, 151, 235]], [1, [174, 1, 126, 250]], [2, [73, 0, 106, 255]]];
+const RAMPA_MM = [[1, [255, 255, 204, 120]], [10, [161, 218, 180, 170]], [30, [65, 182, 196, 190]], [60, [44, 127, 184, 210]], [100, [37, 52, 148, 225]], [150, [122, 1, 119, 235]]];
+const color = (v, rampa) => { let c = null; for (const [l, col] of rampa) if (v >= l) c = col; return c; };
+
+function dibuixa() {
+  const W = G.nc * ESCALA, H = G.nf * ESCALA;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const cx = cv.getContext('2d'), img = cx.createImageData(W, H), px = img.data;
+  const pinta = (r, c, col, rad) => {
+    for (let y = r * ESCALA - rad; y < (r + 1) * ESCALA + rad; y++) for (let x = c * ESCALA - rad; x < (c + 1) * ESCALA + rad; x++) {
+      if (y < 0 || y >= H || x < 0 || x >= W) continue;
+      const o = (y * W + x) * 4; if (px[o + 3] > col[3]) continue;
+      px[o] = col[0]; px[o + 1] = col[1]; px[o + 2] = col[2]; px[o + 3] = col[3];
+    }
+  };
+  const tipus = $('capa').value;
+  for (let i = 0; i < N; i++) {
+    if (!terra[i]) continue;
+    const r = Math.floor(i / G.nc), c = i % G.nc;
+    if (tipus === 'aigua') {
+      const h = res.calat[i];
+      if (h >= 0.05) { pinta(r, c, color(h, RAMPA_H), 0); continue; }
+      const q = res.V[i] / res.segons, col = color(q, RAMPA_Q);
+      if (col) pinta(r, c, col, q >= 10 ? 2 : q >= 0.5 ? 1 : 0);
+    } else {
+      const col = color(tipus === 'pluja' ? res.pluja[i] : res.escola[i], RAMPA_MM);
+      if (col) pinta(r, c, col, 0);
+    }
+  }
+  cx.putImageData(img, 0, 0);
+  const url = cv.toDataURL();
+  if (capa) capa.setUrl(url); else capa = L.imageOverlay(url, G.limits, { pane: 'aigua', interactive: false }).addTo(mapa);
+  if (!marcadors.length) for (const [nom, txt] of [['aforador', 'Aforador de Santa Cristina'], ['desembocadura', 'Desembocadura del Ridaura'], ['fenals', 'Riera de Fenals']])
+    marcadors.push(L.circleMarker(aLatLng(G.cel[nom]), { radius: 6, color: '#fff', weight: 2, fillColor: '#d35400', fillOpacity: 1 }).bindTooltip(txt).addTo(mapa));
+  const ll = (rampa, f) => rampa.map(([l, c]) => `<span style="background:rgba(${c[0]},${c[1]},${c[2]},${c[3] / 255})"></span>${f(l)}`).join('');
+  $('llegenda').innerHTML = tipus === 'aigua'
+    ? `Cabal mitjà (m³/s):${ll(RAMPA_Q, v => '>' + fmt(v, v < 0.1 ? 2 : v < 1 ? 1 : 0))}<br>Aigua embassada (m):${ll(RAMPA_H, v => '>' + fmt(v, v < 1 ? 2 : 0))}`
+    : `mm:${ll(RAMPA_MM, v => '>' + v)}`;
+}
+
+// cel·la ↔ mapa amb la mateixa correspondència lineal que la imatge superposada
+function aLatLng(i) {
+  const [[s, w], [n, e]] = G.limits, r = Math.floor(i / G.nc) + 0.5, c = i % G.nc + 0.5;
+  const p0 = mapa.project([n, w], 0), p1 = mapa.project([s, e], 0);
+  return mapa.unproject([p0.x + (p1.x - p0.x) * c / G.nc, p0.y + (p1.y - p0.y) * r / G.nf], 0);
+}
+function aCel(ll) {
+  const [[s, w], [n, e]] = G.limits, p = mapa.project(ll, 0), p0 = mapa.project([n, w], 0), p1 = mapa.project([s, e], 0);
+  const c = Math.floor((p.x - p0.x) / (p1.x - p0.x) * G.nc), r = Math.floor((p.y - p0.y) / (p1.y - p0.y) * G.nf);
+  return r < 0 || r >= G.nf || c < 0 || c >= G.nc ? -1 : r * G.nc + c;
+}
+mapa.on('click', ev => {
+  if (!res) return; const i = aCel(ev.latlng); if (i < 0 || !terra[i]) return;
+  // la cel·la de més cabal del voltant immediat, per no haver d'encertar el fil d'1 cel·la
+  let m = i; const r0 = Math.floor(i / G.nc), c0 = i % G.nc;
+  for (let r = r0 - 1; r <= r0 + 1; r++) for (let c = c0 - 1; c <= c0 + 1; c++) { const j = r * G.nc + c; if (j >= 0 && j < N && res.V[j] > res.V[m]) m = j; }
+  const q = res.V[m] / res.segons, h = res.calat[i];
+  L.popup().setLatLng(ev.latlng).setContent(
+    `<b>Cota ${fmt(z[i] / 100, 1)} m</b>${urba[i] ? ' · construït' : ''}<br>Pluja de la franja: ${fmt(res.pluja[i])} mm<br>` +
+    `Escola: ${fmt(res.escola[i])} mm<br>Hi passa: ${fmt(res.V[m] / 1e3, 1)} mil m³ (${fmt(q, q < 1 ? 2 : 1)} m³/s de mitjana)` +
+    (h >= 0.01 ? `<br><b>Aigua embassada: ${fmt(h, 2)} m</b>` : '') +
+    (zf[i] - z[i] >= 5 ? `<br>Clotada sense sortida de fins a ${fmt((zf[i] - z[i]) / 100, 2)} m` : '')).openOn(mapa);
+});
+
+function graf() {
+  const cv = $('graf'), dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W * dpr; cv.height = H * dpr; const cx = cv.getContext('2d'); cx.scale(dpr, dpr);
+  const nF = mitjana.length, mx = Math.max(...mitjana) * 1.1, ample = (W - 30) / nF, base = H - 16;
+  cx.fillStyle = '#eef3f8'; cx.fillRect(30 + ini * ample, 0, (fi - ini + 1) * ample, base);
+  mitjana.forEach((v, f) => { cx.fillStyle = f >= ini && f <= fi ? '#2171b5' : '#a8c4de'; const h = v / mx * (base - 4); cx.fillRect(30 + f * ample + 0.5, base - h, Math.max(ample - 1, 1), h); });
+  cx.fillStyle = '#5b6b7b'; cx.font = '10px system-ui'; cx.textAlign = 'right';
+  for (const v of [0, Math.round(mx / 2), Math.round(mx)]) cx.fillText(v, 26, base - v / mx * (base - 4) + 3);
+  cx.textAlign = 'center';
+  R.temps.forEach((t, f) => { if (t.endsWith(':00') && +t.slice(11, 13) % 3 === 0) cx.fillText(horaCurta(t), 30 + (f + 0.5) * ample, H - 3); });
+  cx.textAlign = 'left'; cx.fillText('mm', 0, 9);
+}
+function arrossega() {
+  const cv = $('graf'); let des = null;
+  const f = ev => { const x = (ev.touches ? ev.touches[0].clientX : ev.clientX) - cv.getBoundingClientRect().left;
+    return Math.min(Math.max(Math.floor((x - 30) / ((cv.clientWidth - 30) / R.temps.length)), 0), R.temps.length - 1); };
+  const mou = ev => { if (des === null) return; const k = f(ev); ini = Math.min(des, k); fi = Math.max(des, k); calcula(); };
+  cv.addEventListener('mousedown', ev => { des = f(ev); marcaDurada(null); mou(ev); });
+  cv.addEventListener('touchstart', ev => { des = f(ev); marcaDurada(null); mou(ev); ev.preventDefault(); }, { passive: false });
+  window.addEventListener('mousemove', mou); cv.addEventListener('touchmove', mou);
+  window.addEventListener('mouseup', () => des = null); cv.addEventListener('touchend', () => des = null);
+  window.addEventListener('resize', () => res && graf());
+}
+</script>
+</body>
+</html>
