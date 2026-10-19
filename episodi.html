@@ -47,6 +47,7 @@
       </div>
       <input type="range" id="slider" min="0" value="0">
       <canvas id="graf"></canvas>
+      <div class="nota llegenda" style="margin-bottom:4px">Radar (mm/h):<span style="background:#4292c6"></span>5–15<span style="background:#2ca25f"></span>15–30<span style="background:#fec44f"></span>30–50<span style="background:#f03b20"></span>50–80<span style="background:#7a0177"></span>&gt;80</div>
       <div class="nota llegenda"><span style="background:#1b2733"></span>Ridaura a l'aforador (mesurat)<span style="background:#8e44ad"></span>Ridaura al mar (estimat)<span style="background:#16a085"></span>Fenals (estimat)<span style="background:#5dade2"></span>pluja</div>
     </div>
 
@@ -134,7 +135,7 @@ function pinta() {
   if (radar) {
     const ti = ep.temps_utc[i], fr = radar.temps.findIndex(t => t >= ti);
     const mm = fr >= 0 ? radar.mm[fr] : null;
-    cel_les.forEach((c, k) => { const col = mm ? radarColor(mm[k] * 60 / radar.interval_min) : null; c.setStyle({ fillColor: col || '#000', fillOpacity: col ? 0.55 : 0 }); });
+    cel_les.forEach((c, k) => { const col = mm ? radarColor(mm[k] * 60 / radar.interval_min) : null; c.setStyle({ fillColor: col || '#000', fillOpacity: col ? (col === '#9ecae1' ? 0.25 : 0.45) : 0 }); });
   }
   const pl = ep.pluja_pluviometre_mm, acum = pl.slice(0, i + 1).reduce((a, b) => a + (b || 0), 0);
   const f = (v, d = 0) => v === null || v === undefined ? '–' : (+v).toFixed(d);
@@ -142,7 +143,7 @@ function pinta() {
     <div class="fila"><span>Pluja ara (pluviòmetre)</span><span>${f(pl[i] * 12)} mm/h</span></div>
     <div class="fila"><span>Pluja acumulada des de les 20 h del dia 3</span><span>${f(acum)} mm</span></div>
     <div class="fila"><span>Ridaura a Santa Cristina (mesurat)</span><span>${f(ep.q_aforador_obs[i])} m³/s · ${trT(ep.T_aforador[i])}</span></div>
-    <div class="fila"><span>Ridaura a la desembocadura (estimat)</span><span>${f(ep.q_desembocadura_est[i])} m³/s · ${trT(ep.T_desembocadura[i])}</span></div>
+    <div class="fila"><span>Ridaura a la desembocadura (estimat)</span><span>${ep.q_desembocadura_est[i] === null ? 'per sota de la crescuda ordinària' : f(ep.q_desembocadura_est[i]) + ' m³/s · ' + trT(ep.T_desembocadura[i])}</span></div>
     <div class="fila"><span>Riera de Fenals (estimat)</span><span>${f(ep.q_fenals_est[i])} m³/s · ${trT(ep.T_fenals[i])}</span></div>
     <div class="fila"><span>Elements inundats ara</span><span>${ara} de ${ep.elements.length}</span></div>`;
   const nous = ep.elements.map((e, k) => [e, k]).filter(([e]) => e.ini !== null && e.ini <= i && e.ini > i - 12)
