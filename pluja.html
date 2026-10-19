@@ -73,6 +73,8 @@
           <option value="pluja">Pluja de la franja (mm)</option>
           <option value="escola">Aigua que escola (mm)</option>
         </select></label>
+      <label class="ctl">Opacitat de l'aigua sobre el mapa <b id="vopac"></b>
+        <input type="range" id="opac" min="0" max="1" step="0.05" value="0.85"></label>
       <div class="nota llegenda" id="llegenda"></div>
     </div>
 
@@ -88,9 +90,18 @@
 </div>
 <script>
 const mapa = L.map('mapa').setView([41.815, 3.0], 13);
-L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=topografic&STYLE=default&FORMAT=image/jpeg&TILEMATRIXSET=MON3857NW&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
-  maxZoom: 19, attribution: '© ICGC · Relleu: IGN (MDT 5 m) · Radar: EUMETNET OPERA · Pluviòmetre i aforador: ACA · Usos: ESA WorldCover'
-}).addTo(mapa);
+const WMTS = capa => `https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=${capa}&STYLE=default&FORMAT=image/jpeg&TILEMATRIXSET=MON3857NW&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}`;
+const ATR = '© ICGC · © OpenStreetMap · Relleu: IGN (MDT 5 m) · Radar: EUMETNET OPERA · Pluviòmetre i aforador: ACA · Usos: ESA WorldCover';
+const fons = {
+  'Topogràfic': L.tileLayer(WMTS('topografic'), { maxZoom: 19, attribution: ATR }),
+  'Ortofoto': L.tileLayer(WMTS('orto'), { maxZoom: 19, attribution: ATR }),
+  'Ortofoto amb carrers': L.layerGroup([L.tileLayer(WMTS('orto'), { maxZoom: 19, attribution: ATR }),
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', pane: 'etiquetes' })]),
+  'OpenStreetMap': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: ATR }),
+};
+mapa.createPane('etiquetes').style.zIndex = 460; mapa.getPane('etiquetes').style.pointerEvents = 'none';
+fons['Topogràfic'].addTo(mapa);
+L.control.layers(fons, null, { position: 'topright', collapsed: false }).addTo(mapa);
 mapa.createPane('aigua').style.zIndex = 450;
 
 const $ = id => document.getElementById(id);
@@ -122,6 +133,8 @@ Promise.all([
   $('fi').oninput = () => { fi = +$('fi').value; if (durada !== null) ini = durada ? Math.max(fi - durada * 4 + 1, 0) : 0; if (ini > fi) ini = fi; calcula(); };
   $('ini').oninput = () => { ini = +$('ini').value; if (ini > fi) fi = ini; marcaDurada(null); calcula(); };
   for (const id of ['estat', 'ia', 'mul', 'capa']) $(id).oninput = calcula;
+  const opac = () => { $('vopac').textContent = Math.round($('opac').value * 100) + ' %'; if (capa) capa.setOpacity(+$('opac').value); };
+  $('opac').oninput = opac; opac();
   $('corregeix').onchange = () => { pluges(); calcula(); };
   arrossega();
   mapa.fitBounds(G.limits);
@@ -301,7 +314,7 @@ function dibuixa() {
   }
   cx.putImageData(img, 0, 0);
   const url = cv.toDataURL();
-  if (capa) capa.setUrl(url); else capa = L.imageOverlay(url, G.limits, { pane: 'aigua', interactive: false }).addTo(mapa);
+  if (capa) capa.setUrl(url); else capa = L.imageOverlay(url, G.limits, { pane: 'aigua', interactive: false, opacity: +$('opac').value }).addTo(mapa);
   if (!marcadors.length) for (const [nom, txt] of [['aforador', 'Aforador de Santa Cristina'], ['desembocadura', 'Desembocadura del Ridaura'], ['fenals', 'Riera de Fenals']])
     marcadors.push(L.circleMarker(aLatLng(G.cel[nom]), { radius: 6, color: '#fff', weight: 2, fillColor: '#d35400', fillOpacity: 1 }).bindTooltip(txt).addTo(mapa));
   const ll = (rampa, f) => rampa.map(([l, c]) => `<span style="background:rgba(${c[0]},${c[1]},${c[2]},${c[3] / 255})"></span>${f(l)}`).join('');
