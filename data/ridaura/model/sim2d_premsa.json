@@ -1,0 +1,70 @@
+{
+ "2019-10-22": {
+  "carrers": 470,
+  "amb_30cm": 71,
+  "premsa": {
+   "Avinguda del Doctor Fleming": [
+    28,
+    84
+   ]
+  }
+ },
+ "2024-09-23": {
+  "carrers": 470,
+  "amb_30cm": 57,
+  "premsa": {
+   "Avinguda de s'Agaró": [
+    24,
+    86
+   ]
+  }
+ },
+ "2026-05-18": {
+  "carrers": 470,
+  "amb_30cm": 1,
+  "premsa": {
+   "Avinguda de s'Agaró": [
+    1,
+    59
+   ]
+  }
+ },
+ "2026-10-04": {
+  "carrers": 470,
+  "amb_30cm": 78,
+  "premsa": {
+   "Avinguda de París": [
+    12,
+    72
+   ],
+   "Avinguda de s'Agaró": [
+    50,
+    88
+   ],
+   "Avinguda del Cavall Bernat": [
+    13,
+    74
+   ],
+   "Carrer Mestral": [
+    58,
+    90
+   ],
+   "Carrer de Juli Garreta": [
+    25,
+    81
+   ],
+   "Carrer de la Diagonal": [
+    68,
+    92
+   ],
+   "Carrer de la Tramuntana": [
+    74,
+    93
+   ],
+   "Passeig del Ridaura": [
+    86,
+    96
+   ]
+  }
+ }
+}

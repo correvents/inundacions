@@ -180,7 +180,7 @@ async function carregaEpisodi(e, recalcula = true) {
   FACT = EP ? G.factor_radar : R.temps.map(() => 1);
   $('corregeix').disabled = !EP; if (!EP) $('corregeix').checked = false; else $('corregeix').checked = true;
   $('ia').value = e.ia_mm ?? 60;
-  $('premsa').innerHTML = `${e.resum}<br>${e.carrers.length || e.llocs.length ? '<b>Llocs citats:</b> ' + [...e.carrers, ...e.llocs].join(' · ') + '<br>' : ''}` +
+  $('premsa').innerHTML = `${e.inundacio === false ? '<b>Sense inundació segons la premsa</b> (serveix per veure fins on aguanta). ' : ''}${e.resum}<br>${e.carrers.length || e.llocs.length ? '<b>Llocs citats:</b> ' + [...e.carrers, ...e.llocs].join(' · ') + '<br>' : ''}` +
     `Fonts: ${e.fonts.map((u, k) => `<a href="${u}" target="_blank" rel="noopener">${k + 1}</a>`).join(' ')}` +
     (EP ? '' : '<br><i>Sense dades de l\'aforador per a aquest episodi (l\'ACA només en guarda 3 mesos): radar sense corregir. L\'absorció del terreny és una suposició.</i>');
   $('fi').max = $('ini').max = R.temps.length - 1;
