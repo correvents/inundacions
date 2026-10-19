@@ -30,6 +30,7 @@
   .nota { color: var(--suau); font-size: 12px; }
   .llegenda span { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin: 0 3px 0 7px; vertical-align: middle; }
   a { color: #0b4f8a; }
+  .pixelat { image-rendering: pixelated; }
   .carrega { position: absolute; z-index: 1000; left: 50%; top: 40%; transform: translateX(-50%); background: #fff; padding: 10px 16px; border-radius: 8px; box-shadow: 0 2px 8px #0003; }
   @media (max-width: 760px) { #app { flex-direction: column; } #panell { width: 100%; height: 55%; border-left: 0; border-top: 1px solid var(--vora); } }
 </style>
@@ -78,6 +79,19 @@
       <div class="nota llegenda" id="llegenda"></div>
     </div>
 
+    <div class="targeta">
+      <h2>Radar</h2>
+      <select id="radar">
+        <option value="cap">Sense radar</option>
+        <option value="inst" selected>Imatge instantània (els 15 min del final de la franja)</option>
+        <option value="acum">Pluja acumulada de la franja segons el radar</option>
+      </select>
+      <label class="ctl">Opacitat del radar <b id="vropac"></b>
+        <input type="range" id="ropac" min="0" max="1" step="0.05" value="0.6"></label>
+      <div class="nota llegenda" id="rllegenda"></div>
+      <div class="nota">Cel·les d'1 km (OPERA, EUMETNET). Mou el final de la franja per veure passar la tempesta.</div>
+    </div>
+
     <div class="targeta" id="resum"></div>
     <div class="targeta nota">
       <b>Com es calcula.</b> Relleu: MDT de 5 m de l'IGN (LiDAR) agregat a cel·les de 20 m. Pluja: radar OPERA cada 15 min
@@ -103,6 +117,7 @@ mapa.createPane('etiquetes').style.zIndex = 460; mapa.getPane('etiquetes').style
 fons['Topogràfic'].addTo(mapa);
 L.control.layers(fons, null, { position: 'topright', collapsed: false }).addTo(mapa);
 mapa.createPane('aigua').style.zIndex = 450;
+mapa.createPane('radar').style.zIndex = 455;
 
 const $ = id => document.getElementById(id);
 const BASE = 'data/ridaura/';
@@ -111,7 +126,7 @@ const ESCALA = 2;                                                            // 
 let G, R, EP, N, A, z, zf, dir, urba, ridx, rcv, ordre, comp, compCel, compIni, nComp, terra;
 let cumR;            // pluja acumulada per cel·la de radar i fotograma, ja corregida: cumR[f * nR + r]
 let mitjana;         // pluja mitjana a la zona per fotograma (mm/15 min)
-let ini = 0, fi = 0, durada = 6, res = null, capa = null, marcadors = [];
+let ini = 0, fi = 0, durada = 6, res = null, capa = null, capaRadar = null, marcadors = [];
 
 const hora = t => { const d = new Date(t + 'Z'); return d.toLocaleString('ca-ES', { timeZone: 'Europe/Madrid', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' }); };
 const horaCurta = t => new Date(t + 'Z').toLocaleTimeString('ca-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' });
@@ -135,6 +150,9 @@ Promise.all([
   for (const id of ['estat', 'ia', 'mul', 'capa']) $(id).oninput = calcula;
   const opac = () => { $('vopac').textContent = Math.round($('opac').value * 100) + ' %'; if (capa) capa.setOpacity(+$('opac').value); };
   $('opac').oninput = opac; opac();
+  const ropac = () => { $('vropac').textContent = Math.round($('ropac').value * 100) + ' %'; if (capaRadar) capaRadar.setOpacity(+$('ropac').value); };
+  $('ropac').oninput = ropac; ropac();
+  $('radar').oninput = radar;
   $('corregeix').onchange = () => { pluges(); calcula(); };
   arrossega();
   mapa.fitBounds(G.limits);
@@ -262,6 +280,7 @@ function calculaAra() {
   }
   res = { pluja, escola, V, calat, segons };
   dibuixa();
+  radar();
   graf();
   // resum i comparació amb l'aforador
   const obsQ = (() => { // volum mesurat a l'aforador a la franja (sense el cabal de base d'abans de la tempesta)
@@ -321,6 +340,32 @@ function dibuixa() {
   $('llegenda').innerHTML = tipus === 'aigua'
     ? `Cabal mitjà (m³/s):${ll(RAMPA_Q, v => '>' + fmt(v, v < 0.1 ? 2 : v < 1 ? 1 : 0))}<br>Aigua embassada (m):${ll(RAMPA_H, v => '>' + fmt(v, v < 1 ? 2 : 0))}`
     : `mm:${ll(RAMPA_MM, v => '>' + v)}`;
+}
+
+
+const RAMPA_RATE = [[1, [198, 219, 239, 200]], [5, [66, 146, 198, 230]], [15, [44, 162, 95, 240]], [30, [254, 196, 79, 245]], [50, [240, 59, 32, 250]], [80, [122, 1, 119, 255]]];
+const RAMPA_ACUM = [[5, [198, 219, 239, 200]], [25, [66, 146, 198, 230]], [50, [44, 162, 95, 240]], [100, [254, 196, 79, 245]], [150, [240, 59, 32, 250]], [200, [122, 1, 119, 255]], [250, [40, 0, 40, 255]]];
+function radar() {
+  const tipus = $('radar').value;
+  if (tipus === 'cap') { if (capaRadar) { mapa.removeLayer(capaRadar); capaRadar = null; } $('rllegenda').innerHTML = ''; return; }
+  const nx = R.lons.length, ny = R.lats.length, nR = nx * ny, mul = +$('mul').value, corr = $('corregeix').checked;
+  const cv = document.createElement('canvas'); cv.width = nx; cv.height = ny;
+  const cx = cv.getContext('2d'), img = cx.createImageData(nx, ny);
+  const rampa = tipus === 'inst' ? RAMPA_RATE : RAMPA_ACUM;
+  for (let r = 0; r < nR; r++) {
+    const v = tipus === 'inst' ? R.mm[fi][r] * (corr ? G.factor_radar[fi] : 1) * mul * 60 / R.interval_min
+                               : (cumR[(fi + 1) * nR + r] - cumR[ini * nR + r]) * mul;
+    const col = color(v, rampa); if (!col) continue;
+    const fila = ny - 1 - Math.floor(r / nx), o = (fila * nx + r % nx) * 4;   // les latituds van de sud a nord
+    img.data.set(col, o);
+  }
+  cx.putImageData(img, 0, 0);
+  const m = R.pas_graus / 2, lim = [[R.lats[0] - m, R.lons[0] - m], [R.lats[ny - 1] + m, R.lons[nx - 1] + m]];
+  const url = cv.toDataURL();
+  if (capaRadar) capaRadar.setUrl(url);
+  else { capaRadar = L.imageOverlay(url, lim, { pane: 'radar', interactive: false, opacity: +$('ropac').value, className: 'pixelat' }).addTo(mapa); }
+  const ll = rampa.map(([l, c]) => `<span style="background:rgba(${c[0]},${c[1]},${c[2]},${c[3] / 255})"></span>>${l}`).join('');
+  $('rllegenda').innerHTML = (tipus === 'inst' ? `Intensitat a les ${horaCurta(R.temps[fi])} (mm/h):` : 'Acumulat de la franja (mm):') + ll;
 }
 
 // cel·la ↔ mapa amb la mateixa correspondència lineal que la imatge superposada
