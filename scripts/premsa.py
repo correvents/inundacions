@@ -56,7 +56,7 @@ EPISODIS = [
      "fonts": ["https://news.rpa.cat/2018/11/18/el-temporal-de-pluja-provoca-inundacions-talls-de-carreteres-i-una-pujada-forta-del-cabal-del-ridaura-a-castell-platja-daro-i-sagaro/"]},
     {"id": "2025-11-06", "titol": "6 de novembre de 2025: xàfec", "radar": "2025-11-06_radar.json", "ia_mm": 60,
      "resum": "Més de 34 mm a Platja d'Aro (30 mm en 1 h a Castell d'Aro). La Policia Local talla carrers per acumulació d'aigua; sense incidents greus.",
-     "carrers": ["Carrer de Juli Garreta", "Avinguda de Luxemburg"], "llocs": ["Avinguda central de s'Agaró"],
+     "carrers": ["Carrer de Juli Garreta", "Carrer de Luxemburg"], "llocs": ["Avinguda central de s'Agaró"],
      "fonts": ["https://www.radiocapital.cat/el-temporal-descarrega-amb-forca-al-baix-emporda-i-deixa-acumulacions-daigua-pero-sense-incidencies-greus/"]},
     {"id": "2025-05-05", "titol": "5 de maig de 2025: tempesta sense danys", "radar": "2025-05-05_radar.json", "ia_mm": 60, "inundacio": False,
      "resum": "23 mm en mitja hora a Castell d'Aro (31 mm en 1 h). Protocol preventiu activat, però la premsa no cita inundacions a Platja d'Aro.",
@@ -70,7 +70,7 @@ EPISODIS = [
     {"id": "2019-09-21", "titol": "21 de setembre de 2019: aiguat mortal", "radar": "2019-09-20_radar.json", "ia_mm": 60,
      "resum": "93 mm (51 mm en 1 h). Carrers, baixos, locals i aparcaments soterranis inundats fins a 2-3 pams; embornals tapats per la pinassa. "
               "Un home mor ofegat en uns baixos del carrer Ciutat de Girona.",
-     "carrers": ["Carrer de la Ciutat de Girona"], "llocs": ["Palau d'Esports", "Entorn del Magic Park", "Zona comercial"],
+     "carrers": ["Avinguda Ciutat de Girona"], "llocs": ["Palau d'Esports i Congressos", "Entorn del Magic Park", "Zona comercial"],
      "fonts": ["http://www.elpuntavui.cat/societat/article/5-societat/1668851-un-home-mor-ofegat-en-els-baixos-d-un-local-inundat-per-les-fortes-tempestes-a-platja-d-aro.html", "http://www.elpuntavui.cat/punt-divers/article/4-divers/1668954-inundacions-a-l-emporda-amb-una-victima-mortal-i-el-vallvalles-oriental.html"]},
     {"id": "2018-10-10", "titol": "10 d'octubre de 2018: xàfec", "radar": "2018-10-09_radar.json", "ia_mm": 60,
      "resum": "84 mm a Castell d'Aro, uns 50 mm en menys d'una hora al matí. Inundacions i afectacions a la via pública; cotxes i aigua a s'Agaró.",

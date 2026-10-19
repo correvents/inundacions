@@ -1,37 +1,103 @@
 {
- "2019-10-22": {
+ "2018-11-18": {
   "carrers": 470,
-  "amb_30cm": 71,
+  "amb_15cm": 3,
+  "amb_30cm": 1,
+  "amb_50cm": 0,
   "premsa": {
-   "Avinguda del Doctor Fleming": [
-    28,
-    84
+   "Carrer de la Coma": [
+    1,
+    80
    ]
   }
  },
+ "2019-09-21": {
+  "carrers": 470,
+  "amb_15cm": 21,
+  "amb_30cm": 9,
+  "amb_50cm": 4,
+  "premsa": {
+   "Avinguda Ciutat de Girona": [
+    2,
+    61
+   ]
+  }
+ },
+ "2019-10-22": {
+  "carrers": 470,
+  "amb_15cm": 52,
+  "amb_30cm": 19,
+  "amb_50cm": 6,
+  "premsa": {
+   "Avinguda del Doctor Fleming": [
+    14,
+    88
+   ]
+  }
+ },
+ "2023-09-15": {
+  "carrers": 470,
+  "amb_15cm": 5,
+  "amb_30cm": 2,
+  "amb_50cm": 0,
+  "premsa": {}
+ },
+ "2024-02-26": {
+  "carrers": 470,
+  "amb_15cm": 3,
+  "amb_30cm": 0,
+  "amb_50cm": 0,
+  "premsa": {}
+ },
  "2024-09-23": {
   "carrers": 470,
-  "amb_30cm": 57,
+  "amb_15cm": 4,
+  "amb_30cm": 3,
+  "amb_50cm": 0,
   "premsa": {
    "Avinguda de s'Agaró": [
-    24,
-    86
+    1,
+    44
+   ]
+  }
+ },
+ "2026-01-20": {
+  "carrers": 470,
+  "amb_15cm": 3,
+  "amb_30cm": 0,
+  "amb_50cm": 0,
+  "premsa": {
+   "Carrer de la Coma": [
+    0,
+    53
+   ],
+   "Passeig Marítim": [
+    0,
+    76
+   ],
+   "Passeig del Ridaura": [
+    0,
+    77
    ]
   }
  },
  "2026-05-18": {
   "carrers": 470,
-  "amb_30cm": 1,
+  "amb_15cm": 10,
+  "amb_30cm": 3,
+  "amb_50cm": 0,
   "premsa": {
    "Avinguda de s'Agaró": [
     1,
-    59
+    46
    ]
   }
  },
  "2026-10-04": {
   "carrers": 470,
+  "amb_15cm": 121,
   "amb_30cm": 78,
+  "amb_50cm": 58,
   "premsa": {
    "Avinguda de París": [
     12,

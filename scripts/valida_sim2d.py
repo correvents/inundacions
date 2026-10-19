@@ -16,10 +16,6 @@ import numpy as np, shapely
 from shapely.geometry import shape
 from pyproj import Transformer
 
-PREMSA = {"2026-10-04": "2026-10-04", "2026-05-18": "2026-05-18", "2026-01-20": "2026-01-20", "2024-09-23": "2024-09-23",
-          "2020-01-21": "2020-01-21", "2019-10-22": "2019-10-22", "2018-11-18": "2018-11-18"}
-
-
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
@@ -55,8 +51,9 @@ def main():
             files.append({"episodi": ep, "carrer": nom, "calat_cm": round(cal),
                           "hora_utc": (t0 + timedelta(minutes=tq)).strftime("%Y-%m-%dT%H:%M") if np.isfinite(tq) else ""})
         noms = sorted(val, key=val.get); rang = {n: 100 * (k + 1) / len(noms) for k, n in enumerate(noms)}
-        citats = sorted({p["properties"]["nom"] for p in premsa if p["properties"]["episodi"] == PREMSA.get(ep)} & set(val))
-        resum[ep] = {"carrers": len(val), "amb_30cm": sum(v >= 30 for v in val.values()),
+        citats = sorted({p["properties"]["nom"] for p in premsa if p["properties"]["episodi"] == ep} & set(val))
+        resum[ep] = {"carrers": len(val), "amb_15cm": sum(v >= 15 for v in val.values()), "amb_30cm": sum(v >= 30 for v in val.values()),
+                     "amb_50cm": sum(v >= 50 for v in val.values()),
                      "premsa": {n: (round(val[n]), round(rang[n])) for n in citats}}
         print(ep, resum[ep])
     with open(d / "model" / "sim2d_carrers.csv", "w", newline="") as f:

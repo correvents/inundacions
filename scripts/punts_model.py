@@ -9,6 +9,8 @@ Per a cada carrer amb nom de l'OpenStreetMap dins la plana, sobre la graella de 
   dist_ridaura_m distància al Ridaura
   aca_T10/T100/T500  part del carrer dins la zona inundable de l'ACA
   urba           part urbanitzada
+  punt_baix      pla (< 3,5 %), en clotada (≥ 0,4 m) i a ≤ 1 m sobre el curs d'aigua: on s'inunda amb els xàfecs. Regla ajustada
+                 amb la premsa 2018-2026: els 6 carrers que s'inunden per xàfec hi són tots, i només marca el 8 % dels carrers
 Escriu data/<conca>/model/carrers.csv i carrers.geojson.
 
 Ús:  python3 scripts/punts_model.py --config config/ridaura.json"""
@@ -86,6 +88,7 @@ def main():
              "pendent_pct": round(float(np.nanmean(pendent[m])), 2), "clotada_m": round(float(clot[m].max()), 2),
              "hand_m": round(float(np.nanmin(hand[m])), 2), "dist_ridaura_m": round(float(dist_r[m].min())),
              **{f"aca_{k}": round(float(zm[k][m].mean()), 2) for k in zm}, "urba": round(float((urba[m] > 0).mean()), 2)}
+        r["punt_baix"] = bool(r["pendent_pct"] < 3.5 and r["clotada_m"] >= 0.4 and r["hand_m"] <= 1.0)
         files.append(r); feats.append({"type": "Feature", "properties": r, "geometry": mapping(g.simplify(0.00002))})
     with open(d / "model" / "carrers.csv", "w", newline="") as f:
         w_ = csv.DictWriter(f, files[0].keys()); w_.writeheader(); w_.writerows(files)

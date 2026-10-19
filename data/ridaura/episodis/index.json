@@ -128,6 +128,107 @@
    "fonts": [
     "https://news.rpa.cat/2018/11/18/el-temporal-de-pluja-provoca-inundacions-talls-de-carreteres-i-una-pujada-forta-del-cabal-del-ridaura-a-castell-platja-daro-i-sagaro/"
    ]
+  },
+  {
+   "id": "2025-11-06",
+   "titol": "6 de novembre de 2025: xàfec",
+   "radar": "2025-11-06_radar.json",
+   "ia_mm": 60,
+   "resum": "Més de 34 mm a Platja d'Aro (30 mm en 1 h a Castell d'Aro). La Policia Local talla carrers per acumulació d'aigua; sense incidents greus.",
+   "carrers": [
+    "Carrer de Juli Garreta",
+    "Carrer de Luxemburg"
+   ],
+   "llocs": [
+    "Avinguda central de s'Agaró"
+   ],
+   "fonts": [
+    "https://www.radiocapital.cat/el-temporal-descarrega-amb-forca-al-baix-emporda-i-deixa-acumulacions-daigua-pero-sense-incidencies-greus/"
+   ]
+  },
+  {
+   "id": "2025-05-05",
+   "titol": "5 de maig de 2025: tempesta sense danys",
+   "radar": "2025-05-05_radar.json",
+   "ia_mm": 60,
+   "inundacio": false,
+   "resum": "23 mm en mitja hora a Castell d'Aro (31 mm en 1 h). Protocol preventiu activat, però la premsa no cita inundacions a Platja d'Aro.",
+   "carrers": [],
+   "llocs": [],
+   "fonts": [
+    "https://www.gerio.cat/noticia/1712351/una-forta-tempesta-inunda-els-carrers-de-palamos",
+    "https://news.rpa.cat/2025/05/05/lajuntament-activa-el-protocol-de-prevencio-dinundacions/"
+   ]
+  },
+  {
+   "id": "2024-02-26",
+   "titol": "26 de febrer de 2024: tempesta amb calamarsa",
+   "radar": "2024-02-26_radar.json",
+   "ia_mm": 60,
+   "resum": "Tempesta amb pluja i calamarsa al vespre (21 mm en 30 min a Castell d'Aro). Carrers inundats que dificulten el trànsit.",
+   "carrers": [],
+   "llocs": [],
+   "fonts": [
+    "https://cronicaglobal.elespanol.com/vida/20240227/un-tormenta-sacude-girona-granizo-algunas-inundaciones/835916439_0.html"
+   ]
+  },
+  {
+   "id": "2023-09-15",
+   "titol": "15-16 de setembre de 2023: xàfec sense danys",
+   "radar": "2023-09-15_radar.json",
+   "ia_mm": 60,
+   "inundacio": false,
+   "resum": "54 mm en menys d'una hora a Castell d'Aro (40 mm en 30 min) i 55 mm a Platja d'Aro, però l'episodi acaba \"sense gaires incidències\".",
+   "carrers": [],
+   "llocs": [],
+   "fonts": [
+    "https://govern.cat/salapremsa/notes-premsa/539362/lepisodi-pluja-deixa-30-50-mm-al-litoral-mes-100-mm-punts-del-baix-ebre",
+    "https://www.elpuntavui.cat/societat/article/5-societat/2334172-l-episodi-de-pluges-acaba-sense-gaires-incidencies-i-amb-precipitacions-intenses-a-platja-d-aro-55l-i-palafrugell-48l.html"
+   ]
+  },
+  {
+   "id": "2019-09-21",
+   "titol": "21 de setembre de 2019: aiguat mortal",
+   "radar": "2019-09-20_radar.json",
+   "ia_mm": 60,
+   "resum": "93 mm (51 mm en 1 h). Carrers, baixos, locals i aparcaments soterranis inundats fins a 2-3 pams; embornals tapats per la pinassa. Un home mor ofegat en uns baixos del carrer Ciutat de Girona.",
+   "carrers": [
+    "Avinguda Ciutat de Girona"
+   ],
+   "llocs": [
+    "Palau d'Esports i Congressos",
+    "Entorn del Magic Park",
+    "Zona comercial"
+   ],
+   "fonts": [
+    "http://www.elpuntavui.cat/societat/article/5-societat/1668851-un-home-mor-ofegat-en-els-baixos-d-un-local-inundat-per-les-fortes-tempestes-a-platja-d-aro.html",
+    "http://www.elpuntavui.cat/punt-divers/article/4-divers/1668954-inundacions-a-l-emporda-amb-una-victima-mortal-i-el-vallvalles-oriental.html"
+   ]
+  },
+  {
+   "id": "2018-10-10",
+   "titol": "10 d'octubre de 2018: xàfec",
+   "radar": "2018-10-09_radar.json",
+   "ia_mm": 60,
+   "resum": "84 mm a Castell d'Aro, uns 50 mm en menys d'una hora al matí. Inundacions i afectacions a la via pública; cotxes i aigua a s'Agaró.",
+   "carrers": [],
+   "llocs": [],
+   "fonts": [
+    "https://www.radiocapital.cat/una-gota-freda-responsable-daiguats-i-inundacions-al-baix-emporda/"
+   ]
+  },
+  {
+   "id": "2016-09-14",
+   "titol": "14 de setembre de 2016: xàfec sense danys",
+   "radar": "2016-09-13_radar.json",
+   "ia_mm": 60,
+   "inundacio": false,
+   "resum": "21 mm en 30 min a Castell-Platja d'Aro (33 mm en 1 h); la premsa no hi esmenta danys.",
+   "carrers": [],
+   "llocs": [],
+   "fonts": [
+    "https://bibgirona.cat/assets/documents/000/343/649/15_set_2016_-_Un_aiguat_escombra_el_territori___%C3%92._Pinilla___E._Agull%C3%B3___ACN___girona___Punt_divers___El_Punt_Avui___Not%C3%ADcia.pdf"
+   ]
   }
  ],
  "sense_radar": [
