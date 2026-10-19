@@ -1,0 +1,17 @@
+name: Prova teselles
+on: workflow_dispatch
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for u in \
+            "https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/14/8326/6085.png" \
+            "https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/orto/MON3857NW/14/8326/6085.png" \
+            "https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/orto/MON3857NW/14/8326/6085.jpeg" \
+            "https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=topografic&STYLE=default&FORMAT=image/jpeg&TILEMATRIXSET=MON3857NW&TILEMATRIX=14&TILEROW=6085&TILECOL=8326" \
+            "https://geoserveis.icgc.cat/icc_mapesmultibase/noutm/wmts/topo/GRID3857/14/8326/6085.jpeg" \
+            "https://geoserveis.icgc.cat/icc_mapesmultibase/noutm/wmts/orto/GRID3857/14/8326/6085.jpeg" \
+            "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/14/6085/8326" \
+            "https://a.basemaps.cartocdn.com/light_only_labels/14/8326/6085.png"; do
+            curl -s -m 20 -o /tmp/t -w "%{http_code} %{content_type} %{size_download} " "$u"; echo " $u"; done
