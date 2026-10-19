@@ -23,7 +23,7 @@ jobs:
           path: /tmp/art
       - name: Puja al bucket privat arxiu-inundacions (un fitxer per proveïdor, < 50 MB)
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         run: |
           tar -xzf /tmp/art/aca_arxiu.tar.gz -C /tmp
