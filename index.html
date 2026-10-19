@@ -132,7 +132,8 @@ async function ara() {
              <div class="nota">Radar OPERA · ${hora(d.fins)}</div></div>`;
   document.getElementById('ara').innerHTML = html;
 }
-ara(); setInterval(ara, 5 * 60 * 1000);
+const araSegur = () => ara().catch(() => { document.getElementById('ara').innerHTML = '<h2>Ara</h2><div class="nota">No s\'han pogut carregar les dades en directe.</div>'; });
+araSegur(); setInterval(araSegur, 5 * 60 * 1000);
 </script>
 </body>
 </html>
