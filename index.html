@@ -42,7 +42,7 @@
       <h2>Què s'inunda segons la crescuda</h2>
       <div class="botons" id="botons"></div>
       <div id="resum"></div>
-      <div class="nota" style="margin-top:6px">Zones inundables de l'ACA (període de retorn en anys) creuades amb OpenStreetMap i els punts de risc del SNCZI. Cada nivell inclou també els anteriors.</div>
+      <div class="nota" style="margin-top:6px">Capes de relleu (a dalt a la dreta): les zones baixes en blau són a menys de 2 / 1 / 0,5 m del llit de la rierata més propera; en lila, depressions on l'aigua no té sortida.<br>Zones inundables de l'ACA (període de retorn en anys) creuades amb OpenStreetMap i els punts de risc del SNCZI. Cada nivell inclou també els anteriors.</div>
     </div>
   </div>
 </div>
@@ -75,6 +75,18 @@ fetch('data/ridaura/conca.geojson').then(r => r.json()).then(fc => {
   L.geoJSON(fc.features[0], { style: { color: '#2b7bba', weight: 2, fill: false, dashArray: '4 4' }, interactive: false }).addTo(mapa);
   L.geoJSON({ type: 'FeatureCollection', features: fc.features.filter(f => f.geometry.type.includes('Line')) },
     { style: { color: '#0b4f8a', weight: 1 }, interactive: false }).addTo(mapa);
+});
+// capes de relleu (MDT 5 m de l'IGN): totes les rieretes i les zones baixes que drenen malament
+const capesRelleu = {};
+fetch('data/ridaura/rieretes.geojson').then(r => r.json()).then(fc => {
+  capesRelleu['Rieretes (conca > 0,05 km²)'] = L.geoJSON(fc, {
+    style: f => ({ color: '#1f78b4', weight: Math.max(0.6, (f.properties.ordre || 1) * 0.7), opacity: 0.8 }),
+    onEachFeature: (f, l) => l.bindTooltip(`Conca: ${f.properties.area_km2.toFixed(2)} km² · ordre ${f.properties.ordre}`)
+  });
+  fetch('data/ridaura/zones_baixes.json').then(r => r.json()).then(zb => {
+    capesRelleu['Zones baixes i depressions'] = L.imageOverlay('data/ridaura/zones_baixes.png', zb.limits, { opacity: 0.8 });
+    L.control.layers(null, capesRelleu, { collapsed: false }).addTo(mapa);
+  });
 });
 L.marker([41.81814, 2.97912]).bindPopup("Aforador ACA 171812-001<br>Santa Cristina d'Aro (Ridaura)").addTo(mapa);
 
