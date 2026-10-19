@@ -1,0 +1,37 @@
+name: Graella de radar d'un episodi
+
+on:
+  workflow_dispatch:
+    inputs:
+      des:
+        description: "Inici UTC"
+        default: "2026-10-03T18:00"
+      fins:
+        description: "Final UTC"
+        default: "2026-10-04T14:00"
+
+permissions:
+  contents: write
+
+jobs:
+  graella:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy h5py pyproj shapely
+      - run: PYTHONPATH=scripts python3 scripts/radar_graella.py --config config/ridaura.json --des "${{ inputs.des }}" --fins "${{ inputs.fins }}"
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && exit 0
+          git commit -m "Graella de radar de l'episodi ${{ inputs.des }}"
+          git pull --rebase origin main && git push
