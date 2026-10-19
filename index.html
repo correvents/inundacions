@@ -7,18 +7,26 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
+  :root { --vora: #dde3ea; --suau: #5b6b7b; --t10: #c0392b; --t50: #e67e22; --t100: #f1c40f; --t500: #5dade2; }
   html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #f4f6f8; color: #1b2733; }
   #app { display: flex; height: 100%; }
   #mapa { flex: 1; }
-  #panell { width: 320px; padding: 16px; overflow-y: auto; background: #fff; border-left: 1px solid #dde3ea; box-sizing: border-box; }
-  h1 { font-size: 18px; margin: 0 0 4px; }
-  .sub { color: #5b6b7b; font-size: 13px; margin-bottom: 16px; }
-  .targeta { border: 1px solid #dde3ea; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
-  .targeta h2 { font-size: 14px; margin: 0 0 6px; }
-  .fila { display: flex; justify-content: space-between; font-size: 13px; padding: 2px 0; }
-  .fila span:last-child { font-weight: 600; }
-  .pendent { color: #8a96a3; font-size: 13px; }
-  @media (max-width: 700px) { #app { flex-direction: column; } #panell { width: 100%; height: 45%; border-left: 0; border-top: 1px solid #dde3ea; } }
+  #panell { width: 360px; padding: 14px 16px; overflow-y: auto; background: #fff; border-left: 1px solid var(--vora); box-sizing: border-box; }
+  h1 { font-size: 18px; margin: 0 0 2px; }
+  h2 { font-size: 14px; margin: 0 0 6px; }
+  .sub { color: var(--suau); font-size: 13px; margin-bottom: 12px; }
+  .targeta { border: 1px solid var(--vora); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  .fila { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 2px 0; }
+  .fila span:last-child { font-weight: 600; text-align: right; }
+  .xip { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+  .botons { display: flex; gap: 4px; margin-bottom: 8px; }
+  .botons button { flex: 1; padding: 6px 0; border: 1px solid var(--vora); background: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; }
+  .botons button.actiu { background: #1b2733; color: #fff; border-color: #1b2733; }
+  ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
+  li { margin: 2px 0; }
+  .nota { color: var(--suau); font-size: 12px; }
+  .estat { font-weight: 700; }
+  @media (max-width: 760px) { #app { flex-direction: column; } #panell { width: 100%; height: 48%; border-left: 0; border-top: 1px solid var(--vora); } }
 </style>
 </head>
 <body>
@@ -27,39 +35,104 @@
   <div id="panell">
     <h1>Ridaura · Platja d'Aro</h1>
     <div class="sub">Conca pilot del sistema de previsió de crescudes</div>
-    <div id="conques"></div>
-    <div class="targeta"><h2>Perill per pluja acumulada</h2><div class="pendent">Pendent (capa 1)</div></div>
-    <div class="targeta"><h2>Cabal previst</h2><div class="pendent">Pendent (capa 2)</div></div>
+
+    <div class="targeta" id="ara"><h2>Ara</h2><div class="nota">Carregant dades...</div></div>
+
+    <div class="targeta">
+      <h2>Què s'inunda segons la crescuda</h2>
+      <div class="botons" id="botons"></div>
+      <div id="resum"></div>
+      <div class="nota" style="margin-top:6px">Zones inundables de l'ACA (període de retorn en anys) creuades amb OpenStreetMap i els punts de risc del SNCZI. Cada nivell inclou també els anteriors.</div>
+    </div>
   </div>
 </div>
 <script>
-const mapa = L.map('mapa').setView([41.815, 2.99], 12);
+const SB = 'https://rxfjwklbvqkwgzmpzwae.supabase.co/rest/v1/';
+const SB_CLAU = 'sb_publishable_1c8JKagZduom1Vz07Cpu-w_JHycdtpJ';
+const TS = [10, 50, 100, 500];
+const COLOR = { 10: '#c0392b', 50: '#e67e22', 100: '#f1c40f', 500: '#5dade2' };
+const LLINDARS = [[419, 'Excepcional (2)', '#6c0000'], [251, 'Excepcional', '#c0392b'], [40, 'Molt alt', '#e67e22'], [20, 'Alt', '#f1c40f'], [4, 'Moderat', '#5dade2'], [0, 'Normal', '#2e8b57']];
+
+const mapa = L.map('mapa').setView([41.815, 3.02], 13);
 L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=topografic&STYLE=default&FORMAT=image/jpeg&TILEMATRIXSET=MON3857NW&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}', {
-  maxZoom: 18, attribution: '© Institut Cartogràfic i Geològic de Catalunya'
+  maxZoom: 19, attribution: '© ICGC · © OpenStreetMap · Zones inundables: ACA · Punts de risc: SNCZI (MITECO)'
 }).addTo(mapa);
 
-const COLORS = ['#2b7bba', '#e08a2c'];
+let tActiu = 100, capaZones, capaAfectats, afectats, resum;
+
 fetch('data/ridaura/conca.geojson').then(r => r.json()).then(fc => {
-  const conques = fc.features.filter(f => f.geometry.type.includes('Polygon'));
-  const xarxa = fc.features.filter(f => f.geometry.type.includes('LineString'));
-  conques.forEach((f, i) => {
-    L.geoJSON(f, { style: { color: COLORS[i], weight: 2, fillOpacity: i ? 0.25 : 0.12 } })
-      .bindTooltip(f.properties.nom).addTo(mapa);
-    const p = f.properties;
-    document.getElementById('conques').insertAdjacentHTML('beforeend', `
-      <div class="targeta" style="border-left:4px solid ${COLORS[i]}">
-        <h2>${p.nom}</h2>
-        <div class="fila"><span>Superfície</span><span>${p.area_km2} km²</span></div>
-        <div class="fila"><span>Longitud del curs</span><span>${p.L_km} km</span></div>
-        <div class="fila"><span>Cota màx. / mín.</span><span>${p.zmax} / ${p.zmin} m</span></div>
-        <div class="fila"><span>Temps de concentració (Témez)</span><span>${p.tc_temez_h.toFixed(1)} h</span></div>
-      </div>`);
-  });
-  L.geoJSON({ type: 'FeatureCollection', features: xarxa }, { style: { color: '#0b4f8a', weight: 1.2 } }).addTo(mapa);
-  mapa.fitBounds(L.geoJSON(conques[0]).getBounds(), { padding: [20, 20] });
+  L.geoJSON(fc.features[0], { style: { color: '#2b7bba', weight: 2, fill: false, dashArray: '4 4' }, interactive: false }).addTo(mapa);
+  L.geoJSON({ type: 'FeatureCollection', features: fc.features.filter(f => f.geometry.type.includes('Line')) },
+    { style: { color: '#0b4f8a', weight: 1 }, interactive: false }).addTo(mapa);
 });
 L.marker([41.81814, 2.97912]).bindPopup("Aforador ACA 171812-001<br>Santa Cristina d'Aro (Ridaura)").addTo(mapa);
-L.circleMarker([41.805, 3.0672], { radius: 7, color: '#c0392b', fillOpacity: 0.9 }).bindPopup("Desembocadura (Platja d'Aro)").addTo(mapa);
+
+Promise.all([
+  fetch('data/ridaura/zones_acumulades.geojson').then(r => r.json()),
+  fetch('data/ridaura/afectats.geojson').then(r => r.json()),
+  fetch('data/ridaura/afectats_resum.json').then(r => r.json()),
+]).then(([zones, af, rs]) => {
+  afectats = af; resum = rs;
+  capaZones = L.geoJSON(zones, { style: f => ({ color: COLOR[f.properties.T], weight: 1, fillOpacity: 0.25 }), interactive: false }).addTo(mapa);
+  document.getElementById('botons').innerHTML = TS.map(T => `<button data-t="${T}">T${T}</button>`).join('');
+  document.querySelectorAll('#botons button').forEach(b => b.onclick = () => mostra(+b.dataset.t));
+  mostra(tActiu);
+});
+
+function mostra(T) {
+  tActiu = T;
+  document.querySelectorAll('#botons button').forEach(b => b.classList.toggle('actiu', +b.dataset.t === T));
+  capaZones.eachLayer(l => l.setStyle({ fillOpacity: l.feature.properties.T <= T ? 0.3 : 0, opacity: l.feature.properties.T <= T ? 1 : 0 }));
+  if (capaAfectats) mapa.removeLayer(capaAfectats);
+  const sel = afectats.features.filter(f => f.properties.T <= T);
+  capaAfectats = L.geoJSON({ type: 'FeatureCollection', features: sel }, {
+    style: f => ({ color: COLOR[f.properties.T], weight: f.geometry.type.includes('Line') ? 3 : 1, fillOpacity: 0.6 }),
+    pointToLayer: (f, ll) => L.circleMarker(ll, { radius: 6, color: '#1b2733', weight: 1, fillColor: COLOR[f.properties.T], fillOpacity: 1 }),
+    onEachFeature: (f, l) => l.bindPopup(`<b>${f.properties.nom || f.properties.categoria}</b><br>${f.properties.categoria}<br>S'inunda a partir de <b>T${f.properties.T}</b>${f.properties.gravetat ? '<br>Gravetat SNCZI: ' + f.properties.gravetat : ''}`)
+  }).addTo(mapa);
+  // resum acumulat
+  const compte = {}, llocs = [], carrers = new Set();
+  TS.filter(t => t <= T).forEach(t => {
+    Object.entries(resum.per_categoria['T' + t]).forEach(([k, v]) => compte[k] = (compte[k] || 0) + v);
+    resum.llocs['T' + t].forEach(n => llocs.push([n, t]));
+    resum.carrers['T' + t].forEach(n => carrers.add(n));
+  });
+  const ordre = Object.entries(compte).sort((a, b) => b[1] - a[1]);
+  document.getElementById('resum').innerHTML =
+    ordre.map(([k, v]) => `<div class="fila"><span>${k}</span><span>${v}</span></div>`).join('') +
+    `<h2 style="margin-top:10px">Llocs</h2><ul>${llocs.filter(([n]) => !/^(Carrer|Avinguda|Carretera|Camí|Eix|Anella|Passatge|Plaça)/.test(n))
+      .map(([n, t]) => `<li><span class="xip" style="background:${COLOR[t]}"></span>${n}</li>`).join('')}</ul>` +
+    `<h2 style="margin-top:10px">Carrers (${carrers.size})</h2><div class="nota">${[...carrers].sort().join(' · ')}</div>`;
+}
+
+// dades en directe
+async function sb(taula, params) {
+  const r = await fetch(SB + taula + '?' + new URLSearchParams(params), { headers: { apikey: SB_CLAU, 'Accept-Profile': 'inundacions' } });
+  return r.ok ? r.json() : [];
+}
+async function ara() {
+  const [q, h, acum] = await Promise.all([
+    sb('observacions', { select: 'temps,valor', conca: 'eq.ridaura', var: 'eq.cabal_m3s', order: 'temps.desc', limit: 1 }),
+    sb('observacions', { select: 'temps,valor', conca: 'eq.ridaura', var: 'eq.nivell_cm', order: 'temps.desc', limit: 1 }),
+    sb('pluja_acumulada', { select: '*', conca: 'eq.ridaura' }),
+  ]);
+  const hora = t => new Date(t).toLocaleString('ca', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+  let html = '<h2>Ara</h2>';
+  if (q.length) {
+    const v = q[0].valor, ll = LLINDARS.find(([m]) => v >= m);
+    html += `<div class="fila"><span>Cabal a Santa Cristina</span><span>${v.toFixed(1)} m³/s</span></div>
+             <div class="fila"><span>Nivell</span><span>${h.length ? (h[0].valor / 100).toFixed(2) + ' m' : '-'}</span></div>
+             <div class="fila"><span>Estat (llindars ACA)</span><span class="estat" style="color:${ll[2]}">${ll[1]}</span></div>
+             <div class="nota">Aforador · ${hora(q[0].temps)}</div>`;
+  }
+  const d = acum.find(a => a.subconca === 'desembocadura');
+  if (d) html += `<div style="margin-top:8px"><div class="fila"><span>Pluja radar a la conca 1 h / 3 h</span><span>${(+d.mm_1h).toFixed(1)} / ${(+d.mm_3h).toFixed(1)} mm</span></div>
+             <div class="fila"><span>6 h / 24 h</span><span>${(+d.mm_6h).toFixed(1)} / ${(+d.mm_24h).toFixed(1)} mm</span></div>
+             <div class="fila"><span>Intensitat màx. última hora</span><span>${(+d.mmh_max_1h || 0).toFixed(1)} mm/h</span></div>
+             <div class="nota">Radar OPERA · ${hora(d.fins)}</div></div>`;
+  document.getElementById('ara').innerHTML = html;
+}
+ara(); setInterval(ara, 5 * 60 * 1000);
 </script>
 </body>
 </html>
