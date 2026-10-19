@@ -1,0 +1,28 @@
+name: Prepara capes estàtiques
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  prepara:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests pyproj
+      - name: Zones inundables i elements sensibles
+        run: python3 scripts/prepara_zones.py --config config/ridaura.json
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && exit 0
+          git commit -m "Capes estàtiques: zones inundables i elements sensibles"
+          git pull --rebase origin main && git push

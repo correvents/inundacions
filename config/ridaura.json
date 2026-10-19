@@ -32,5 +32,11 @@
       "var": "pluja_mmh"
     }
   ],
-  "geometria": "data/ridaura/conca.geojson"
+  "geometria": "data/ridaura/conca.geojson",
+  "bbox_zones": [
+    2.9,
+    41.77,
+    3.09,
+    41.86
+  ]
 }
