@@ -9,28 +9,30 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests h5py
-      - name: Arxiu OPERA
+      - run: pip install requests rasterio numpy
+      - name: CAUMAX a la Ridaura
         run: |
           python3 - <<'PY'
-          import requests, re, h5py
-          S="https://s3.waw3-1.cloudferro.com/openradar-archive"
-          for p in ["2026/10/04/OPERA/", "2026/10/04/OPERA/COMP/", "2026/10/04/ES/", "2020/01/20/OPERA/", "2020/01/20/OPERA/COMP/"]:
-              x=requests.get(S,params={"list-type":2,"prefix":p,"delimiter":"/","max-keys":50},timeout=60).text
-              print("PREFIX",repr(p), re.findall(r"<Prefix>([^<]+)</Prefix>",x)[:50], re.findall(r"<Key>([^<]+)</Key>",x)[:20])
-          x=requests.get(S,params={"list-type":2,"prefix":"2026/10/04/OPERA/","max-keys":1000},timeout=60).text
-          ks=re.findall(r"<Key>([^<]+)</Key>",x); print(len(ks)); print("\n".join(sorted(set(re.sub(r"\d{8}T\d{4}","X",k) for k in ks))))
-          for k in ks:
-              if k.endswith(".h5") and ("ACRR" in k or "RATE" in k):
-                  open("a.h5","wb").write(requests.get(S+"/"+k,timeout=120).content)
-                  print("FILE",k)
-                  with h5py.File("a.h5") as h:
-                      h.visititems(lambda n,o: print(n, getattr(o,"shape",""), {a:(str(v)[:200]) for a,v in o.attrs.items()}))
-                      print(dict(h["where"].attrs))
-                  break
+          import requests, rasterio, numpy as np, io
+          from rasterio.io import MemoryFile
+          W="https://gis.miteco.gob.es/geoserver/ows"
+          d=requests.get(W,params={"service":"WCS","version":"2.0.1","request":"DescribeCoverage","coverageId":"agua__CaudalesMaximos100"},timeout=60).text
+          print(d[:2500])
+          punts={"aforador":(2.97912,41.81814),"desembocadura":(3.0671,41.8051)}
+          for T in [2,5,10,25,100,500]:
+              for sub in [("Long(2.90,3.10)","Lat(41.76,41.90)"),("E(2.90,3.10)","N(41.76,41.90)"),("x(2.90,3.10)","y(41.76,41.90)")]:
+                  r=requests.get(W,params=[("service","WCS"),("version","2.0.1"),("request","GetCoverage"),("coverageId",f"agua__CaudalesMaximos{T}"),("subset",sub[0]),("subset",sub[1]),("subsettingCrs","http://www.opengis.net/def/crs/EPSG/0/4326"),("format","image/tiff")],timeout=120)
+                  if r.ok and r.content[:2] in (b"II",b"MM"): break
+                  print(T,sub,r.status_code,r.text[:300])
+              else: continue
+              with MemoryFile(r.content) as m, m.open() as ds:
+                  a=ds.read(1).astype(float); nd=ds.nodata
+                  if nd is not None: a[a==nd]=np.nan
+                  print("T",T,ds.crs,ds.bounds,a.shape,"max",np.nanmax(a))
+                  from pyproj import Transformer
+                  tr=Transformer.from_crs("EPSG:4326",ds.crs,always_xy=True)
+                  for nom,(lo,la) in punts.items():
+                      x,y=tr.transform(lo,la); r0,c0=ds.index(x,y)
+                      w=a[max(r0-6,0):r0+7,max(c0-6,0):c0+7]
+                      print("  ",nom,"valor",a[r0,c0] if 0<=r0<a.shape[0] and 0<=c0<a.shape[1] else None,"max finestra",np.nanmax(w) if w.size else None)
           PY
-      - name: MITECO cabals màxims
-        run: |
-          for u in "https://wms.mapama.gob.es/sig/Agua/CAUMAX/wms.aspx" "https://wms.mapama.gob.es/sig/Agua/CaudalesMaximos/wms.aspx" "https://servicios.idee.es/wms-inspire/hidrografia" "https://wms.mapama.gob.es/sig/Agua/Caumax/wms.aspx"; do echo "== $u"; curl -s -m 30 "$u?request=GetCapabilities&service=WMS" | grep -oE "<(Name|Title)>[^<]*</(Name|Title)>" | head -30; done
-          curl -s -m 60 "https://gis.miteco.gob.es/geoserver/ows?service=WCS&request=GetCapabilities" | grep -oiE "<(wcs:)?CoverageId>[^<]*</(wcs:)?CoverageId>|<(ows:)?Title>[^<]*(caud|q[0-9]|max)[^<]*</(ows:)?Title>" | head -60
-          curl -s -m 60 "https://gis.miteco.gob.es/geoserver/wms?service=WMS&request=GetCapabilities" | grep -oiE "<Name>[^<]*(caud|caumax|q_?t|qmax|maxim)[^<]*</Name>" | sort -u | head -60

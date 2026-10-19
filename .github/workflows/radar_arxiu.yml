@@ -1,0 +1,27 @@
+name: Radar d'un episodi passat
+
+on:
+  workflow_dispatch:
+    inputs:
+      des:
+        description: "Inici UTC (YYYY-MM-DDTHH:MM)"
+        default: "2026-10-02T12:00"
+      fins:
+        description: "Final UTC (YYYY-MM-DDTHH:MM)"
+        default: "2026-10-05T12:00"
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy h5py pyproj shapely
+      - name: Pluja del radar OPERA (arxiu) sobre la conca
+        run: python3 scripts/radar_conca.py --config config/ridaura.json --des "${{ inputs.des }}" --fins "${{ inputs.fins }}"

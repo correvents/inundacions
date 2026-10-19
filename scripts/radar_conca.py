@@ -6,9 +6,11 @@ Per a cada compost de reflectivitat (DBZH, 5 min, ~1 km) que encara no sigui a S
   - la passa a mm/h amb Marshall-Palmer (Z = 200 R^1.6, màx. 125 mm/h),
   - desa a inundacions.pluja_conca: mm caiguts en els 5 min (mitjana de la subconca), intensitat màxima i cobertura.
 L'acumulat (1/3/6/24 h) el calcula la vista inundacions.pluja_acumulada.
-El bucket públic només guarda les últimes 24 h.
+El bucket de temps real només guarda les últimes 24 h; per a episodis passats es fa servir l'arxiu
+(mateixos noms de fitxer, DBZH cada 5 min des de juliol de 2024).
 
-Ús:  python3 scripts/radar_conca.py --config config/ridaura.json [--hores 1]"""
+Ús:  python3 scripts/radar_conca.py --config config/ridaura.json [--hores 1]
+     python3 scripts/radar_conca.py --config config/ridaura.json --des 2026-10-03T00:00 --fins 2026-10-05T00:00"""
 import argparse, json, re, sys, tempfile, urllib.parse
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -18,15 +20,16 @@ from shapely.geometry import shape, Point
 from shapely.prepared import prep
 from sb import insereix, llegeix
 
-S3 = "https://s3.waw3-1.cloudferro.com/openradar-24h"
+S3_24H = "https://s3.waw3-1.cloudferro.com/openradar-24h"
+S3_ARXIU = "https://s3.waw3-1.cloudferro.com/openradar-archive"
 PAS = 0.0025   # graus (~250 m): prou per tenir diversos punts per píxel de radar
 
 
-def claus(ini, fi):
+def claus(s3, ini, fi):
     """{instant (UTC): clau S3} dels compostos DBZH entre ini i fi."""
     out, h = {}, ini.replace(minute=0)
     while h <= fi:
-        xml = requests.get(S3, params={"list-type": 2, "prefix": h.strftime("%Y/%m/%d/OPERA/COMP/OPERA@%Y%m%dT%H")}, timeout=30).text
+        xml = requests.get(s3, params={"list-type": 2, "prefix": h.strftime("%Y/%m/%d/OPERA/COMP/OPERA@%Y%m%dT%H")}, timeout=30).text
         for k in re.findall(r"<Key>([^<]+)</Key>", xml):
             m = re.search(r"OPERA@(\d{8}T\d{4})@0@DBZH\.h5$", k)
             if m:
@@ -76,6 +79,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
     ap.add_argument("--hores", type=float, default=1)
+    ap.add_argument("--des", help="inici UTC (YYYY-MM-DDTHH:MM): llegeix de l'arxiu en lloc de les últimes hores")
+    ap.add_argument("--fins", help="final UTC (per defecte, 24 h després de --des)")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
     fc = json.loads(Path(cfg["geometria"]).read_text())
@@ -83,10 +88,17 @@ def main():
     for f in fc["features"]:
         if f["geometry"]["type"].endswith("Polygon"):
             subs[f["properties"]["subconca"]] = punts(shape(f["geometry"]))
-    fi = datetime.now(timezone.utc); ini = fi - timedelta(hours=a.hores)
-    disponibles = claus(ini, fi)
+    if a.des:
+        s3 = S3_ARXIU
+        ini = datetime.fromisoformat(a.des).replace(tzinfo=timezone.utc)
+        fi = datetime.fromisoformat(a.fins).replace(tzinfo=timezone.utc) if a.fins else ini + timedelta(hours=24)
+    else:
+        s3 = S3_24H
+        fi = datetime.now(timezone.utc); ini = fi - timedelta(hours=a.hores)
+    disponibles = claus(s3, ini, fi)
     fets = {r["temps"][:16] for r in llegeix("pluja_conca", {"select": "temps", "conca": f"eq.{cfg['conca']}", "font": "eq.radar",
-                                                               "temps": f"gt.{ini.isoformat()}"})}
+                                                               "temps": f"gt.{ini.isoformat()}",
+                                                               "and": f"(temps.lte.{fi.isoformat()})"})}
     pendents = {t: k for t, k in disponibles.items() if t.strftime("%Y-%m-%dT%H:%M") not in fets}
     print(f"OPERA: {len(disponibles)} compostos a la finestra, {len(pendents)} per processar")
     files, desades = [], 0
@@ -94,7 +106,7 @@ def main():
         for t, k in sorted(pendents.items()):
             f = Path(tmp) / "c.h5"
             try:
-                r = requests.get(S3 + "/" + urllib.parse.quote(k, safe="/@"), timeout=120)
+                r = requests.get(s3 + "/" + urllib.parse.quote(k, safe="/@"), timeout=120)
                 r.raise_for_status(); f.write_bytes(r.content)
                 for nom, (lon, lat) in subs.items():
                     i = mmh(mostreja(f, lon, lat))
