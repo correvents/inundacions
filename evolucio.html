@@ -241,7 +241,7 @@ function reprodueix(on) {
 // Model ràpid: balanç d'aigua pas a pas des de l'inici de l'episodi. L'aigua que escola avança pel camí de màxim pendent
 // com una cadena de dipòsits (cada cel·la la reté de mitjana L/v segons), s'atura a les clotades fins que són plenes i les
 // clotades es buiden per infiltració (terreny natural) o pel clavegueram (zona construïda, la capacitat que no fa servir la pluja).
-const SEW = 30, CADA_CK = 4, DTS = +(new URLSearchParams(location.search).get('dt') || 300), VMULT = +(new URLSearchParams(location.search).get('v') || 1);
+const SEW = 30, CADA_CK = 4, DTS = +(new URLSearchParams(location.search).get('dt') || 300), VMULT = +(new URLSearchParams(location.search).get('v') || 2);
 function velocitat(i) {
   const j = rcv[i]; if (j < 0) return 1;
   const L = (dir[i] % 2 ? Math.SQRT2 : 1) * G.pas_m, s = Math.max((zf[i] - zf[j]) / 100 / L, 0.002);
