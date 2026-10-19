@@ -1,0 +1,32 @@
+name: Malla per al simulador de pluja
+
+on:
+  workflow_dispatch:
+    inputs:
+      pas:
+        description: "Mida de cel·la de la malla web (m)"
+        default: "20"
+
+permissions:
+  contents: write
+
+jobs:
+  graella:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy rasterio pyproj shapely pysheds pillow
+      - run: python3 scripts/relleu.py --config config/ridaura.json --pas 10 --nomes-mdt
+      - run: python3 scripts/graella_web.py --config config/ridaura.json --mdt /tmp/relleu/mdt.tif --radar data/ridaura/episodis/2026-10-03_radar.json --episodi data/ridaura/episodis/2026-10-04.json --pas "${{ inputs.pas }}"
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && exit 0
+          git commit -m "Malla web per al simulador de pluja"
+          for i in 1 2 3 4; do git pull --rebase origin main && git push && exit 0; sleep $((i*5)); done; exit 1
