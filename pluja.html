@@ -40,8 +40,14 @@
   <div id="mapa"><div class="carrega" id="carrega">Carregant el relleu…</div></div>
   <div id="panell">
     <h1>Pluja sobre el relleu</h1>
-    <div class="sub">Tria una franja de pluja de l'episodi del 4 d'octubre i mira cap on corre l'aigua i on s'embassa ·
+    <div class="sub">Tria un episodi i una franja de pluja i mira cap on corre l'aigua i on s'embassa ·
       <a href="episodi.html">reproducció</a> · <a href="./">visor</a></div>
+
+    <div class="targeta">
+      <select id="episodi" style="font-weight:600;margin-bottom:6px"></select>
+      <div class="nota" id="premsa"></div>
+      <label class="nota" style="display:block;margin-top:4px"><input type="checkbox" id="veupremsa" checked> Marcar al mapa els carrers que cita la premsa</label>
+    </div>
 
     <div class="targeta">
       <div class="franja" id="franja">–</div>
@@ -121,12 +127,13 @@ fons['Topogràfic'].addTo(mapa);
 L.control.layers(fons, null, { position: 'topright', collapsed: false }).addTo(mapa);
 mapa.createPane('aigua').style.zIndex = 450;
 mapa.createPane('radar').style.zIndex = 455;
+mapa.createPane('premsa').style.zIndex = 470;
 
 const $ = id => document.getElementById(id);
 const BASE = 'data/ridaura/';
 const DR = [-1, -1, 0, 1, 1, 1, 0, -1], DC = [0, 1, 1, 1, 0, -1, -1, -1];   // 0=N 1=NE 2=E 3=SE 4=S 5=SO 6=O 7=NO
 const ESCALA = 2;                                                            // píxels per cel·la al dibuix
-let G, R, EP, N, A, z, zf, dir, urba, ridx, rcv, ordre, comp, compCel, compIni, nComp, terra;
+let G, R, EP, FACT, IDX, PREMSA, capaPremsa, N, A, z, zf, dir, urba, ridx, rcv, ordre, comp, compCel, compIni, nComp, terra;
 let cumR;            // pluja acumulada per cel·la de radar i fotograma, ja corregida: cumR[f * nR + r]
 let mitjana;         // pluja mitjana a la zona per fotograma (mm/15 min)
 let ini = 0, fi = 0, durada = 6, res = null, capa = null, capaRadar = null, marcadors = [];
@@ -138,15 +145,17 @@ const fmt = (x, d = 1) => x.toLocaleString('ca-ES', { maximumFractionDigits: d, 
 Promise.all([
   fetch(BASE + 'web/graella.json').then(r => r.json()),
   fetch(BASE + 'web/graella.bin').then(r => r.arrayBuffer()),
-  fetch(BASE + 'episodis/2026-10-03_radar.json').then(r => r.json()),
-  fetch(BASE + 'episodis/2026-10-04.json').then(r => r.json()),
-]).then(([g, bin, rad, ep]) => {
-  G = g; R = rad; EP = ep;
+  fetch(BASE + 'episodis/index.json').then(r => r.json()),
+  fetch(BASE + 'episodis/premsa.geojson').then(r => r.json()),
+]).then(async ([g, bin, idx, premsa]) => {
+  G = g; IDX = idx; PREMSA = premsa;
+  $('episodi').innerHTML = IDX.episodis.map(e => `<option value="${e.id}">${e.titol}</option>`).join('');
+  await carregaEpisodi(IDX.episodis[0], false);
   prepara(bin);
   $('carrega').remove();
-  fi = R.temps.findIndex(t => t >= '2026-10-04T10:00'); if (fi < 0) fi = R.temps.length - 1;
-  $('fi').max = $('ini').max = R.temps.length - 1;
-  triaDurada(6);
+  iniciEpisodi();
+  $('episodi').onchange = () => { reprodueix(false); carregaEpisodi(IDX.episodis.find(e => e.id === $('episodi').value)).then(iniciEpisodi); };
+  $('veupremsa').onchange = dibuixaPremsa;
   for (const b of document.querySelectorAll('#durades button')) b.onclick = () => triaDurada(+b.dataset.h);
   $('fi').oninput = () => { reprodueix(false); fi = +$('fi').value; if (durada !== null) ini = durada ? Math.max(fi - durada * 4 + 1, 0) : 0; if (ini > fi) ini = fi; calcula(); };
   $('ini').oninput = () => { ini = +$('ini').value; if (ini > fi) fi = ini; marcaDurada(null); calcula(); };
@@ -161,6 +170,39 @@ Promise.all([
   arrossega();
   mapa.fitBounds(G.limits);
 }).catch(e => { $('carrega').textContent = 'No s\'ha pogut carregar: ' + e.message; });
+
+// episodi: radar en graella i, si n'hi ha, la sèrie de l'aforador i el pluviòmetre (per corregir el radar)
+let EPI;
+async function carregaEpisodi(e, recalcula = true) {
+  EPI = e;
+  R = await fetch(BASE + 'episodis/' + e.radar).then(r => r.json());
+  EP = e.episodi ? await fetch(BASE + 'episodis/' + e.episodi).then(r => r.json()) : null;
+  FACT = EP ? G.factor_radar : R.temps.map(() => 1);
+  $('corregeix').disabled = !EP; if (!EP) $('corregeix').checked = false; else $('corregeix').checked = true;
+  $('ia').value = e.ia_mm ?? 60;
+  $('premsa').innerHTML = `${e.resum}<br>${e.carrers.length || e.llocs.length ? '<b>Llocs citats:</b> ' + [...e.carrers, ...e.llocs].join(' · ') + '<br>' : ''}` +
+    `Fonts: ${e.fonts.map((u, k) => `<a href="${u}" target="_blank" rel="noopener">${k + 1}</a>`).join(' ')}` +
+    (EP ? '' : '<br><i>Sense dades de l\'aforador per a aquest episodi (l\'ACA només en guarda 3 mesos): radar sense corregir. L\'absorció del terreny és una suposició.</i>');
+  $('fi').max = $('ini').max = R.temps.length - 1;
+  if (recalcula) pluges();
+  dibuixaPremsa();
+}
+function iniciEpisodi() {
+  // la franja inicial acaba quan s'acaben les 6 h més plujoses
+  let millor = 0, fiM = R.temps.length - 1;
+  for (let f = 0; f < mitjana.length; f++) { let s = 0; for (let k = Math.max(f - 23, 0); k <= f; k++) s += mitjana[k]; if (s > millor) { millor = s; fiM = f; } }
+  fi = Math.min(fiM + 4, R.temps.length - 1);
+  triaDurada(6);
+}
+function dibuixaPremsa() {
+  if (capaPremsa) { mapa.removeLayer(capaPremsa); capaPremsa = null; }
+  if (!$('veupremsa').checked || !PREMSA) return;
+  capaPremsa = L.geoJSON({ type: 'FeatureCollection', features: PREMSA.features.filter(f => f.properties.episodi === EPI.id) }, {
+    pane: 'premsa', interactive: true,
+    style: { color: '#e31a1c', weight: 5, opacity: 0.85, dashArray: '2 6', lineCap: 'round', fillOpacity: 0.2 },
+    onEachFeature: (f, l) => l.bindTooltip(`Premsa: ${f.properties.nom}`)
+  }).addTo(mapa);
+}
 
 function prepara(bin) {
   const cap = nom => { const c = G.capes.find(c => c.nom === nom); const T = c.tipus.endsWith('u2') ? Uint16Array : Uint8Array;
@@ -219,12 +261,12 @@ function prepara(bin) {
 function pluges() {
   const nR = R.lons.length * R.lats.length, nF = R.temps.length, corr = $('corregeix').checked;
   cumR = new Float32Array((nF + 1) * nR);           // fila 0 = abans del primer fotograma
-  for (let f = 0; f < nF; f++) { const k = corr ? G.factor_radar[f] : 1;
+  for (let f = 0; f < nF; f++) { const k = corr ? FACT[f] : 1;
     for (let r = 0; r < nR; r++) cumR[(f + 1) * nR + r] = cumR[f * nR + r] + R.mm[f][r] * k; }
   // pluja mitjana per fotograma sobre les cel·les de terra
   const pes = new Float64Array(nR); let tot = 0;
   for (let i = 0; i < N; i++) if (terra[i] && ridx[i] !== 65535) { pes[ridx[i]]++; tot++; }
-  mitjana = R.temps.map((_, f) => { let s = 0; for (let r = 0; r < nR; r++) s += pes[r] * R.mm[f][r] * (corr ? G.factor_radar[f] : 1); return s / tot; });
+  mitjana = R.temps.map((_, f) => { let s = 0; for (let r = 0; r < nR; r++) s += pes[r] * R.mm[f][r] * (corr ? FACT[f] : 1); return s / tot; });
 }
 
 function triaDurada(h) {
@@ -303,7 +345,7 @@ function calculaAra() {
   radar();
   graf();
   // resum i comparació amb l'aforador
-  const obsQ = (() => { // volum mesurat a l'aforador a la franja (sense el cabal de base d'abans de la tempesta)
+  const obsQ = !EP ? null : (() => { // volum mesurat a l'aforador a la franja (sense el cabal de base d'abans de la tempesta)
     const base = EP.q_aforador_obs[0] || 0; let v = 0;
     EP.temps_utc.forEach((t, k) => { if (t > t0s && t <= R.temps[fi] && EP.q_aforador_obs[k] != null) v += Math.max(EP.q_aforador_obs[k] - base, 0) * EP.pas_min * 60; });
     return v; })();
@@ -314,7 +356,7 @@ function calculaAra() {
     fila('Aigua que escola (tota la zona)', `${fmt(volTot / 1e6, 2)} hm³`) +
     fila('Aigua retinguda a clotades', `${fmt(volBassals / 1e3, 0)} mil m³ · ${fmt(areaBassals / 1e4, 1)} ha amb > 10 cm`) +
     fila(`Ridaura a l'aforador (${fmt(G.areaKm2.aforador, 0)} km²)`, `${fmt(punt('aforador') / segons)} m³/s de mitjana`) +
-    fila('&nbsp;&nbsp;mesurat a l\'aforador, mateixa franja', `${fmt(obsQ / segons)} m³/s`) +
+    (obsQ === null ? '' : fila('&nbsp;&nbsp;mesurat a l\'aforador, mateixa franja', `${fmt(obsQ / segons)} m³/s`)) +
     fila(`Ridaura al mar (${fmt(G.areaKm2.desembocadura, 0)} km²)`, `${fmt(punt('desembocadura') / segons)} m³/s`) +
     fila(`Riera de Fenals (${fmt(G.areaKm2.fenals, 1)} km²)`, `${fmt(punt('fenals') / segons)} m³/s`) +
     '<div class="nota" style="margin-top:4px">Cabals mitjans de la franja: la punta pot ser 2–4 vegades més alta. L\'aigua triga 1–2 h a arribar a l\'aforador, ' +
@@ -373,7 +415,7 @@ function radar() {
   const cx = cv.getContext('2d'), img = cx.createImageData(nx, ny);
   const rampa = tipus === 'inst' ? RAMPA_RATE : RAMPA_ACUM;
   for (let r = 0; r < nR; r++) {
-    const v = tipus === 'inst' ? R.mm[fi][r] * (corr ? G.factor_radar[fi] : 1) * mul * 60 / R.interval_min
+    const v = tipus === 'inst' ? R.mm[fi][r] * (corr ? FACT[fi] : 1) * mul * 60 / R.interval_min
                                : (cumR[(fi + 1) * nR + r] - cumR[ini * nR + r]) * mul;
     const col = color(v, rampa); if (!col) continue;
     const fila = ny - 1 - Math.floor(r / nx), o = (fila * nx + r % nx) * 4;   // les latituds van de sud a nord
@@ -421,7 +463,9 @@ function graf() {
   cx.fillStyle = '#5b6b7b'; cx.font = '10px system-ui'; cx.textAlign = 'right';
   for (const v of [0, Math.round(mx / 2), Math.round(mx)]) cx.fillText(v, 26, base - v / mx * (base - 4) + 3);
   cx.textAlign = 'center';
-  R.temps.forEach((t, f) => { if (t.endsWith(':00') && +t.slice(11, 13) % 3 === 0) cx.fillText(horaCurta(t), 30 + (f + 0.5) * ample, H - 3); });
+  const cada = nF > 200 ? 24 : nF > 100 ? 6 : 3, ultim = { x: -99 };
+  R.temps.forEach((t, f) => { const x = 30 + (f + 0.5) * ample; if (t.endsWith(':00') && +t.slice(11, 13) % cada === 0 && x - ultim.x > 34) {
+    cx.fillText(cada >= 24 ? new Date(t + 'Z').toLocaleDateString('ca-ES', { day: 'numeric', month: 'numeric' }) : horaCurta(t), x, H - 3); ultim.x = x; } });
   cx.textAlign = 'left'; cx.fillText('mm', 0, 9);
 }
 function arrossega() {
