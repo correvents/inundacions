@@ -9,30 +9,30 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests rasterio numpy
-      - name: CAUMAX a la Ridaura
+      - run: pip install requests rasterio numpy pyproj
+      - name: Capes per al mètode racional
         run: |
+          curl -s -m 60 "https://gis.miteco.gob.es/geoserver/ows?service=WCS&version=2.0.1&request=GetCapabilities" > cap.xml
           python3 - <<'PY'
-          import requests, rasterio, numpy as np, io
+          import re
+          x=open("cap.xml").read()
+          for m in re.finditer(r"<wcs:CoverageSummary>(.*?)</wcs:CoverageSummary>",x,re.S):
+              b=m.group(1); i=re.search(r"CoverageId>([^<]+)<",b).group(1); t=re.search(r"Title>([^<]*)<",b)
+              print(i,"|",t.group(1) if t else "")
+          PY
+          for u in https://www.miteco.gob.es/content/dam/miteco/es/cartografia-y-sig/ide/descargas/umbral_escorrentia_tcm30-176013.zip https://www.miteco.gob.es/content/dam/miteco/es/cartografia-y-sig/ide/descargas/i1id_tcm30-176014.zip; do
+            curl -sL -m 120 -o z.zip "$u"; ls -la z.zip; unzip -l z.zip | head -30; rm -f z.zip; done
+          python3 - <<'PY'
+          import requests, numpy as np
           from rasterio.io import MemoryFile
+          from pyproj import Transformer
           W="https://gis.miteco.gob.es/geoserver/ows"
-          d=requests.get(W,params={"service":"WCS","version":"2.0.1","request":"DescribeCoverage","coverageId":"agua__CaudalesMaximos100"},timeout=60).text
-          print(d[:2500])
-          punts={"aforador":(2.97912,41.81814),"desembocadura":(3.0671,41.8051)}
-          for T in [2,5,10,25,100,500]:
-              for sub in [("Long(2.90,3.10)","Lat(41.76,41.90)"),("E(2.90,3.10)","N(41.76,41.90)"),("x(2.90,3.10)","y(41.76,41.90)")]:
-                  r=requests.get(W,params=[("service","WCS"),("version","2.0.1"),("request","GetCoverage"),("coverageId",f"agua__CaudalesMaximos{T}"),("subset",sub[0]),("subset",sub[1]),("subsettingCrs","http://www.opengis.net/def/crs/EPSG/0/4326"),("format","image/tiff")],timeout=120)
-                  if r.ok and r.content[:2] in (b"II",b"MM"): break
-                  print(T,sub,r.status_code,r.text[:300])
-              else: continue
+          for T in [100,500]:
+              r=requests.get(W,params=[("service","WCS"),("version","2.0.1"),("request","GetCoverage"),("coverageId",f"agua__CaudalesMaximos{T}"),("subset","Long(0.2,3.4)"),("subset","Lat(40.5,42.9)"),("subsettingCrs","http://www.opengis.net/def/crs/EPSG/0/4326"),("format","image/tiff")],timeout=180)
               with MemoryFile(r.content) as m, m.open() as ds:
-                  a=ds.read(1).astype(float); nd=ds.nodata
-                  if nd is not None: a[a==nd]=np.nan
-                  print("T",T,ds.crs,ds.bounds,a.shape,"max",np.nanmax(a))
-                  from pyproj import Transformer
-                  tr=Transformer.from_crs("EPSG:4326",ds.crs,always_xy=True)
-                  for nom,(lo,la) in punts.items():
-                      x,y=tr.transform(lo,la); r0,c0=ds.index(x,y)
-                      w=a[max(r0-6,0):r0+7,max(c0-6,0):c0+7]
-                      print("  ",nom,"valor",a[r0,c0] if 0<=r0<a.shape[0] and 0<=c0<a.shape[1] else None,"max finestra",np.nanmax(w) if w.size else None)
+                  a=ds.read(1).astype(float)
+                  if ds.nodata is not None: a[a==ds.nodata]=np.nan
+                  ok=np.argwhere(~np.isnan(a)); print("T",T,a.shape,"cel·les amb valor",len(ok))
+                  if len(ok):
+                      cols=ok[:,1]; print("  columna més a l'est amb valor", cols.max(), "lon", ds.xy(0,cols.max())[0])
           PY
