@@ -1,0 +1,40 @@
+name: Simulació 2D d'un episodi
+
+on:
+  workflow_dispatch:
+    inputs:
+      pas:
+        description: "Mida de cel·la (m)"
+        default: "20"
+      ia_natural:
+        description: "Llindar de pèrdues del terreny natural (mm)"
+        default: "150"
+      ia_urba:
+        description: "Llindar de pèrdues de les zones construïdes (mm)"
+        default: "5"
+
+permissions:
+  contents: write
+
+jobs:
+  sim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy rasterio pyproj shapely pillow numba
+      - name: Relleu
+        run: python3 scripts/relleu.py --config config/ridaura.json --pas 10 --nomes-mdt
+      - name: Simulació
+        run: python3 scripts/simula_2d.py --config config/ridaura.json --mdt /tmp/relleu/mdt.tif --radar data/ridaura/episodis/2026-10-03_radar.json --episodi data/ridaura/episodis/2026-10-04.json --pas "${{ inputs.pas }}" --ia-natural "${{ inputs.ia_natural }}" --ia-urba "${{ inputs.ia_urba }}"
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet && exit 0
+          git commit -m "Simulació 2D de l'episodi"
+          git pull --rebase origin main && git push

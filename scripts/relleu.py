@@ -69,6 +69,7 @@ def main():
     ap.add_argument("--config", required=True)
     ap.add_argument("--pas", type=float, default=10)
     ap.add_argument("--llindar-km2", type=float, default=0.05)
+    ap.add_argument("--nomes-mdt", action="store_true", help="només prepara /tmp/relleu/mdt.tif (per a la simulació 2D)")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
     d = Path("data") / cfg["conca"]
@@ -83,6 +84,8 @@ def main():
     with rasterio.open(TMP / "mdt.tif", "w", **perfil) as f:
         f.write(np.where(mar, np.nan, z), 1)
     print(f"Reixa de {a.pas:.0f} m: {z.shape[1]}×{z.shape[0]}")
+    if a.nomes_mdt:
+        return 0
 
     from pysheds.grid import Grid
     g = Grid.from_raster(str(TMP / "mdt.tif"))
