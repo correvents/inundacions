@@ -19,7 +19,6 @@ from pathlib import Path
 import numpy as np, requests
 np.in1d = np.isin                      # pysheds encara fa servir np.in1d (numpy 2)
 import rasterio
-from rasterio.io import MemoryFile
 from rasterio.merge import merge
 from rasterio.warp import reproject, Resampling, transform_bounds
 from rasterio.transform import from_origin
@@ -46,7 +45,9 @@ def baixa_mdt():
             r = requests.get(WCS, params=p, timeout=180)
             if r.content[:2] not in (b"II", b"MM"):
                 sys.exit(f"WCS {xa:.0f},{ya:.0f}: HTTP {r.status_code} {r.text[:300]}")
-            trossos.append(MemoryFile(r.content).open())
+            fitxer = TMP / f"mdt5_{len(trossos)}.tif"
+            fitxer.write_bytes(r.content)
+            trossos.append(rasterio.open(fitxer))
     mosaic, tr = merge(trossos)
     print(f"MDT 5 m: {mosaic.shape[1]}×{mosaic.shape[2]} cel·les, {len(trossos)} trossos")
     return mosaic[0].astype("float32"), tr, trossos[0].crs, trossos[0].nodata
