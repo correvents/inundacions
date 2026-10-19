@@ -1,0 +1,40 @@
+name: Calibra el model de cabal
+
+on:
+  workflow_dispatch:
+    inputs:
+      des:
+        description: "Inici de l'episodi (UTC)"
+        default: "2026-10-03T12:00"
+      fins:
+        description: "Final de l'episodi (UTC)"
+        default: "2026-10-05T00:00"
+
+permissions:
+  contents: write
+
+jobs:
+  calibra:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy scipy matplotlib
+      - name: Calibratge amb el radar
+        run: PYTHONPATH=scripts python3 scripts/model_cabal.py --config config/ridaura.json --des "${{ inputs.des }}" --fins "${{ inputs.fins }}" --font radar
+      - name: Calibratge amb el pluviòmetre
+        run: PYTHONPATH=scripts python3 scripts/model_cabal.py --config config/ridaura.json --des "${{ inputs.des }}" --fins "${{ inputs.fins }}" --font pluviometre
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/ data/
+          git diff --cached --quiet && exit 0
+          git commit -m "Calibratge del model de cabal"
+          git pull --rebase origin main && git push
