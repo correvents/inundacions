@@ -3,7 +3,7 @@
 
 A partir de la reixa de relleu.py (MDT 5 m de l'IGN) prepara, a --pas metres:
   - cota del terreny i cota amb les depressions omplertes (cm, uint16): la diferència és on l'aigua s'embassa,
-  - direcció de drenatge D8 sobre el relleu condicionat (pysheds), codi 0–7 (E, SE, S, SO, O, NO, N, NE), 255 = mar o vora,
+  - direcció de drenatge D8 sobre el relleu condicionat (pysheds), codi 0–7 (N, NE, E, SE, S, SO, O, NO), 255 = mar o vora,
   - zones construïdes (ESA WorldCover 2021, classe 50),
   - índex de la cel·la del radar de l'episodi que cobreix cada cel·la.
 Ho desa tot en un binari (data/<conca>/web/graella.bin) amb la descripció a graella.json, i hi afegeix el factor horari
@@ -24,7 +24,7 @@ from pyproj import Transformer
 
 CAIXA = [2.90, 41.755, 3.08, 41.88]     # conca del Ridaura i plana de Platja d'Aro
 WORLDCOVER = "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N39E{:03d}_Map.tif"
-DIRMAP = (1, 2, 4, 8, 16, 32, 64, 128)  # pysheds: E, SE, S, SO, O, NO, N, NE
+DIRMAP = (1, 2, 4, 8, 16, 32, 64, 128)  # pysheds en l'ordre N, NE, E, SE, S, SO, O, NO → codi 0–7
 
 
 def main():
@@ -115,12 +115,12 @@ def main():
     to_utm = Transformer.from_crs(4326, crs, always_xy=True)
     punts = {}
     for nom, (lon, lat) in {"aforador": (cfg["aforador"]["lon"], cfg["aforador"]["lat"]), "desembocadura": (3.0671, 41.8051),
-                            "fenals": (3.0655, 41.8155)}.items():
+                            "fenals": (3.0712, 41.8194)}.items():
         x, y = to_utm.transform(lon, lat)
         punts[nom] = [int((tr.f - y) // tr.a), int((x - tr.c) // tr.a)]
     (dest / "graella.json").write_text(json.dumps({
         "nf": nf, "nc": nc, "pas_m": tr.a, "crs": str(crs), "origen_utm": [tr.c, tr.f], "limits": [[s4, w4], [n4, e4]],
-        "capes": capes, "dirs": "0=E 1=SE 2=S 3=SO 4=O 5=NO 6=N 7=NE, 255=mar o vora",
+        "capes": capes, "dirs": "0=N 1=NE 2=E 3=SE 4=S 5=SO 6=O 7=NO, 255=mar o vora",
         "radar": Path(a.radar).name, "factor_radar": factors, "punts": punts}, ensure_ascii=False))
     print(f"graella.bin: {len(blob) / 1e6:.1f} MB")
     return 0

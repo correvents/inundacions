@@ -95,7 +95,7 @@ mapa.createPane('aigua').style.zIndex = 450;
 
 const $ = id => document.getElementById(id);
 const BASE = 'data/ridaura/';
-const DR = [0, 1, 1, 1, 0, -1, -1, -1], DC = [1, 1, 0, -1, -1, -1, 0, 1];   // 0=E 1=SE 2=S 3=SO 4=O 5=NO 6=N 7=NE
+const DR = [-1, -1, 0, 1, 1, 1, 0, -1], DC = [0, 1, 1, 1, 0, -1, -1, -1];   // 0=N 1=NE 2=E 3=SE 4=S 5=SO 6=O 7=NO
 const ESCALA = 2;                                                            // píxels per cel·la al dibuix
 let G, R, EP, N, A, z, zf, dir, urba, ridx, rcv, ordre, comp, compCel, compIni, nComp, terra;
 let cumR;            // pluja acumulada per cel·la de radar i fotograma, ja corregida: cumR[f * nR + r]
@@ -173,7 +173,7 @@ function prepara(bin) {
   G.cel = {};
   for (const [nom, [r0, c0]] of Object.entries(G.punts)) {
     let millor = r0 * G.nc + c0;
-    for (let r = r0 - 4; r <= r0 + 4; r++) for (let c = c0 - 4; c <= c0 + 4; c++)
+    for (let r = r0 - 10; r <= r0 + 10; r++) for (let c = c0 - 10; c <= c0 + 10; c++)
       if (r >= 0 && r < G.nf && c >= 0 && c < G.nc && acc[r * G.nc + c] > acc[millor]) millor = r * G.nc + c;
     G.cel[nom] = millor;
   }
@@ -260,7 +260,7 @@ function calculaAra() {
   $('resum').innerHTML = '<h2>Resultat de la franja</h2>' +
     fila('Pluja mitjana / màxima', `${fmt(sumP / nT)} / ${fmt(maxP)} mm`) +
     fila('Aigua que escola (tota la zona)', `${fmt(volTot / 1e6, 2)} hm³`) +
-    fila('Aigua retinguda a clotades', `${fmt(volBassals / 1e3, 0)} m³ · ${fmt(areaBassals / 1e4, 1)} ha amb > 10 cm`) +
+    fila('Aigua retinguda a clotades', `${fmt(volBassals / 1e3, 0)} mil m³ · ${fmt(areaBassals / 1e4, 1)} ha amb > 10 cm`) +
     fila(`Ridaura a l'aforador (${fmt(G.areaKm2.aforador, 0)} km²)`, `${fmt(punt('aforador') / segons)} m³/s de mitjana`) +
     fila('&nbsp;&nbsp;mesurat a l\'aforador, mateixa franja', `${fmt(obsQ / segons)} m³/s`) +
     fila(`Ridaura al mar (${fmt(G.areaKm2.desembocadura, 0)} km²)`, `${fmt(punt('desembocadura') / segons)} m³/s`) +
