@@ -47,7 +47,7 @@
     <div class="cel"><div class="m" id="m0"></div><div class="titol">1. Radar en aquest moment<div class="ll" id="ll0"></div></div></div>
     <div class="cel"><div class="m" id="m1"></div><div class="titol">2. Pluja caiguda des de l'inici<div class="ll" id="ll1"></div></div></div>
     <div class="cel"><div class="m" id="m2"></div><div class="titol">3. Aigua que escola ara (no l'absorbeix el terreny ni el clavegueram)<div class="ll" id="ll2"></div></div></div>
-    <div class="cel"><div class="m" id="m3"></div><div class="titol"><select id="vista3"><option value="sim">4. Aigua al carrer ara (simulació 2D)</option><option value="d8">4. Aigua que corre i que hi ha ara (model ràpid)</option></select>
+    <div class="cel"><div class="m" id="m3"></div><div class="titol"><select id="vista3"><option value="sim">4. Aigua al carrer ara (simulació 2D)</option><option value="d8">4. Aigua que corre i que hi ha ara (model ràpid)</option><option value="dues">4. Les dues juntes (2D de fons, corrents del model ràpid)</option></select>
       <div class="ll" id="ll3"></div></div></div>
   </div>
   <div id="peu">
@@ -73,7 +73,7 @@ const ATR = '© ICGC · Relleu: IGN · Radar: EUMETNET OPERA · Pluja: Meteocat,
 const mapes = [0, 1, 2, 3].map(k => {
   const m = L.map('m' + k, { zoomControl: k === 0, attributionControl: k === 3 }).setView([41.815, 3.0], 13);
   L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', { maxZoom: 19, attribution: ATR, opacity: 0.55 }).addTo(m);
-  m.createPane('aigua').style.zIndex = 450; m.createPane('fletxes').style.zIndex = 460; m.createPane('premsa').style.zIndex = 470;
+  m.createPane('aigua').style.zIndex = 450; m.createPane('corrents').style.zIndex = 455; m.createPane('fletxes').style.zIndex = 460; m.createPane('premsa').style.zIndex = 470;
   return m;
 });
 let sincronitzant = false;
@@ -188,7 +188,7 @@ Promise.all([
   $('play').onclick = () => reprodueix(!rellotge);
   $('graf').onclick = ev => { const r = $('graf').getBoundingClientRect(); fi = Math.min(Math.max(Math.floor((ev.clientX - r.left - 30) / ((r.width - 30) / R.temps.length)), 0), R.temps.length - 1); reprodueix(false); calcula(); };
   window.addEventListener('resize', () => res && graf());
-  mapes[3].on('zoomend', () => res && fletxes(3));
+  mapes[3].on('zoomend', () => res && $('vista3').value !== 'dues' && fletxes(3));
 }).catch(e => { $('carrega').textContent = 'No s\'ha pogut carregar: ' + e.message; });
 
 let EPI, capesPremsa = [];
@@ -199,7 +199,7 @@ async function carregaEpisodi(e) {
   ES = await fetch(BASE + 'episodis/' + e.id + '_estacio.json').then(r => r.ok ? r.json() : null).catch(() => null);
   FACT = EP ? G.factor_radar : ES ? factorsEstacio(ES) : R.temps.map(() => 1);
   SIM = await fetch(BASE + 'sim2d/' + e.id + '/index.json').then(r => r.ok ? r.json() : null).catch(() => null);
-  $('vista3').value = SIM ? 'sim' : 'd8'; $('vista3').options[0].disabled = !SIM;
+  $('vista3').value = SIM ? 'sim' : 'd8'; $('vista3').options[0].disabled = $('vista3').options[2].disabled = !SIM;
   if (SIM) SIM.fotogrames.forEach(f => { const im = new Image(); im.src = BASE + 'sim2d/' + e.id + '/' + f.png; });   // precàrrega
   IA = e.ia_mm ?? 150; PHI = e.perdua_mm_h ?? 12;
   $('via').innerHTML = `El terreny absorbeix <b>${IA} mm</b> i després ${PHI} mm/h` + (e.api_mm != null ? ` (pluja dels dies abans: ${e.api_mm} mm)` : '') + ` · clavegueram ${SEW} mm/h`;
@@ -323,16 +323,19 @@ function calcula() {
   graella(1, i => res.pluja[i], RAMPA_MM); $('ll1').innerHTML = llegenda(RAMPA_MM, `fins a les ${horaCurta(R.temps[fi])}, mm:`);
   graella(2, i => res.escola[i], RAMPA_RATE); $('ll2').innerHTML = llegenda(RAMPA_RATE, `mm/h (terreny: ${IA} mm i després ${PHI} mm/h; construït: 5 mm i clavegueram ${SEW} mm/h):`);
   // 4. simulació 2D en aquest moment o el càlcul pel relleu, amb les fletxes del pendent
-  const fr = SIM && $('vista3').value === 'sim' ? SIM.fotogrames.filter(f => f.temps <= R.temps[fi]).pop() : null;
-  if (SIM && $('vista3').value === 'sim') {
+  const v3 = SIM ? $('vista3').value : 'd8';
+  const fr = v3 !== 'd8' ? SIM.fotogrames.filter(f => f.temps <= R.temps[fi]).pop() : null;
+  if (capaCorrents) { mapes[3].removeLayer(capaCorrents); capaCorrents = null; }
+  if (v3 !== 'd8') {
     if (fr) posa(3, BASE + 'sim2d/' + EPI.id + '/' + fr.png, SIM.limits, false); else if (capes[3]) { mapes[3].removeLayer(capes[3]); capes[3] = null; }
     $('ll3').innerHTML = llegenda(SIM.llegenda_calat_m.map((l, k) => [l, [[189, 215, 238, 120], [107, 174, 214, 170], [33, 113, 181, 200], [8, 69, 148, 220], [63, 0, 125, 235]][k]]), 'calat (m):') +
-      ' · fletxes: per on baixa l\'aigua';
+      (v3 === 'dues' ? '<br>' + llegenda(RAMPA_C, 'corrents del model ràpid (m³/s):') : ' · fletxes: per on baixa l\'aigua');
+    if (v3 === 'dues') corrents(3);
   } else {
     aiguaD8(3);
     $('ll3').innerHTML = llegenda(RAMPA_Q, 'cabal ara (m³/s):') + '<br>' + llegenda(RAMPA_H, 'embassada ara (m):');
   }
-  fletxes(3);
+  if (v3 === 'dues') { if (capaFletxes) { mapes[3].removeLayer(capaFletxes); capaFletxes = null; } } else fletxes(3);
   graf();
 }
 
@@ -361,6 +364,20 @@ function pinta(k, colorDe) {
   posa(k, cv.toDataURL(), G.limits, false);
 }
 const graella = (k, v, rampa) => pinta(k, i => color(v(i), rampa));
+// corrents del model ràpid en taronja, per sobre del calat de la simulació 2D
+const RAMPA_C = [[0.1, [254, 196, 79, 210]], [1, [254, 153, 41, 235]], [10, [217, 95, 14, 250]], [50, [140, 45, 4, 255]]];
+let capaCorrents = null;
+function corrents(k) {
+  const W = G.nc * ESCALA, H = G.nf * ESCALA, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const cx = cv.getContext('2d'), img = cx.createImageData(W, H), px = img.data;
+  for (let i = 0; i < N; i++) {
+    if (!terra[i]) continue; const col = color(res.V[i] / res.segons, RAMPA_C); if (!col) continue;
+    const r = Math.floor(i / G.nc), c = i % G.nc;
+    for (let y = r * ESCALA; y < (r + 1) * ESCALA; y++) for (let x = c * ESCALA; x < (c + 1) * ESCALA; x++) px.set(col, (y * W + x) * 4);
+  }
+  cx.putImageData(img, 0, 0);
+  capaCorrents = L.imageOverlay(cv.toDataURL(), G.limits, { pane: 'corrents', interactive: false, opacity: 0.9 }).addTo(mapes[k]);
+}
 const aiguaD8 = k => pinta(k, i => res.calat[i] >= 0.05 ? color(res.calat[i], RAMPA_H) : color(res.V[i] / res.segons, RAMPA_Q));
 
 // fletxes: a cada bloc de B×B cel·les (més petit com més zoom), la de més cabal; la direcció és la del recorregut de l'aigua 5 cel·les avall
