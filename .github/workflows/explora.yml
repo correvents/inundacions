@@ -15,22 +15,22 @@ jobs:
           python3 - <<'PY'
           import requests, re, h5py
           S="https://s3.waw3-1.cloudferro.com/openradar-archive"
-          for p in ["", "2026/", "2026/10/", "2026/10/04/"]:
+          for p in ["2026/10/04/OPERA/", "2026/10/04/OPERA/COMP/", "2026/10/04/ES/", "2020/01/20/OPERA/", "2020/01/20/OPERA/COMP/"]:
               x=requests.get(S,params={"list-type":2,"prefix":p,"delimiter":"/","max-keys":50},timeout=60).text
               print("PREFIX",repr(p), re.findall(r"<Prefix>([^<]+)</Prefix>",x)[:50], re.findall(r"<Key>([^<]+)</Key>",x)[:20])
-          x=requests.get(S,params={"list-type":2,"prefix":"2026/10/04/","max-keys":1000},timeout=60).text
-          ks=re.findall(r"<Key>([^<]+)</Key>",x); print(len(ks)); print("\n".join(ks[:60]))
+          x=requests.get(S,params={"list-type":2,"prefix":"2026/10/04/OPERA/","max-keys":1000},timeout=60).text
+          ks=re.findall(r"<Key>([^<]+)</Key>",x); print(len(ks)); print("\n".join(sorted(set(re.sub(r"\d{8}T\d{4}","X",k) for k in ks))))
           for k in ks:
-              if k.endswith(".h5") and ("1000" in k or True):
+              if k.endswith(".h5") and ("ACRR" in k or "RATE" in k):
                   open("a.h5","wb").write(requests.get(S+"/"+k,timeout=120).content)
                   print("FILE",k)
                   with h5py.File("a.h5") as h:
-                      h.visititems(lambda n,o: print(n, getattr(o,"shape",""), dict(o.attrs)))
+                      h.visititems(lambda n,o: print(n, getattr(o,"shape",""), {a:(str(v)[:200]) for a,v in o.attrs.items()}))
                       print(dict(h["where"].attrs))
                   break
           PY
-      - name: MITECO capes de cabals
+      - name: MITECO cabals màxims
         run: |
-          curl -s "https://gis.miteco.gob.es/geoserver/wfs?service=WFS&request=GetCapabilities" | grep -oiE "<Name>[^<]*(caud|q_?max|caumax|cuenca|subcuen)[^<]*</Name>" | sort -u | head -80
-          curl -s "https://wms.mapama.gob.es/sig/Agua/CaudalesMax/wms.aspx?request=GetCapabilities&service=WMS" | grep -oE "<Name>[^<]*</Name>" | head -40
-          curl -s "https://wms.mapama.gob.es/sig/Agua/Caudales/wms.aspx?request=GetCapabilities&service=WMS" | grep -oE "<Name>[^<]*</Name>" | head -40
+          for u in "https://wms.mapama.gob.es/sig/Agua/CAUMAX/wms.aspx" "https://wms.mapama.gob.es/sig/Agua/CaudalesMaximos/wms.aspx" "https://servicios.idee.es/wms-inspire/hidrografia" "https://wms.mapama.gob.es/sig/Agua/Caumax/wms.aspx"; do echo "== $u"; curl -s -m 30 "$u?request=GetCapabilities&service=WMS" | grep -oE "<(Name|Title)>[^<]*</(Name|Title)>" | head -30; done
+          curl -s -m 60 "https://gis.miteco.gob.es/geoserver/ows?service=WCS&request=GetCapabilities" | grep -oiE "<(wcs:)?CoverageId>[^<]*</(wcs:)?CoverageId>|<(ows:)?Title>[^<]*(caud|q[0-9]|max)[^<]*</(ows:)?Title>" | head -60
+          curl -s -m 60 "https://gis.miteco.gob.es/geoserver/wms?service=WMS&request=GetCapabilities" | grep -oiE "<Name>[^<]*(caud|caumax|q_?t|qmax|maxim)[^<]*</Name>" | sort -u | head -60
