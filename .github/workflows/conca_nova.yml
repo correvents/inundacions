@@ -24,7 +24,7 @@ jobs:
           python-version: "3.12"
       - run: pip install requests numpy pandas h5py pyproj shapely rasterio pysheds pillow numba
       - name: Estacions XEMA properes
-        run: python3 scripts/pluja_xema.py --config config/${{ inputs.conca }}.json
+        run: python3 scripts/pluja_xema.py --config config/${{ inputs.conca }}.json --des 2026-07-15 --max-estacions 8
       - name: Radar, correcció amb estacions i índex
         env:
           CONCA: ${{ inputs.conca }}

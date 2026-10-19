@@ -28,6 +28,8 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
     ap.add_argument("--radi-km", type=float, default=20)
+    ap.add_argument("--des", help="només les lectures des d'aquesta data (AAAA-MM-DD); per a conques noves en zones amb moltes estacions")
+    ap.add_argument("--max-estacions", type=int, default=0, help="només les N més properes (0 = totes)")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
     d = Path("data") / cfg["conca"] / "xema"; d.mkdir(parents=True, exist_ok=True)
@@ -35,14 +37,18 @@ def main():
     est = socrata("yqwd-vj5e", {"$limit": 5000})
     km = lambda e: math.hypot((float(e["latitud"]) - lat0) * 111, (float(e["longitud"]) - lon0) * 111 * math.cos(math.radians(lat0)))
     prop = sorted([dict(e, km=round(km(e), 1)) for e in est if km(e) <= a.radi_km], key=lambda e: e["km"])
+    if a.max_estacions:
+        prop = prop[:a.max_estacions]
     (d / "estacions.json").write_text(json.dumps(prop, ensure_ascii=False, indent=1))
     print("estacions:", [(e["codi_estacio"], e["nom_estacio"], e["km"], e.get("data_inici"), e.get("data_fi")) for e in prop])
     episodis = []
     for e in prop:
         codi, files, off = e["codi_estacio"], [], 0
         while True:
-            r = socrata("nzvn-apee", {"codi_estacio": codi, "codi_variable": "35", "$select": "data_lectura,valor_lectura",
-                                      "$order": "data_lectura", "$limit": 50000, "$offset": off})
+            q = {"codi_estacio": codi, "codi_variable": "35", "$select": "data_lectura,valor_lectura", "$order": "data_lectura", "$limit": 50000, "$offset": off}
+            if a.des:
+                q["$where"] = f"data_lectura >= '{a.des}T00:00:00.000'"
+            r = socrata("nzvn-apee", q)
             files += r; off += len(r)
             if len(r) < 50000: break
         if not files: continue
