@@ -6,33 +6,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install requests rasterio numpy pyproj
-      - name: Capes per al mètode racional
+      - run: sudo apt-get install -y poppler-utils >/dev/null 2>&1 || true
+      - name: Capes ACA de pluja màxima
         run: |
-          curl -s -m 60 "https://gis.miteco.gob.es/geoserver/ows?service=WCS&version=2.0.1&request=GetCapabilities" > cap.xml
-          python3 - <<'PY'
-          import re
-          x=open("cap.xml").read()
-          for m in re.finditer(r"<wcs:CoverageSummary>(.*?)</wcs:CoverageSummary>",x,re.S):
-              b=m.group(1); i=re.search(r"CoverageId>([^<]+)<",b).group(1); t=re.search(r"Title>([^<]*)<",b)
-              print(i,"|",t.group(1) if t else "")
-          PY
-          for u in https://www.miteco.gob.es/content/dam/miteco/es/cartografia-y-sig/ide/descargas/umbral_escorrentia_tcm30-176013.zip https://www.miteco.gob.es/content/dam/miteco/es/cartografia-y-sig/ide/descargas/i1id_tcm30-176014.zip; do
-            curl -sL -m 120 -o z.zip "$u"; ls -la z.zip; unzip -l z.zip | head -30; rm -f z.zip; done
-          python3 - <<'PY'
-          import requests, numpy as np
-          from rasterio.io import MemoryFile
-          from pyproj import Transformer
-          W="https://gis.miteco.gob.es/geoserver/ows"
-          for T in [100,500]:
-              r=requests.get(W,params=[("service","WCS"),("version","2.0.1"),("request","GetCoverage"),("coverageId",f"agua__CaudalesMaximos{T}"),("subset","Long(0.2,3.4)"),("subset","Lat(40.5,42.9)"),("subsettingCrs","http://www.opengis.net/def/crs/EPSG/0/4326"),("format","image/tiff")],timeout=180)
-              with MemoryFile(r.content) as m, m.open() as ds:
-                  a=ds.read(1).astype(float)
-                  if ds.nodata is not None: a[a==ds.nodata]=np.nan
-                  ok=np.argwhere(~np.isnan(a)); print("T",T,a.shape,"cel·les amb valor",len(ok))
-                  if len(ok):
-                      cols=ok[:,1]; print("  columna més a l'est amb valor", cols.max(), "lon", ds.xy(0,cols.max())[0])
-          PY
+          for s in wfs wms wcs; do
+            curl -s -m 90 "https://aplicacions.aca.gencat.cat/geoserver/$s?service=$s&request=GetCapabilities" > c_$s.xml; ls -la c_$s.xml
+            grep -oiE "<(Name|wcs:CoverageId|Title)>[^<]*(pd|precip|pluj|pluvi|isom|max|cn|escorr|p0|llindar|cabal|caudal|ridaura|retorn)[^<]*</(Name|wcs:CoverageId|Title)>" c_$s.xml | sort -u | head -80
+          done
+      - name: PGRI ACA (Ridaura)
+        run: |
+          curl -sL -m 180 -o pgri.pdf "https://aca.gencat.cat/web/.content/30_Plans_i_programes/20_Gestio_del_risc_inundacions/1er-cicle-de-planificacio/bloc1/101_1_Proposta_PGRI_ca.pdf"; ls -la pgri.pdf
+          pdftotext -layout pgri.pdf p.txt && grep -n -i -B3 -A6 "ridaura\|platja d.aro" p.txt | head -150
