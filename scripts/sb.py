@@ -29,3 +29,9 @@ def llegeix(taula, params):
     if not r.ok:
         sys.exit(f"Supabase {taula}: HTTP {r.status_code} {r.text[:300]}")
     return r.json()
+
+
+def esborra(taula, params):
+    r = requests.delete(_url(taula), params=params, timeout=60, headers=_cap({"Prefer": "return=minimal"}))
+    if not r.ok:
+        sys.exit(f"Supabase {taula}: HTTP {r.status_code} {r.text[:300]}")

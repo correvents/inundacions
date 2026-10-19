@@ -1,8 +1,7 @@
 name: Recull dades
 
+# La recollida periòdica la fa vigila.yml; aquest queda per recuperar l'històric a mà.
 on:
-  schedule:
-    - cron: "*/10 * * * *"
   workflow_dispatch:
     inputs:
       hores:

@@ -1,0 +1,48 @@
+name: Vigilància cada 10 min
+
+# Recull les dades i fa la previsió cada 10 minuts dins d'una mateixa execució de ~5 h 40 min. En acabar, es torna a
+# llançar ella mateixa (workflow_dispatch amb el GITHUB_TOKEN sí que crea una execució nova). La programació horària
+# només hi és de reserva, per si la cadena es trenca. Per aturar-la: cancel·lar l'execució en curs.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 * * * *"
+
+concurrency:
+  group: vigila
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  vigila:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    env:
+      SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy scipy h5py pyproj shapely
+      - name: Cada 10 minuts
+        run: |
+          fi=$(( $(date +%s) + 340*60 ))
+          while [ "$(date +%s)" -lt "$fi" ]; do
+            echo "::group::$(date -u +%H:%M) UTC"
+            timeout 240 python3 scripts/aca_aforador.py --config config/ridaura.json --hores 3 || echo "ACA: ha fallat"
+            timeout 240 python3 scripts/radar_conca.py --config config/ridaura.json --hores 1 || echo "Radar: ha fallat"
+            timeout 120 python3 scripts/previsio.py --config config/ridaura.json || echo "Previsió: ha fallat"
+            echo "::endgroup::"
+            ara=$(date +%s); sleep $(( 600 - ara % 600 + 60 ))
+          done
+      - name: Torna a començar
+        if: success() || failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run vigila.yml --ref main -R "${{ github.repository }}"
