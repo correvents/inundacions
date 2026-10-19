@@ -1,0 +1,11 @@
+name: Explora dades Bombers (temporal)
+on: workflow_dispatch
+jobs:
+  e:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for q in bombers "serveis bombers" "actuacions bombers" incendis inundacions; do
+            echo "=== $q"
+            curl -s "https://api.us.socrata.com/api/catalog/v1?domains=analisi.transparenciacatalunya.cat&limit=20&q=$(echo $q | sed 's/ /%20/g')" | jq -r '.results[] | [.resource.id, .resource.name, (.resource.columns_name|join(","))] | @tsv' | cut -c1-400
+          done
