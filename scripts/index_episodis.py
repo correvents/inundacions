@@ -18,6 +18,11 @@ def main():
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text()); d = Path("data") / cfg["conca"]
     eps = [json.loads(e) for e in a.episodi]
+    ant = d / "episodis" / "index.json"                      # conserva la sèrie mesurada (episodi) si ja hi era
+    previ = {e["id"]: e for e in json.loads(ant.read_text())["episodis"]} if ant.exists() else {}
+    for e in eps:
+        if "episodi" not in e and previ.get(e["id"], {}).get("episodi"):
+            e["episodi"] = previ[e["id"]]["episodi"]
     est = {e["codi_estacio"]: e for e in json.loads((d / "xema" / "estacions.json").read_text())}
     codi = cfg.get("estacio_api")
     t0s = {e["id"]: pd.Timestamp(json.loads((d / "episodis" / e["radar"]).read_text())["temps"][0]) for e in eps}
