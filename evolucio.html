@@ -204,6 +204,13 @@ async function carregaEpisodi(e) {
   ES = await fetch(BASE + 'episodis/' + e.id + '_estacio.json').then(r => r.ok ? r.json() : null).catch(() => null);
   FACT = EP ? G.factor_radar : ES ? factorsEstacio(ES) : R.temps.map(() => 1);
   SIM = await fetch(BASE + 'sim2d/' + e.id + '/index.json').then(r => r.ok ? r.json() : null).catch(() => null);
+  if (SIM && SIM.fotogrames.length) {                          // després del radar no plou: el rellotge segueix mentre la simulació 2D buida l'aigua
+    const ultim = SIM.fotogrames[SIM.fotogrames.length - 1].temps, nR0 = R.lons.length * R.lats.length, pas = R.interval_min * 60000;
+    FACT = Array.from(FACT);
+    let t = new Date(R.temps[R.temps.length - 1] + 'Z').getTime() + pas;
+    const fins = new Date(ultim + 'Z').getTime();
+    while (t <= fins) { R.temps.push(new Date(t).toISOString().slice(0, 16)); R.mm.push(new Array(nR0).fill(0)); FACT.push(1); t += pas; }
+  }
   $('vista3').value = SIM ? 'sim' : 'd8'; $('vista3').options[0].disabled = $('vista3').options[2].disabled = !SIM; $('vista3').options[3].disabled = !(SIM && SIM.assecat);
   if (SIM) SIM.fotogrames.forEach(f => { const im = new Image(); im.src = BASE + 'sim2d/' + e.id + '/' + f.png; });   // precàrrega
   const UP = new URLSearchParams(location.search);          // ?ia=&phi= només per calibrar amb un cabal mesurat
