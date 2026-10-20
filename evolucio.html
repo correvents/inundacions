@@ -22,6 +22,9 @@
   .titol { position: absolute; z-index: 1000; left: 8px; top: 6px; background: #fffe; padding: 4px 8px; border-radius: 6px; font-size: 13px; font-weight: 700; box-shadow: 0 1px 3px #0002; max-width: 75%; }
   .titol .ll { font-weight: 400; font-size: 11px; color: var(--suau); }
   .titol .ll span { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin: 0 2px 0 6px; vertical-align: middle; }
+  .gran-bt { position: absolute; z-index: 1001; right: 8px; top: 6px; border: 1px solid var(--vora); background: #fffe; border-radius: 6px; padding: 3px 8px; font-size: 13px; cursor: pointer; box-shadow: 0 1px 3px #0002; }
+  #mapes.un { grid-template-columns: 1fr; grid-template-rows: 1fr; }
+  #mapes.un .cel:not(.gran) { display: none; }
   .titol select { font-size: 12px; margin-top: 2px; }
   #peu { background: #fff; border-top: 1px solid var(--vora); padding: 4px 12px 6px; }
   canvas#graf { width: 100%; height: 110px; display: block; cursor: pointer; }
@@ -194,6 +197,21 @@ Promise.all([
   mapes[3].on('zoomend', () => res && $('vista3').value !== 'dues' && fletxes(3));
 }).catch(e => { $('carrega').textContent = 'No s\'ha pogut carregar: ' + e.message; });
 
+
+// ⛶ un mapa a tot el quadre i, si el navegador ho permet, a pantalla completa (Esc per tornar)
+function granMapa(cel) {
+  const mapesEl = $('mapes'), on = !cel.classList.contains('gran');
+  document.querySelectorAll('.cel').forEach(c => c.classList.remove('gran'));
+  mapesEl.classList.toggle('un', on); if (on) cel.classList.add('gran');
+  cel.querySelector('.gran-bt').textContent = on ? '✕ Torna' : '⛶ Gran';
+  const app = document.documentElement;
+  try { if (on && !document.fullscreenElement) app.requestFullscreen && app.requestFullscreen(); else if (!on && document.fullscreenElement) document.exitFullscreen(); } catch (e) {}
+  setTimeout(() => { mapes.forEach(m => m.invalidateSize()); if (typeof res !== 'undefined' && res) calcula(); }, 150);
+}
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && $('mapes').classList.contains('un')) { const c = document.querySelector('.cel.gran'); if (c) granMapa(c); }
+});
+document.querySelectorAll('.cel').forEach(c => { const b = document.createElement('button'); b.className = 'gran-bt'; b.textContent = '⛶ Gran'; b.onclick = () => granMapa(c); c.appendChild(b); });
 let EPI, capesPremsa = [];
 function ponPremsa() { capesPremsa.forEach((c, k) => $('premsaOn').checked ? c.addTo(mapes[k]) : mapes[k].removeLayer(c)); }
 document.addEventListener('DOMContentLoaded', () => { $('premsaOn').onchange = ponPremsa; });
@@ -353,7 +371,7 @@ function calcula() {
     aiguaD8(3);
     $('ll3').innerHTML = llegenda(RAMPA_Q, 'cabal ara (m³/s):') + '<br>' + llegenda(RAMPA_H, 'embassada ara (m):');
   }
-  if (v3 === 'dues' || v3 === 'assecat') { if (capaFletxes { mapes[3].removeLayer(capaFletxes); capaFletxes = null; } } else fletxes(3);
+  if (v3 === 'dues' || v3 === 'assecat') { if (capaFletxes) { mapes[3].removeLayer(capaFletxes); capaFletxes = null; } } else fletxes(3);
   graf();
 }
 
