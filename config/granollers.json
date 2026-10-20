@@ -6,16 +6,16 @@
   2.288
  ],
  "caixa": [
-  2.2,
+  2.18,
   41.57,
-  2.4,
-  41.72
+  2.42,
+  41.77
  ],
  "caixa_radar": [
-  2.17,
+  2.15,
   41.54,
-  2.43,
-  41.75
+  2.45,
+  41.8
  ],
  "aforador": {
   "codi": "080885-001",
@@ -34,7 +34,7 @@
   ]
  },
  "estacio_api": "",
- "nota": "Aiguats 4-5/10/2026; 361 mm en 2 dies, 75 mm/h a Granollers. Aforador ACA del Congost a La Garriga (aigües amunt de Granollers). Altres: Lliçà de Vall (Tenes), Montornès (Mogent).",
+ "nota": "Aiguats 4-5/10/2026; 361 mm en 2 dies, 75 mm/h a Granollers. Aforador ACA del Congost a La Garriga (aigües amunt de Granollers). Altres: Lliçà de Vall (Tenes), Montornès (Mogent). Domini ampliat cap al nord (fins 41.77) per incloure la conca alta del Congost fins a La Garriga.",
  "sensors": [
   {
    "id": "080885-001-ANA001",
