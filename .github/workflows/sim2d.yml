@@ -21,6 +21,9 @@ on:
       perdua_natural:
         description: "Infiltració del terreny natural un cop superat el llindar (mm/h)"
         default: "12"
+      extra_hores:
+        description: "Hores sense pluja després del radar, per veure el buidat"
+        default: "24"
       clavegueram:
         description: "Capacitat dels embornals a les zones construïdes (mm/h)"
         default: "30"
@@ -52,7 +55,7 @@ jobs:
           python3 scripts/simula_2d.py --config config/${{ inputs.conca }}.json --mdt /tmp/relleu/mdt.tif --id "${{ matrix.ep.id }}" \
             --radar "data/${{ inputs.conca }}/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ inputs.pas }}" \
             --ia-natural "${{ matrix.ep.ia }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}" \
-            --perdua-natural "${{ inputs.perdua_natural }}" --clavegueram "${{ inputs.clavegueram }}"
+            --perdua-natural "${{ inputs.perdua_natural }}" --clavegueram "${{ inputs.clavegueram }}" --extra-hores "${{ inputs.extra_hores }}"
       - name: Desa
         run: |
           git config user.name "github-actions[bot]"

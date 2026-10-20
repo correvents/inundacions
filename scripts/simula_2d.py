@@ -101,6 +101,7 @@ def main():
     ap.add_argument("--clavegueram", type=float, default=30, help="capacitat dels embornals a les zones construïdes (mm/h)")
     ap.add_argument("--n-natural", type=float, default=0.06, help="n de Manning del terreny natural")
     ap.add_argument("--n-urba", type=float, default=0.02, help="n de Manning de les zones construïdes")
+    ap.add_argument("--extra-hores", type=float, default=0, help="hores addicionals sense pluja després de l'última dada de radar, per veure com es buida l'aigua")
     ap.add_argument("--cada", type=int, default=10, help="minuts entre fotogrames")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
@@ -174,7 +175,7 @@ def main():
     t15 = np.full((nf, nc), np.inf)                               # primer moment amb més de 15 cm d'aigua (min des de l'inici)
     t_mullat = np.zeros((nf, nc))                                 # darrer moment amb més de 5 cm d'aigua (min des de l'inici)
     ini = temps_rad[0] - timedelta(minutes=rad["interval_min"])
-    fi = temps_rad[-1]
+    fi_radar = temps_rad[-1]; fi = fi_radar + timedelta(hours=a.extra_hores)
     dest = Path("data") / cfg["conca"] / "sim2d" / (a.id or fi.strftime("%Y-%m-%d")); dest.mkdir(parents=True, exist_ok=True)
     # sortida en lat/lon per al visor
     w, s, e, nn = rasterio.warp.transform_bounds(crs, "EPSG:4326", tr.c, tr.f - nf * dx, tr.c + nc * dx, tr.f)
@@ -198,7 +199,10 @@ def main():
         # pluja de l'interval de radar actual, repartida uniformement
         while k_frame < len(temps_rad) - 1 and temps_rad[k_frame] < t + timedelta(seconds=1):
             k_frame += 1
-        if k_frame != k_taxa:                                         # la pluja només canvia amb cada fotograma de radar
+        if t >= fi_radar:                                              # passat l'últim fotograma de radar no plou més
+            if k_taxa != -2:
+                taxa = np.zeros_like(taxa); k_taxa = -2
+        elif k_frame != k_taxa:                                       # la pluja només canvia amb cada fotograma de radar
             taxa = frames[k_frame][idx] * factor(temps_rad[k_frame]) / 1000 / (rad["interval_min"] * 60)   # m/s
             k_taxa = k_frame
         hm = hmax_actiu(h, actiu)
