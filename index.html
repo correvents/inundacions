@@ -3,226 +3,77 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Inundacions · Ridaura</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<title>Inundacions per conca</title>
 <style>
-  :root { --vora: #dde3ea; --suau: #5b6b7b; --t10: #c0392b; --t50: #e67e22; --t100: #f1c40f; --t500: #5dade2; }
-  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #f4f6f8; color: #1b2733; }
-  #app { display: flex; height: 100%; }
-  #mapa { flex: 1; }
-  #panell { width: 360px; padding: 14px 16px; overflow-y: auto; background: #fff; border-left: 1px solid var(--vora); box-sizing: border-box; }
-  h1 { font-size: 18px; margin: 0 0 2px; }
-  h2 { font-size: 14px; margin: 0 0 6px; }
-  .sub { color: var(--suau); font-size: 13px; margin-bottom: 12px; }
-  .targeta { border: 1px solid var(--vora); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
-  .fila { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 2px 0; }
-  .fila span:last-child { font-weight: 600; text-align: right; }
-  .xip { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
-  .botons { display: flex; gap: 4px; margin-bottom: 8px; }
-  .botons button { flex: 1; padding: 6px 0; border: 1px solid var(--vora); background: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; }
-  .botons button.actiu { background: #1b2733; color: #fff; border-color: #1b2733; }
-  ul { margin: 4px 0 0; padding-left: 18px; font-size: 13px; }
-  li { margin: 2px 0; }
-  .nota { color: var(--suau); font-size: 12px; }
-  .estat { font-weight: 700; }
-  canvas#grafprev { width: 100%; height: 150px; display: block; margin: 6px 0; }
-  .avis { border-radius: 6px; padding: 6px 8px; font-weight: 700; font-size: 14px; color: #fff; margin-bottom: 6px; }
-  @media (max-width: 760px) { #app { flex-direction: column; } #panell { width: 100%; height: 48%; border-left: 0; border-top: 1px solid var(--vora); } }
+  :root { --fons: #f4f6f8; --text: #1b2733; --suau: #5b6b7b; --vora: #dde3ea; --card: #fff; --accent: #1f6fb2; }
+  @media (prefers-color-scheme: dark) { :root { --fons: #12181f; --text: #e6edf3; --suau: #9aa8b6; --vora: #2a3541; --card: #1a232d; --accent: #6bb0e8; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--fons); color: var(--text); font: 16px/1.55 system-ui, sans-serif; }
+  main { max-width: 920px; margin: 0 auto; padding: 32px 16px 48px; }
+  h1 { font-size: 28px; margin: 0 0 6px; }
+  h2 { font-size: 19px; margin: 36px 0 10px; }
+  .sub { color: var(--suau); margin: 0 0 24px; }
+  .llocs { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+  a.lloc { display: block; background: var(--card); border: 1px solid var(--vora); border-radius: 10px; padding: 16px; color: inherit; text-decoration: none; }
+  a.lloc:hover { border-color: var(--accent); }
+  .lloc h3 { margin: 0 0 4px; font-size: 18px; color: var(--accent); }
+  .lloc p { margin: 4px 0; font-size: 14px; color: var(--suau); }
+  .lloc .ob { color: var(--text); font-weight: 600; font-size: 14px; }
+  ol, ul { padding-left: 20px; } li { margin: 4px 0; }
+  .nota { background: var(--card); border: 1px solid var(--vora); border-radius: 8px; padding: 12px 14px; font-size: 14px; color: var(--suau); }
+  .enll a { color: var(--accent); }
+  footer { margin-top: 36px; font-size: 13px; color: var(--suau); }
 </style>
 </head>
 <body>
-<div id="app">
-  <div id="mapa"></div>
-  <div id="panell">
-    <h1>Ridaura · Platja d'Aro</h1>
-    <div class="sub">Conca pilot del sistema de previsió de crescudes · <a href="episodi.html">reproducció del 4 d'octubre</a> · <a href="pluja.html">juga amb la pluja</a> · <a href="evolucio.html">evolució en 4 mapes</a></div>
+<main>
+  <h1>Inundacions per conca</h1>
+  <p class="sub">Reconstrucció i previsió de quins punts de pobles i ciutats s'inunden amb pluges fortes, a partir de radar, relleu i mesures reals.</p>
 
-    <div class="targeta" id="previsio"><h2>Previsió 3 h</h2><div class="nota">Carregant la previsió...</div></div>
-    <div class="targeta" id="ara"><h2>Ara</h2><div class="nota">Carregant dades...</div></div>
-
-    <div class="targeta">
-      <h2>Què s'inunda segons la crescuda</h2>
-      <div class="botons" id="botons"></div>
-      <div id="resum"></div>
-      <div class="nota" style="margin-top:6px">Capes de relleu (a dalt a la dreta): les zones baixes en blau són a menys de 2 / 1 / 0,5 m del llit de la rierata més propera; en lila, depressions on l'aigua no té sortida.<br>Zones inundables de l'ACA (període de retorn en anys) creuades amb OpenStreetMap i els punts de risc del SNCZI. Cada nivell inclou també els anteriors.</div>
-    </div>
+  <div class="llocs">
+    <a class="lloc" href="evolucio.html">
+      <h3>Platja d'Aro</h3>
+      <p>Riera Ridaura i Fenals</p>
+      <p class="ob">Cas més treballat: 15 episodis des de 2016 i calibratge amb l'aforador de Santa Cristina d'Aro (4 d'octubre de 2026, 304 m³/s).</p>
+    </a>
+    <a class="lloc" href="evolucio.html?conca=granollers">
+      <h3>Granollers</h3>
+      <p>Riu Congost</p>
+      <p class="ob">3-5 d'octubre de 2026. Calibrat amb l'aforador de La Garriga: pic simulat 60,6 m³/s davant dels 67,2 mesurats.</p>
+    </a>
+    <a class="lloc" href="evolucio.html?conca=cabrera">
+      <h3>Cabrera de Mar</h3>
+      <p>Torrents de Valldoriol i la Torreta</p>
+      <p class="ob">17 d'octubre de 2026. Sense aforador a la zona: resultats orientatius, sense validar amb cabal.</p>
+    </a>
   </div>
-</div>
-<script>
-const SB = 'https://rxfjwklbvqkwgzmpzwae.supabase.co/rest/v1/';
-const SB_CLAU = 'sb_publishable_1c8JKagZduom1Vz07Cpu-w_JHycdtpJ';
-const TS = [10, 50, 100, 500];
-const COLOR = { 10: '#c0392b', 50: '#e67e22', 100: '#f1c40f', 500: '#5dade2' };
-const LLINDARS = [[419, 'Excepcional (2)', '#6c0000'], [251, 'Excepcional', '#c0392b'], [40, 'Molt alt', '#e67e22'], [20, 'Alt', '#f1c40f'], [4, 'Moderat', '#5dade2'], [0, 'Normal', '#2e8b57']];
+  <p class="enll" style="margin-top:14px;font-size:14px">A més: <a href="previsio.html">previsió en directe de Platja d'Aro</a> · <a href="pluja.html">eina de pluja acumulada sobre el relleu</a> · <a href="episodi.html">reproducció de l'episodi del 4 d'octubre</a></p>
 
-const mapa = L.map('mapa').setView([41.815, 3.02], 13);
-L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', {
-  maxZoom: 19, attribution: '© ICGC · © OpenStreetMap · Zones inundables: ACA · Punts de risc: SNCZI (MITECO)'
-}).addTo(mapa);
+  <h2>Què és</h2>
+  <p>Un model que calcula on s'acumula i on corre l'aigua de pluja a cada punt d'una conca. Els mapes oficials de zones inundables (ACA, T10, T100, T500) diuen on pot arribar un riu; aquest model afegeix el que hi falta: <b>quines condicions de pluja fan que passi</b>, la pluja que cau fora de les zones oficials (carrers, torrents petits, zones planes que drenen malament) i <b>quant temps triga l'aigua a marxar</b>.</p>
 
-let tActiu = 100, capaZones, capaAfectats, afectats, resum, cfg;
+  <h2>Com funciona</h2>
+  <ol>
+    <li><b>Pluja.</b> Radar OPERA cada 5-15 min, corregit amb pluviòmetres reals (estacions de la Generalitat i de l'ACA). El radar sol errar, sobretot en llevantades i tempestes.</li>
+    <li><b>Terreny.</b> Relleu (MDE) i usos del sòl. El terreny absorbeix primer una part de la pluja (més o menys segons la pluja dels 60 dies anteriors) i després va perdent aigua a un ritme fix; a les zones urbanes el clavegueram n'evacua una part.</li>
+    <li><b>Aigua que corre.</b> L'aigua que sobra baixa pel pendent, s'acumula als clots i circula per rieres i carrers. A cada moment es calcula l'aigua que queda, no la suma de la pluja.</li>
+    <li><b>Simulació 2D.</b> Una simulació hidrodinàmica sobre cel·les de 20 m dona el calat (alçada de l'aigua) i el cabal que passa, i es compara amb l'aforador quan n'hi ha.</li>
+    <li><b>Assecat.</b> Després de la pluja el càlcul continua 24 h sense pluja per veure quant triga cada punt a quedar per sota de 5 cm.</li>
+  </ol>
 
-// Període de retorn equivalent a un cabal (interpolació en log T entre els cabals oficials de l'ACA)
-function periodeRetorn(q, qt) {
-  const p = [[2.33, qt.QMCO], [10, qt.Q10], [50, qt.Q50], [100, qt.Q100], [500, qt.Q500]];
-  if (q < p[0][1]) return null;
-  for (let i = 1; i < p.length; i++) if (q <= p[i][1]) {
-    const [t0, q0] = p[i - 1], [t1, q1] = p[i];
-    return Math.exp(Math.log(t0) + (q - q0) / (q1 - q0) * (Math.log(t1) - Math.log(t0)));
-  }
-  return 501;
-}
+  <h2>Com es llegeixen els mapes</h2>
+  <ul>
+    <li>Quatre mapes sincronitzats amb un rellotge: radar, pluja acumulada, aigua que escola i aigua al carrer. El quart també es pot veure a pantalla completa (⛶ Gran) i en vista de temps d'assecat.</li>
+    <li>La casella «Premsa» mostra els carrers que la premsa va citar com a afectats, per comparar-los amb el model.</li>
+    <li>La gràfica de baix mostra la pluja, el cabal mesurat a l'aforador i el cabal calculat.</li>
+  </ul>
 
-fetch('data/ridaura/conca.geojson').then(r => r.json()).then(fc => {
-  L.geoJSON(fc.features[0], { style: { color: '#2b7bba', weight: 2, fill: false, dashArray: '4 4' }, interactive: false }).addTo(mapa);
-  L.geoJSON({ type: 'FeatureCollection', features: fc.features.filter(f => f.geometry.type.includes('Line')) },
-    { style: { color: '#0b4f8a', weight: 1 }, interactive: false }).addTo(mapa);
-});
-// capes de relleu (MDT 5 m de l'IGN): totes les rieretes i les zones baixes que drenen malament
-const capesRelleu = {};
-fetch('data/ridaura/rieretes.geojson').then(r => r.json()).then(fc => {
-  capesRelleu['Rieretes (conca > 0,05 km²)'] = L.geoJSON(fc, {
-    style: f => ({ color: '#1f78b4', weight: Math.max(0.6, (f.properties.ordre || 1) * 0.7), opacity: 0.8 }),
-    onEachFeature: (f, l) => l.bindTooltip(`Conca: ${f.properties.area_km2.toFixed(2)} km² · ordre ${f.properties.ordre}`)
-  });
-  fetch('data/ridaura/zones_baixes.json').then(r => r.json()).then(zb => {
-    capesRelleu['Zones baixes i depressions'] = L.imageOverlay('data/ridaura/zones_baixes.png', zb.limits, { opacity: 0.8 });
-    L.control.layers(null, capesRelleu, { collapsed: false }).addTo(mapa);
-  });
-});
-L.marker([41.81814, 2.97912]).bindPopup("Aforador ACA 171812-001<br>Santa Cristina d'Aro (Ridaura)").addTo(mapa);
+  <h2>Què cal tenir en compte</h2>
+  <div class="nota">
+    <p style="margin-top:0">És un model en desenvolupament. Els paràmetres del terreny (absorció inicial i ritme de pèrdua) s'han calibrat amb pocs episodis i <b>no es poden aplicar tal qual a una altra conca</b>: cada lloc cal calibrar-lo amb el seu cabal mesurat. Granollers està calibrat amb aforador; Platja d'Aro, amb un sol episodi gran, i Cabrera de Mar no es pot validar amb cabal. El radar pot sobreestimar o subestimar la pluja i la simulació 2D no recull tots els efectes del clavegueram ni del mar. <b>No és un servei d'avís oficial</b>: per a emergències, seguiu sempre les indicacions de Protecció Civil.</p>
+  </div>
 
-Promise.all([
-  fetch('data/ridaura/zones_acumulades.geojson').then(r => r.json()),
-  fetch('data/ridaura/afectats.geojson').then(r => r.json()),
-  fetch('data/ridaura/afectats_resum.json').then(r => r.json()),
-]).then(([zones, af, rs]) => {
-  afectats = af; resum = rs;
-  capaZones = L.geoJSON(zones, { style: f => ({ color: COLOR[f.properties.T], weight: 1, fillOpacity: 0.25 }), interactive: false }).addTo(mapa);
-  document.getElementById('botons').innerHTML = TS.map(T => `<button data-t="${T}">T${T}</button>`).join('');
-  document.querySelectorAll('#botons button').forEach(b => b.onclick = () => mostra(+b.dataset.t));
-  mostra(tActiu);
-});
-
-function mostra(T) {
-  tActiu = T;
-  document.querySelectorAll('#botons button').forEach(b => b.classList.toggle('actiu', +b.dataset.t === T));
-  capaZones.eachLayer(l => l.setStyle({ fillOpacity: l.feature.properties.T <= T ? 0.3 : 0, opacity: l.feature.properties.T <= T ? 1 : 0 }));
-  if (capaAfectats) mapa.removeLayer(capaAfectats);
-  const sel = afectats.features.filter(f => f.properties.T <= T);
-  capaAfectats = L.geoJSON({ type: 'FeatureCollection', features: sel }, {
-    style: f => ({ color: COLOR[f.properties.T], weight: f.geometry.type.includes('Line') ? 3 : 1, fillOpacity: 0.6 }),
-    pointToLayer: (f, ll) => L.circleMarker(ll, { radius: 6, color: '#1b2733', weight: 1, fillColor: COLOR[f.properties.T], fillOpacity: 1 }),
-    onEachFeature: (f, l) => l.bindPopup(`<b>${f.properties.nom || f.properties.categoria}</b><br>${f.properties.categoria}<br>S'inunda a partir de <b>T${f.properties.T}</b>${f.properties.gravetat ? '<br>Gravetat SNCZI: ' + f.properties.gravetat : ''}`)
-  }).addTo(mapa);
-  // resum acumulat
-  const compte = {}, llocs = [], carrers = new Set();
-  TS.filter(t => t <= T).forEach(t => {
-    Object.entries(resum.per_categoria['T' + t]).forEach(([k, v]) => compte[k] = (compte[k] || 0) + v);
-    resum.llocs['T' + t].forEach(n => llocs.push([n, t]));
-    resum.carrers['T' + t].forEach(n => carrers.add(n));
-  });
-  const ordre = Object.entries(compte).sort((a, b) => b[1] - a[1]);
-  document.getElementById('resum').innerHTML =
-    ordre.map(([k, v]) => `<div class="fila"><span>${k}</span><span>${v}</span></div>`).join('') +
-    `<h2 style="margin-top:10px">Llocs</h2><ul>${llocs.filter(([n]) => !/^(Carrer|Avinguda|Carretera|Camí|Eix|Anella|Passatge|Plaça)/.test(n))
-      .map(([n, t]) => `<li><span class="xip" style="background:${COLOR[t]}"></span>${n}</li>`).join('')}</ul>` +
-    `<h2 style="margin-top:10px">Carrers (${carrers.size})</h2><div class="nota">${[...carrers].sort().join(' · ')}</div>`;
-}
-
-// dades en directe
-async function sb(taula, params) {
-  const r = await fetch(SB + taula + '?' + new URLSearchParams(params), { headers: { apikey: SB_CLAU, 'Accept-Profile': 'inundacions' } });
-  return r.ok ? r.json() : [];
-}
-async function ara() {
-  if (!cfg) cfg = await fetch('config/ridaura.json').then(r => r.json());
-  const [q, h, acum] = await Promise.all([
-    sb('observacions', { select: 'temps,valor', conca: 'eq.ridaura', var: 'eq.cabal_m3s', order: 'temps.desc', limit: 1 }),
-    sb('observacions', { select: 'temps,valor', conca: 'eq.ridaura', var: 'eq.nivell_cm', order: 'temps.desc', limit: 1 }),
-    sb('pluja_acumulada', { select: '*', conca: 'eq.ridaura' }),
-  ]);
-  const hora = t => new Date(t).toLocaleString('ca', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-  let html = '<h2>Ara</h2>';
-  if (q.length) {
-    const v = q[0].valor, ll = LLINDARS.find(([m]) => v >= m);
-    html += `<div class="fila"><span>Cabal a Santa Cristina</span><span>${v.toFixed(1)} m³/s</span></div>
-             <div class="fila"><span>Nivell</span><span>${h.length ? (h[0].valor / 100).toFixed(2) + ' m' : '-'}</span></div>
-             <div class="fila"><span>Estat (llindars ACA)</span><span class="estat" style="color:${ll[2]}">${ll[1]}</span></div>
-             <div class="fila"><span>Període de retorn equivalent</span><span class="estat">${trT(periodeRetorn(v, cfg.cabals_T.aforador))}</span></div>
-             <div class="nota">Aforador · ${hora(q[0].temps)}</div>`;
-  }
-  const d = acum.find(a => a.subconca === 'desembocadura');
-  if (d) html += `<div style="margin-top:8px"><div class="fila"><span>Pluja radar a la conca 1 h / 3 h</span><span>${(+d.mm_1h).toFixed(1)} / ${(+d.mm_3h).toFixed(1)} mm</span></div>
-             <div class="fila"><span>6 h / 24 h</span><span>${(+d.mm_6h).toFixed(1)} / ${(+d.mm_24h).toFixed(1)} mm</span></div>
-             <div class="fila"><span>Intensitat màx. última hora</span><span>${(+d.mmh_max_1h || 0).toFixed(1)} mm/h</span></div>
-             <div class="nota">Radar OPERA · ${hora(d.fins)}</div></div>`;
-  html += `<div class="nota" style="margin-top:8px">Referència: el 4 d'octubre de 2026 l'aforador va arribar a 304 m³/s, ${trT(periodeRetorn(303.7, cfg.cabals_T.aforador))} segons els cabals de l'ACA (Q100 = 199, Q500 = 342 m³/s).</div>`;
-  document.getElementById('ara').innerHTML = html;
-  // si hi ha crescuda, el mapa mostra la zona que li correspon
-  const T = q.length ? periodeRetorn(q[0].valor, cfg.cabals_T.aforador) : null;
-  if (T && T >= 10 && capaZones) mostra([...TS].reverse().find(t => t <= T));
-}
-const trT = T => T === null ? 'menys que la crescuda ordinària' : T > 500 ? 'més de T500' : T < 10 ? `T${T.toFixed(0)} (per sota de T10)` : `≈ T${Math.round(T / (T < 50 ? 5 : 10)) * (T < 50 ? 5 : 10)}`;
-const araSegur = () => ara().catch(() => { document.getElementById('ara').innerHTML = '<h2>Ara</h2><div class="nota">No s\'han pogut carregar les dades en directe.</div>'; });
-araSegur(); setInterval(araSegur, 5 * 60 * 1000);
-
-// previsió: l'última execució de scripts/previsio.py (cada 10 min)
-const NIVELL = [['Sense crescuda prevista', '#2e8b57'], ['Crescuda ordinària', '#5dade2'], ['Avís T10', '#c0392b'], ['Avís T50', '#e67e22'], ['Avís T100', '#8e0000'], ['Avís T500', '#4a0000']];
-async function previsio() {
-  if (!cfg) cfg = await fetch('config/ridaura.json').then(r => r.json());
-  const darrer = await sb('previsions_cabal', { select: 'run', conca: 'eq.ridaura', order: 'run.desc', limit: 1 });
-  if (!darrer.length) { document.getElementById('previsio').innerHTML = '<h2>Previsió 3 h</h2><div class="nota">Encara no hi ha cap previsió.</div>'; return; }
-  const run = darrer[0].run;
-  const [files, obs, avis] = await Promise.all([
-    sb('previsions_cabal', { select: 'punt,temps,cabal_m3s', conca: 'eq.ridaura', run: 'eq.' + run, order: 'temps' }),
-    sb('observacions', { select: 'temps,valor', conca: 'eq.ridaura', var: 'eq.cabal_m3s', temps: 'gte.' + new Date(new Date(run) - 6 * 3600e3).toISOString(), order: 'temps' }),
-    sb('avisos', { select: 'temps,nivell,motiu', conca: 'eq.ridaura', order: 'temps.desc', limit: 1 }),
-  ]);
-  const punt = n => files.filter(f => f.punt === n);
-  const t0 = new Date(run), fut = n => punt(n).filter(f => new Date(f.temps) > t0);
-  const max = n => fut(n).reduce((m, f) => Math.max(m, f.cabal_m3s), 0);
-  const hora = t => new Date(t).toLocaleTimeString('ca', { hour: '2-digit', minute: '2-digit' });
-  const T = (q, qt) => trT(periodeRetorn(q, qt));
-  const FEN = { QMCO: 15.6, Q10: 40.52, Q50: 71.35, Q100: 86.74, Q500: 126.52 };
-  const nv = avis.length ? avis[0].nivell : 0;
-  let html = `<h2>Previsió 3 h</h2><div class="avis" style="background:${NIVELL[nv][1]}">${NIVELL[nv][0]}</div>
-    <canvas id="grafprev"></canvas>
-    <div class="nota" style="margin-bottom:6px"><span class="xip" style="background:#1b2733"></span>mesurat <span class="xip" style="background:#2b7bba"></span>previst sense més pluja <span class="xip" style="background:#c0392b"></span>si plou 1 h més com l'última hora</div>
-    <div class="fila"><span>Ridaura a l'aforador, màxim previst</span><span>${max('aforador').toFixed(0)} m³/s · ${T(max('aforador'), cfg.cabals_T.aforador)}</span></div>
-    <div class="fila"><span>&nbsp;&nbsp;si continua plovent</span><span>${max('aforador_continua').toFixed(0)} m³/s · ${T(max('aforador_continua'), cfg.cabals_T.aforador)}</span></div>
-    <div class="fila"><span>Ridaura al mar</span><span>${max('desembocadura').toFixed(0)} m³/s · ${T(max('desembocadura'), cfg.cabals_T.desembocadura)}</span></div>
-    <div class="fila"><span>Riera de Fenals (centre)</span><span>${max('fenals').toFixed(0)} m³/s · ${T(max('fenals'), FEN)}</span></div>
-    <div class="nota">${avis.length ? avis[0].motiu + '<br>' : ''}Càlcul de les ${hora(run)} amb el pluviòmetre de l'ACA i el model calibrat amb l'episodi del 4/10 (provisional: només un episodi).</div>`;
-  document.getElementById('previsio').innerHTML = html;
-  // gràfica
-  const cv = document.getElementById('grafprev'), dpr = devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
-  cv.width = W * dpr; cv.height = H * dpr; const cx = cv.getContext('2d'); cx.scale(dpr, dpr);
-  const tmin = +t0 - 6 * 3600e3, tmax = +t0 + 3 * 3600e3;
-  const qmax = Math.max(10, cfg.cabals_T.aforador.QMCO, ...files.filter(f => f.punt.startsWith('aforador')).map(f => f.cabal_m3s), ...obs.map(o => o.valor)) * 1.1;
-  const X = t => 30 + (new Date(t) - tmin) / (tmax - tmin) * (W - 34), Y = q => H - 14 - q / qmax * (H - 20);
-  cx.font = '10px system-ui'; cx.fillStyle = '#5b6b7b';
-  for (const [k, c] of [['QMCO', '#5dade2'], ['Q10', '#c0392b'], ['Q50', '#e67e22'], ['Q100', '#8e0000']]) {
-    const q = cfg.cabals_T.aforador[k]; if (q > qmax) continue;
-    cx.strokeStyle = c; cx.setLineDash([3, 3]); cx.beginPath(); cx.moveTo(30, Y(q)); cx.lineTo(W - 4, Y(q)); cx.stroke();
-    cx.fillStyle = c; cx.fillText(k === 'QMCO' ? 'ordinària' : 'T' + k.slice(1), 32, Y(q) - 2);
-  }
-  cx.setLineDash([]);
-  cx.strokeStyle = '#999'; cx.beginPath(); cx.moveTo(X(t0), 4); cx.lineTo(X(t0), H - 14); cx.stroke();
-  cx.fillStyle = '#5b6b7b'; cx.textAlign = 'center'; cx.fillText('ara', X(t0), H - 2);
-  cx.fillText(hora(tmin), 40, H - 2); cx.fillText(hora(tmax), W - 20, H - 2);
-  cx.textAlign = 'right'; cx.fillText(Math.round(qmax / 1.1), 27, 12); cx.fillText('0', 27, H - 14);
-  const linia = (pts, c, w) => { if (!pts.length) return; cx.strokeStyle = c; cx.lineWidth = w; cx.beginPath(); pts.forEach(([t, q], i) => i ? cx.lineTo(X(t), Y(q)) : cx.moveTo(X(t), Y(q))); cx.stroke(); cx.lineWidth = 1; };
-  linia(fut('aforador_continua').map(f => [f.temps, f.cabal_m3s]), '#c0392b', 1.5);
-  linia(punt('aforador').map(f => [f.temps, f.cabal_m3s]), '#2b7bba', 2);
-  linia(obs.map(o => [o.temps, o.valor]), '#1b2733', 2);
-  // el mapa mostra la zona del pitjor període de retorn previst
-  const Tp = periodeRetorn(Math.max(max('aforador'), max('aforador_continua')), cfg.cabals_T.aforador);
-  if (Tp && Tp >= 10 && capaZones) mostra([...TS].reverse().find(t => t <= Tp));
-}
-const previsioSegur = () => previsio().catch(() => { document.getElementById('previsio').innerHTML = '<h2>Previsió 3 h</h2><div class="nota">No s\'ha pogut carregar la previsió.</div>'; });
-previsioSegur(); setInterval(previsioSegur, 5 * 60 * 1000);
-</script>
+  <footer>Dades: radar OPERA (EUMETNET), estacions XEMA i aforadors ACA, relleu ICGC, zones inundables ACA. Codi obert a GitHub (correvents/inundacions). Si el mapa no carrega, força la recàrrega del navegador.</footer>
+</main>
 </body>
 </html>
