@@ -172,6 +172,7 @@ def main():
     pluja_acum = np.zeros((nf, nc)); neta_ant = np.zeros((nf, nc))
     hmax = np.zeros((nf, nc))
     t15 = np.full((nf, nc), np.inf)                               # primer moment amb més de 15 cm d'aigua (min des de l'inici)
+    t_mullat = np.zeros((nf, nc))                                 # darrer moment amb més de 5 cm d'aigua (min des de l'inici)
     ini = temps_rad[0] - timedelta(minutes=rad["interval_min"])
     fi = temps_rad[-1]
     dest = Path("data") / cfg["conca"] / "sim2d" / (a.id or fi.strftime("%Y-%m-%d")); dest.mkdir(parents=True, exist_ok=True)
@@ -212,6 +213,8 @@ def main():
         pas_temps(z, h, qx, qy, n, dx, dt, actiu)
         np.maximum(hmax, h, out=hmax)
         t15[(h > 0.15) & ~np.isfinite(t15)] = t_seg / 60
+        mullat = h > 0.05
+        t_mullat[mullat] = t_seg / 60                              # darrer minut amb més de 5 cm d'aigua
         t_seg += dt; t = ini + timedelta(seconds=t_seg)
         if t >= proxim:
             nom = f"{proxim:%d%H%M}.png"; png(h, nom)
@@ -225,13 +228,31 @@ def main():
             print(f"{proxim:%d %H:%M} dt {dt:.2f} s, calat màx {hm:.2f} m, cabal aforador {q:.1f} m³/s, inundat >15 cm {(h > 0.15).sum() * dx * dx / 1e6:.2f} km² ({time.time() - rellotge:.0f} s)")
             proxim += timedelta(minutes=a.cada)
     png(hmax, "maxim.png")
+    # temps d'assecat: des que supera 15 cm fins l'últim minut amb més de 5 cm; les cel·les encara mullades al final queden marcades
+    mullat_final = h > 0.05
+    durada = np.where(np.isfinite(t15), np.maximum(t_mullat - np.nan_to_num(t15), 0), np.nan)
+    d_h = durada / 60
+    def png_assecat(nom):
+        out = np.full((lnf, lnc), np.nan, dtype=np.float32)
+        reproject(d_h.astype(np.float32), out, src_transform=tr, src_crs=crs, dst_transform=ll_tr, dst_crs="EPSG:4326",
+                  resampling=Resampling.nearest, src_nodata=np.nan, dst_nodata=np.nan)
+        fin = np.zeros((lnf, lnc), dtype=np.float32)
+        reproject(mullat_final.astype(np.float32), fin, src_transform=tr, src_crs=crs, dst_transform=ll_tr, dst_crs="EPSG:4326", resampling=Resampling.nearest)
+        rgba = np.zeros((lnf, lnc, 4), dtype=np.uint8)
+        ok = np.isfinite(out)
+        for llindar, c in ((0, (255, 255, 178, 200)), (1, (254, 204, 92, 210)), (3, (253, 141, 60, 220)), (6, (240, 59, 32, 230)), (12, (189, 0, 38, 240))):
+            rgba[ok & (out >= llindar)] = c
+        rgba[ok & (fin > 0.5)] = (84, 39, 143, 240)          # encara mullat al final de la simulació
+        Image.fromarray(rgba, "RGBA").save(dest / nom, optimize=True)
+    png_assecat("assecat.png")
+    np.where(np.isfinite(durada), np.minimum(durada, 65534), 65535).astype("<u2").tofile(dest / "durada_min.u2")
     # graelles numèriques per al model d'inundació (UTM, mateixa reixa que la simulació): calat màxim en cm i minut d'inundació
     np.minimum(np.rint(hmax * 100), 65534).astype("<u2").tofile(dest / "calat_max_cm.u2")
     np.where(np.isfinite(t15), np.minimum(t15, 65534), 65535).astype("<u2").tofile(dest / "minut_15cm.u2")
     (dest / "index.json").write_text(json.dumps({
         "limits": [[s, w], [nn, e]], "pas_m": dx, "inici_utc": ini.strftime("%Y-%m-%dT%H:%M"),
         "graella_utm": {"crs": str(crs), "x0": tr.c, "y0": tr.f, "nf": nf, "nc": nc, "fitxers": {"calat_max_cm.u2": "uint16 cm",
-                        "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png",
+                        "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai", "durada_min.u2": "uint16 minuts entre superar 15 cm i l'últim moment amb més de 5 cm; 65535 = mai superat"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png", "assecat": "assecat.png", "assecat_final_mullat_km2": round(float(mullat_final.sum()) * dx * dx / 1e6, 3), "llegenda_assecat_h": [0, 1, 3, 6, 12],
         "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "h_llera_m": a.h_llera, "manning": {"natural": a.n_natural, "construit": a.n_urba},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2]}, ensure_ascii=False))
