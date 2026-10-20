@@ -60,6 +60,7 @@
 const $ = id => document.getElementById(id);
 const CONCA = new URLSearchParams(location.search).get('conca') || 'ridaura';
 const BASE = 'data/' + CONCA + '/';
+const NOM_PUNT = { ridaura: "Ridaura a l'aforador", granollers: 'Congost a La Garriga', cabrera: 'Riera de Cabrera (punt de control)' };
 const DR = [-1, -1, 0, 1, 1, 1, 0, -1], DC = [0, 1, 1, 1, 0, -1, -1, -1];   // 0=N 1=NE 2=E 3=SE 4=S 5=SO 6=O 7=NO
 const ESCALA = 2;
 let G, R, EP, ES, FACT, IDX, PREMSA, SIM, N, A, z, zf, dir, urba, ridx, rcv, ordre, comp, compCel, compIni, nComp, terra;
@@ -423,8 +424,8 @@ function graf() {
   if (obs.length) linia(obs, '#d35400', []);
   linia(mod, '#7b3294', [4, 3]);
   cx.font = '10px system-ui'; cx.textAlign = 'right';
-  cx.fillStyle = '#7b3294'; cx.fillText(`Ridaura a l'aforador, model ràpid: ${fmt(DIN.serie.aforador[fi], 0)} m³/s ara (màx. ${fmt(Math.max(...DIN.serie.aforador), 0)})`, W - 4, 10);
-  if (obs.length) { cx.fillStyle = '#d35400'; cx.fillText(`mesurat: màx. ${fmt(Math.max(...obs.map(p => p[1] || 0)), 0)} m³/s`, W - 4, 22); }
+  cx.fillStyle = '#7b3294'; cx.fillText(`${NOM_PUNT[CONCA] || 'Punt de control'}, model ràpid: ${fmt(DIN.serie.aforador[fi], 0)} m³/s ara (màx. ${fmt(Math.max(...DIN.serie.aforador), 0)})`, W - 4, 10);
+  if (obs.length) { cx.fillStyle = '#d35400'; cx.fillText(`mesurat a l'aforador: màx. ${fmt(Math.max(...obs.map(p => p[1] || 0)), 0)} m³/s`, W - 4, 22); }
   const x = 30 + (fi + 0.5) * ample; cx.strokeStyle = '#e31a1c'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(x, 0); cx.lineTo(x, base); cx.stroke();
   cx.fillStyle = '#5b6b7b'; cx.font = '10px system-ui'; cx.textAlign = 'right';
   for (const v of [0, Math.round(mx / 2), Math.round(mx)]) cx.fillText(v, 26, base - v / mx * (base - 4) + 3);
