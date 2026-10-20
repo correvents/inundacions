@@ -6,10 +6,11 @@
    "resum": "361 mm en dos dies, 75 mm en una hora. Esvoranc al carrer Josep Umbert, hospital, passos soterrats de les Rondes i centenars de baixos.",
    "radar": "2026-10-03_radar.json",
    "api_mm": 42,
-   "ia_mm": 108,
-   "perdua_mm_h": 12,
+   "ia_mm": 65,
+   "perdua_mm_h": 10,
    "estacio_api": "YM",
-   "episodi": "2026-10-04_aforador.json"
+   "episodi": "2026-10-04_aforador.json",
+   "calibrat": "Calibrat amb el cabal mesurat a La Garriga (NSE 0,72 amb el model ràpid): absorbeix 65 mm i després 10 mm/h. Provisional: un sol episodi."
   }
  ],
  "sense_radar": [],

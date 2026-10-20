@@ -205,7 +205,7 @@ async function carregaEpisodi(e) {
   if (SIM) SIM.fotogrames.forEach(f => { const im = new Image(); im.src = BASE + 'sim2d/' + e.id + '/' + f.png; });   // precàrrega
   const UP = new URLSearchParams(location.search);          // ?ia=&phi= només per calibrar amb un cabal mesurat
   IA = UP.get('ia') !== null ? +UP.get('ia') : (e.ia_mm ?? 150); PHI = UP.get('phi') !== null ? +UP.get('phi') : (e.perdua_mm_h ?? 12);
-  $('via').innerHTML = `El terreny absorbeix <b>${IA} mm</b> i després ${PHI} mm/h` + (e.api_mm != null ? ` (pluja dels dies abans: ${e.api_mm} mm)` : '') + ` · clavegueram ${SEW} mm/h`;
+  $('via').innerHTML = `El terreny absorbeix <b>${IA} mm</b> i després ${PHI} mm/h` + (e.api_mm != null ? ` (pluja dels dies abans: ${e.api_mm} mm)` : '') + ` · clavegueram ${SEW} mm/h` + (e.calibrat ? ` · <i>${e.calibrat}</i>` : '');
   const nR = R.lons.length * R.lats.length, nF = R.temps.length, phiF = PHI * R.interval_min / 60, sewF = SEW * R.interval_min / 60;
   cumR = new Float32Array((nF + 1) * nR); cumN = new Float32Array((nF + 1) * nR); cumU = new Float32Array((nF + 1) * nR);
   const absN = new Float32Array(nR).fill(IA), absU = new Float32Array(nR).fill(5);
