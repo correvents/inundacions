@@ -245,7 +245,7 @@ async function carregaEpisodi(e) {
     cumN[o] = cumN[a] + q;
     const v = Math.min(p, absU[r]); absU[r] -= v; cumU[o] = cumU[a] + Math.max(p - v - sewF, 0);
   }
-  simula();
+  await simula();
   const pes = new Float64Array(nR); let tot = 0;
   for (let i = 0; i < N; i++) if (terra[i] && ridx[i] !== 65535) { pes[ridx[i]]++; tot++; }
   mitjana = R.temps.map((_, f) => { let s = 0; for (let r = 0; r < nR; r++) s += pes[r] * R.mm[f][r] * FACT[f]; return s / tot; });
@@ -279,7 +279,7 @@ function velocitat(i) {
   const L = (dir[i] % 2 ? Math.SQRT2 : 1) * G.pas_m, s = Math.max((zf[i] - zf[j]) / 100 / L, 0.002);
   return Math.min(Math.max(4 * Math.pow(ACC[i] * A / 1e6, 0.25) * Math.sqrt(s), 0.03), 3.5) * VMULT;
 }
-function simula() {
+async function simula() {
   const nF = R.temps.length, seg = R.interval_min * 60, nsub = Math.max(1, Math.ceil(seg / DTS)), dts = seg / nsub;
   const K = new Float32Array(N);
   for (let i = 0; i < N; i++) if (terra[i]) { const L = (dir[i] % 2 ? Math.SQRT2 : 1) * G.pas_m; K[i] = dts / (L / velocitat(i) + dts); }
@@ -289,6 +289,7 @@ function simula() {
     if (f % CADA_CK === 0) DIN.ck[f / CADA_CK] = { W: DIN.W.slice(), S: DIN.S.slice() };
     pasFrame(f);
     for (const nom in G.cel) DIN.serie[nom][f] = DIN.Q[G.cel[nom]];
+    if (f % 6 === 5 && $('carrega')) { $('carrega').textContent = `Calculant el model ràpid… ${Math.round(100 * f / nF)} %`; await new Promise(r => setTimeout(r)); }   // deixa respirar la pàgina i mostra el progrés
   }
 }
 function pasFrame(f) {
