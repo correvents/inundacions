@@ -118,9 +118,10 @@ def obstacles(fitxer, tr, nf, nc, dx, fi=2.0):
     return phi, psx, psy, desti, ed
 
 
-def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, phi, toca=5.0):
-    """Edificis amb plantes sota rasant que tenen aigua a tocar: calat màxim a les cel·les lliures a menys de `toca` m de la
-    planta de les parts amb soterrani, i minut en què hi passa de 15 cm."""
+def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, toca=5.0):
+    """Edificis amb plantes sota rasant que tenen aigua a tocar: a les cel·les a menys de `toca` m de la planta de les parts amb
+    soterrani, l'alçada màxima de l'aigua per sobre del terra de l'edifici (mediana del MDT sota la planta), sense passar del
+    calat. Així l'aigua d'una riera encaixada al costat, més baixa que l'edifici, no compta. I minut en què hi passa de 15 cm."""
     from shapely.geometry import Polygon, box
     from shapely.ops import unary_union
     per_ref = {}
@@ -129,7 +130,13 @@ def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, phi, toca=5.0):
             per_ref.setdefault(ref, []).append(Polygon(an[0], an[1:]).buffer(0))
     out = {}
     for ref, pols in per_ref.items():
-        g = unary_union(pols).buffer(toca)
+        pl = unary_union(pols)
+        g = pl.buffer(toca)
+        mx = ~tr_mdt
+        bx0, by0, bx1, by1 = pl.bounds
+        a0, b0 = mx * (bx0, by1); a1, b1 = mx * (bx1, by0)
+        tros = z_mdt[max(int(b0), 0):max(int(b1) + 1, int(b0) + 1), max(int(a0), 0):max(int(a1) + 1, int(a0) + 1)]
+        terra = float(np.nanmedian(tros)) if tros.size and np.isfinite(tros).any() else -1e9
         x0, y0, x1, y1 = g.bounds
         c0, c1 = max(int((x0 - tr.c) // dx), 0), min(int((x1 - tr.c) // dx), nc - 1)
         r0, r1 = max(int((tr.f - y1) // dx), 0), min(int((tr.f - y0) // dx), nf - 1)
@@ -139,8 +146,11 @@ def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, phi, toca=5.0):
                 cel = box(tr.c + c * dx, tr.f - (r + 1) * dx, tr.c + (c + 1) * dx, tr.f - r * dx)
                 if not g.intersects(cel):
                     continue
-                cm = max(cm, int(round(hmax[r, c] * 100)))
-                if np.isfinite(t15[r, c]):
+                sobre = min(hmax[r, c], z[r, c] + hmax[r, c] - terra)
+                if sobre <= 0:
+                    continue
+                cm = max(cm, int(round(sobre * 100)))
+                if np.isfinite(t15[r, c]) and sobre >= 0.15:
                     mn = t15[r, c] if mn is None else min(mn, t15[r, c])
                     if np.isfinite(durada[r, c]): du = max(du, durada[r, c])
         if cm >= 5:
@@ -180,6 +190,7 @@ def main():
         with np.errstate(all="ignore"):
             z = np.nanmin(np.nanmin(blocs, axis=3), axis=1)            # el mínim de cada bloc conserva els llits
         tr = f.transform * f.transform.scale(fac, fac)
+        tr_mdt = f.transform
         crs = f.crs
     mar = ~np.isfinite(z)
     z = np.where(mar, 0.0, z).astype(np.float64)
@@ -320,9 +331,9 @@ def main():
     # graelles numèriques per al model d'inundació (UTM, mateixa reixa que la simulació): calat màxim en cm i minut d'inundació
     sot = None
     if edif is not None:
-        n_sot, sot = soterranis(edif, tr, nf, nc, dx, hmax, t15, durada, phi)
+        n_sot, sot = soterranis(edif, tr, nf, nc, dx, hmax, t15, durada, z, z0, tr_mdt)
         (dest / "soterranis.json").write_text(json.dumps({"inici_utc": ini.strftime("%Y-%m-%dT%H:%M"), "toca_m": 5, "llindar_cm": 15,
-            "camps": ["calat màxim a tocar (cm)", "minut des de inici_utc en què passa de 15 cm (null = mai)", "minuts amb aigua"], "edificis": sot}, separators=(",", ":")))
+            "camps": ["aigua a tocar per sobre del terra de l'edifici, màxim (cm)", "minut des de inici_utc en què passa de 15 cm (null = mai)", "minuts amb aigua"], "edificis": sot}, separators=(",", ":")))
         print(f"Soterranis: {sum(1 for v in sot.values() if v[0] >= 15)} de {n_sot} edificis amb soterrani tenen ≥15 cm d'aigua a tocar")
     np.minimum(np.rint(hmax * 100), 65534).astype("<u2").tofile(dest / "calat_max_cm.u2")
     np.where(np.isfinite(t15), np.minimum(t15, 65534), 65535).astype("<u2").tofile(dest / "minut_15cm.u2")
