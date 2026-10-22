@@ -44,6 +44,8 @@
     <button id="play">▶ Reprodueix</button>
     <select id="vel"><option value="900">lent</option><option value="450" selected>normal</option><option value="150">ràpid</option></select>
     <label class="nota"><input type="checkbox" id="premsaOn" checked> Premsa</label>
+    <label class="nota" title="Edificis del Cadastre amb plantes sota rasant: en vermell quan l'aigua de la simulació 2D hi passa de 15 cm a tocar"><input type="checkbox" id="soterOn"> Soterranis</label>
+    <label class="nota" title="Edificis del Cadastre pintats per nombre de plantes (≈3 m cada una). A la simulació 2D l'aigua els ha de voltar pels carrers"><input type="checkbox" id="edifOn"> Edificis</label>
     <span id="via" title="Calculat amb la pluja dels 60 dies anteriors (fix per a cada episodi)"></span>
     <span class="nota"><a href="pluja.html">eina de pluja</a> · <a href="./">inici</a> · <a href="previsio.html">previsió en directe</a></span>
   </div>
@@ -79,7 +81,7 @@ const ATR = '© ICGC · Relleu: IGN · Radar: EUMETNET OPERA · Pluja: Meteocat,
 const mapes = [0, 1, 2, 3].map(k => {
   const m = L.map('m' + k, { zoomControl: k === 0, attributionControl: k === 3 }).setView([41.815, 3.0], 13);
   L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', { maxZoom: 19, attribution: ATR, opacity: 0.55 }).addTo(m);
-  m.createPane('aigua').style.zIndex = 450; m.createPane('corrents').style.zIndex = 455; m.createPane('fletxes').style.zIndex = 460; m.createPane('premsa').style.zIndex = 470;
+  m.createPane('aigua').style.zIndex = 450; m.createPane('corrents').style.zIndex = 455; m.createPane('fletxes').style.zIndex = 460; m.createPane('premsa').style.zIndex = 470; m.createPane('edificis').style.zIndex = 452; m.createPane('soterranis').style.zIndex = 465;
   return m;
 });
 let sincronitzant = false;
@@ -214,7 +216,50 @@ document.addEventListener('fullscreenchange', () => {
 document.querySelectorAll('.cel').forEach(c => { const b = document.createElement('button'); b.className = 'gran-bt'; b.textContent = '⛶ Gran'; b.onclick = () => granMapa(c); c.appendChild(b); });
 let EPI, capesPremsa = [];
 function ponPremsa() { capesPremsa.forEach((c, k) => $('premsaOn').checked ? c.addTo(mapes[k]) : mapes[k].removeLayer(c)); }
-document.addEventListener('DOMContentLoaded', () => { $('premsaOn').onchange = ponPremsa; });
+document.addEventListener('DOMContentLoaded', () => { $('premsaOn').onchange = ponPremsa; $('soterOn').onchange = () => { soterranis(); llegendaSoter(); }; $('edifOn').onchange = () => edificis().then(calcula); });
+
+// Cadastre: edificis per alçada i soterranis amb aigua a tocar (només al mapa 4)
+let CAD = undefined, SOTER = null, capaSoter = null, capaEdif = null;
+async function cadastre() {
+  if (CAD !== undefined) return CAD;
+  CAD = await Promise.all([fetch(BASE + 'cadastre/resum.json').then(r => r.ok ? r.json() : null), fetch(BASE + 'cadastre/soterranis.geojson').then(r => r.ok ? r.json() : null)])
+    .then(([resum, geo]) => resum && geo ? { resum, geo } : null).catch(() => null);
+  if (!CAD) ['soterOn', 'edifOn'].forEach(id => { $(id).disabled = true; $(id).parentNode.title = 'Encara no hi ha dades del Cadastre per a aquesta zona'; });
+  return CAD;
+}
+async function edificis() {
+  if (capaEdif) { mapes[3].removeLayer(capaEdif); capaEdif = null; }
+  if (!$('edifOn').checked || !await cadastre()) return;
+  capaEdif = L.imageOverlay(BASE + 'cadastre/' + CAD.resum.png, CAD.resum.limits, { pane: 'edificis', interactive: false, opacity: 0.75 }).addTo(mapes[3]);
+}
+const COL_SOTER = cm => cm >= 60 ? '#67000d' : cm >= 30 ? '#cb181d' : '#fb6a4a';
+async function soterranis() {
+  if (!$('soterOn').checked || !await cadastre()) { if (capaSoter) { mapes[3].removeLayer(capaSoter); capaSoter = null; } return; }
+  if (!capaSoter) capaSoter = L.geoJSON(CAD.geo, { pane: 'soterranis', renderer: L.canvas({ pane: 'soterranis' }),
+    onEachFeature: (f, l) => l.bindTooltip(() => textSoter(f.properties)) }).addTo(mapes[3]);
+  const ara = Date.parse(R.temps[fi] + 'Z'), t0 = SOTER ? Date.parse(SOTER.inici_utc + 'Z') : 0;
+  let n = 0;
+  capaSoter.eachLayer(l => {
+    const v = SOTER && SOTER.edificis[l.feature.properties.ref], moll = v && v[1] != null && t0 + v[1] * 6e4 <= ara;
+    if (moll) n++;
+    l.setStyle(moll ? { color: '#67000d', weight: 1.5, fillColor: COL_SOTER(v[0]), fillOpacity: 0.85 } : { color: '#525252', weight: 1, fillColor: '#bdbdbd', fillOpacity: 0.25 });
+  });
+  capaSoter._n = n;
+}
+function textSoter(p) {
+  const v = SOTER && SOTER.edificis[p.ref];
+  let t = `<b>Soterrani: ${p.plantes_sota} planta${p.plantes_sota > 1 ? 'es' : ''} sota rasant</b>, ${p.plantes_sobre} sobre (≈${p.plantes_sobre * 3} m)` + (p.us ? `<br>Ús: ${p.us}` + (p.habitatges ? `, ${p.habitatges} habitatges` : '') : '');
+  if (!SOTER) return t + '<br><i>Sense simulació 2D amb edificis per a aquest episodi</i>';
+  if (!v || v[0] < 15) return t + '<br>Aigua a tocar: ' + (v ? `màx. ${v[0]} cm (no passa de 15 cm)` : 'no');
+  const h = new Date(Date.parse(SOTER.inici_utc + 'Z') + v[1] * 6e4).toISOString().slice(0, 16);
+  return t + `<br><b>Aigua a tocar: màx. ${v[0]} cm</b>, passa de 15 cm a les ${horaCurta(h)}` + (v[2] ? `, mullat ${fmt(v[2] / 60, 1)} h` : '');
+}
+function llegendaSoter() {
+  if (!$('soterOn').checked || !capaSoter) return;
+  const tot = SOTER ? Object.values(SOTER.edificis).filter(v => v[0] >= 15).length : 0;
+  $('ll3').innerHTML += `<br>Soterranis amb ≥15 cm d'aigua a tocar: <b>${capaSoter._n || 0}</b> ara, ${tot} en tot l'episodi (de ${CAD.geo.features.length})` +
+    [[15, '#fb6a4a'], [30, '#cb181d'], [60, '#67000d']].map(([l, c]) => `<span style="background:${c}"></span>>${l} cm`).join('');
+}
 async function carregaEpisodi(e) {
   EPI = e; $('episodi').value = e.id;
   R = await fetch(BASE + 'episodis/' + e.radar).then(r => r.json());
@@ -222,6 +267,7 @@ async function carregaEpisodi(e) {
   ES = await fetch(BASE + 'episodis/' + e.id + '_estacio.json').then(r => r.ok ? r.json() : null).catch(() => null);
   FACT = EP ? G.factor_radar : ES ? factorsEstacio(ES) : R.temps.map(() => 1);
   SIM = await fetch(BASE + 'sim2d/' + e.id + '/index.json').then(r => r.ok ? r.json() : null).catch(() => null);
+  SOTER = SIM && SIM.edificis ? await fetch(BASE + 'sim2d/' + e.id + '/' + SIM.edificis.soterranis).then(r => r.ok ? r.json() : null).catch(() => null) : null;
   if (SIM && SIM.fotogrames.length) {                          // després del radar no plou: el rellotge segueix mentre la simulació 2D buida l'aigua
     const ultim = SIM.fotogrames[SIM.fotogrames.length - 1].temps, nR0 = R.lons.length * R.lats.length, pas = R.interval_min * 60000;
     FACT = Array.from(FACT);
@@ -373,6 +419,8 @@ function calcula() {
     $('ll3').innerHTML = llegenda(RAMPA_Q, 'cabal ara (m³/s):') + '<br>' + llegenda(RAMPA_H, 'embassada ara (m):');
   }
   if (v3 === 'dues' || v3 === 'assecat') { if (capaFletxes) { mapes[3].removeLayer(capaFletxes); capaFletxes = null; } } else fletxes(3);
+  if ($('edifOn').checked && CAD) $('ll3').innerHTML += '<br>' + llegenda(CAD.resum.llegenda_plantes.map((l, k) => [l, [[189, 189, 189, 200], [150, 150, 150, 215], [99, 99, 99, 230], [37, 37, 37, 240]][k]]), 'edificis, plantes sobre rasant (≈3 m cada una):');
+  if ($('soterOn').checked) soterranis().then(llegendaSoter);
   graf();
 }
 

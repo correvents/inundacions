@@ -31,5 +31,18 @@
  },
  "estacio_api": "",
  "nota": "Xàfec del 17/10/2026: 60 mm en 40 min; la riera arrossega una dona. No hi ha aforador de l'ACA a la riera (el més proper, Arenys de Munt, a 14 km): es valida només amb premsa i pluviòmetres.",
- "aforador_mode": "caixa"
+ "aforador_mode": "caixa",
+ "municipis_cadastre": [
+  "Cabrera de Mar",
+  "Cabrils",
+  "Vilassar de Mar",
+  "Vilassar de Dalt",
+  "Argentona",
+  "Mataró",
+  "Premià de Dalt",
+  "Premià de Mar",
+  "Òrrius",
+  "Sant Andreu de Llavaneres",
+  "Dosrius"
+ ]
 }

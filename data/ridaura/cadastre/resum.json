@@ -1,0 +1,30 @@
+{
+ "font": "Dirección General del Catastro, INSPIRE Buildings",
+ "limits": [
+  [
+   41.75,
+   2.86
+  ],
+  [
+   41.89,
+   3.09
+  ]
+ ],
+ "png": "edificis.png",
+ "llegenda_plantes": [
+  1,
+  3,
+  6,
+  10
+ ],
+ "h_planta_m": 3.0,
+ "parts": 80988,
+ "parts_obstacle": 77865,
+ "edificis_amb_soterrani": 3847,
+ "soterranis_per_plantes": {
+  "1": 3779,
+  "2": 65,
+  "3": 2,
+  "5": 1
+ }
+}

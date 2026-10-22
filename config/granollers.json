@@ -47,5 +47,34 @@
    "var": "cabal_m3s"
   }
  ],
- "aforador_mode": "caixa"
+ "aforador_mode": "caixa",
+ "municipis_cadastre": [
+  "Granollers",
+  "Canovelles",
+  "Franqueses del Vallès",
+  "Garriga",
+  "Ametlla del Vallès",
+  "Cardedeu",
+  "Roca del Vallès",
+  "Montornès del Vallès",
+  "Vilanova del Vallès",
+  "Lliçà d'Amunt",
+  "Lliçà de Vall",
+  "Bigues i Riells",
+  "Santa Eulàlia de Ronçana",
+  "Parets del Vallès",
+  "Montmeló",
+  "Figaró-Montmany",
+  "Tagamanent",
+  "Llinars del Vallès",
+  "Cànoves i Samalús",
+  "Sant Antoni de Vilamajor",
+  "Vallromanes",
+  "Mollet del Vallès",
+  "Martorelles",
+  "Sant Fost de Campsentelles",
+  "Caldes de Montbui",
+  "Sant Feliu de Codines",
+  "Santa Maria de Martorelles"
+ ]
 }

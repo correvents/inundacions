@@ -35,12 +35,14 @@ WORLDCOVER = "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map
 
 
 @njit(cache=True)
-def pas_temps(z, h, qx, qy, n, dx, dt, actiu):
-    """Un pas de l'esquema inercial local. qx a la cara est de cada cel·la, qy a la cara sud."""
+def pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi):
+    """Un pas de l'esquema inercial local. qx a la cara est de cada cel·la, qy a la cara sud.
+    Porositat dels edificis: q és el cabal per metre d'amplada lliure; psx/psy, la fracció lliure de cada cara, i phi, la
+    fracció lliure de cada cel·la (h és el calat a la part lliure, el carrer). Sense edificis tot val 1."""
     nf, nc = z.shape
     for i in range(nf):
         for j in range(nc - 1):
-            if not (actiu[i, j] or actiu[i, j + 1]):
+            if not (actiu[i, j] or actiu[i, j + 1]) or psx[i, j] == 0.0:
                 qx[i, j] = 0.0; continue
             eta1, eta2 = z[i, j] + h[i, j], z[i, j + 1] + h[i, j + 1]
             hf = max(eta1, eta2) - max(z[i, j], z[i, j + 1])
@@ -53,7 +55,7 @@ def pas_temps(z, h, qx, qy, n, dx, dt, actiu):
             qx[i, j] = min(max(q, -qmax), qmax)
     for i in range(nf - 1):
         for j in range(nc):
-            if not (actiu[i, j] or actiu[i + 1, j]):
+            if not (actiu[i, j] or actiu[i + 1, j]) or psy[i, j] == 0.0:
                 qy[i, j] = 0.0; continue
             eta1, eta2 = z[i, j] + h[i, j], z[i + 1, j] + h[i + 1, j]
             hf = max(eta1, eta2) - max(z[i, j], z[i + 1, j])
@@ -69,11 +71,11 @@ def pas_temps(z, h, qx, qy, n, dx, dt, actiu):
             if not actiu[i, j]:
                 h[i, j] = 0.0; continue                   # mar o fora del domini: l'aigua surt
             ent = 0.0
-            if j > 0: ent += qx[i, j - 1]
-            if j < nc - 1: ent -= qx[i, j]
-            if i > 0: ent += qy[i - 1, j]
-            if i < nf - 1: ent -= qy[i, j]
-            h[i, j] = max(h[i, j] + dt * ent / dx, 0.0)
+            if j > 0: ent += psx[i, j - 1] * qx[i, j - 1]
+            if j < nc - 1: ent -= psx[i, j] * qx[i, j]
+            if i > 0: ent += psy[i - 1, j] * qy[i - 1, j]
+            if i < nf - 1: ent -= psy[i, j] * qy[i, j]
+            h[i, j] = max(h[i, j] + dt * ent / (dx * phi[i, j]), 0.0)
 
 
 @njit(cache=True)
@@ -84,6 +86,80 @@ def hmax_actiu(h, actiu):
             if actiu[i, j] and h[i, j] > m:
                 m = h[i, j]
     return m
+
+
+def obstacles(fitxer, tr, nf, nc, dx, fi=2.0):
+    """Porositat dels edificis del Cadastre a la reixa de la simulació (Sanders et al. 2008, porositat integral).
+    Les parts amb plantes sobre rasant es rasteritzen a fi metres; de cada cel·la en surt la fracció lliure (phi) i de cada cara
+    la fracció lliure per on pot passar l'aigua (psx, psy), limitada a la de les dues cel·les perquè l'esquema sigui estable.
+    Cel·les gairebé tot edifici (< 10 % lliure): no hi entra aigua i la pluja de les teulades va a la cel·la lliure més propera."""
+    import gzip, rasterio.features
+    from scipy.ndimage import distance_transform_edt
+    from shapely.geometry import Polygon
+    ed = json.loads(gzip.open(fitxer, "rt").read())
+    f = max(int(round(dx / fi)), 1)
+    ftr = rasterio.transform.from_origin(tr.c, tr.f, dx / f, dx / f)
+    formes = [(Polygon(an[0], an[1:]), 1) for ref, sobre, sota, an in ed["parts"] if sobre >= 1 and len(an[0]) >= 4]
+    fina = rasterio.features.rasterize(formes, out_shape=(nf * f, nc * f), transform=ftr, fill=0, dtype="uint8").astype(bool)
+    phi = 1 - fina.reshape(nf, f, nc, f).mean(axis=(1, 3))
+    vx = fina[:, f - 1:-1:f][:, :nc - 1] | fina[:, f::f][:, :nc - 1]          # columnes fines a banda i banda de cada cara est
+    psx = np.ones((nf, nc)); psx[:, :nc - 1] = 1 - vx.reshape(nf, f, nc - 1).mean(axis=1)
+    vy = fina[f - 1:-1:f, :][:nf - 1] | fina[f::f, :][:nf - 1]
+    psy = np.ones((nf, nc)); psy[:nf - 1, :] = 1 - vy.reshape(nf - 1, nc, f).mean(axis=2)
+    del fina, vx, vy
+    bloc = phi < 0.1
+    psx[:, :-1] = np.minimum(psx[:, :-1], np.minimum(phi[:, :-1], phi[:, 1:])); psy[:-1] = np.minimum(psy[:-1], np.minimum(phi[:-1], phi[1:]))
+    psx[:, :-1][bloc[:, :-1] | bloc[:, 1:]] = 0; psy[:-1][bloc[:-1] | bloc[1:]] = 0
+    phi = np.where(bloc, 1.0, phi)                 # inert: no hi entra ni hi plou
+    _, (ri, ci) = distance_transform_edt(bloc, return_indices=True)
+    desti = (ri * nc + ci).ravel()
+    ed["ocupacio_pct"] = round(100 * float(1 - np.where(bloc, 0, phi).mean()), 2)
+    print(f"Edificis: {len(formes)} parts, ocupen {ed['ocupacio_pct']} % del domini; {bloc.sum()} cel·les tancades")
+    return phi, psx, psy, desti, ed
+
+
+def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, toca=5.0):
+    """Edificis amb plantes sota rasant que tenen aigua a tocar: a les cel·les a menys de `toca` m de la planta de les parts amb
+    soterrani, l'alçada màxima de l'aigua per sobre del terra de l'edifici (mediana del MDT sota la planta), sense passar del
+    calat. Així l'aigua d'una riera encaixada al costat, més baixa que l'edifici, no compta. I minut en què hi passa de 15 cm."""
+    from shapely.geometry import Polygon, box
+    from shapely.ops import unary_union
+    per_ref = {}
+    for ref, sobre, sota, an in ed["parts"]:
+        if sota > 0 and len(an[0]) >= 4:
+            p = Polygon(an[0], an[1:]).buffer(0)
+            if not p.is_empty:
+                per_ref.setdefault(ref, []).append(p)
+    out = {}
+    for ref, pols in per_ref.items():
+        pl = unary_union(pols)
+        if pl.is_empty:
+            continue
+        g = pl.buffer(toca)
+        mx = ~tr_mdt
+        bx0, by0, bx1, by1 = pl.bounds
+        a0, b0 = mx * (bx0, by1); a1, b1 = mx * (bx1, by0)
+        tros = z_mdt[max(int(b0), 0):max(int(b1) + 1, int(b0) + 1), max(int(a0), 0):max(int(a1) + 1, int(a0) + 1)]
+        terra = float(np.nanmedian(tros)) if tros.size and np.isfinite(tros).any() else -1e9
+        x0, y0, x1, y1 = g.bounds
+        c0, c1 = max(int((x0 - tr.c) // dx), 0), min(int((x1 - tr.c) // dx), nc - 1)
+        r0, r1 = max(int((tr.f - y1) // dx), 0), min(int((tr.f - y0) // dx), nf - 1)
+        cm, mn, du = 0, None, 0
+        for r in range(r0, r1 + 1):
+            for c in range(c0, c1 + 1):
+                cel = box(tr.c + c * dx, tr.f - (r + 1) * dx, tr.c + (c + 1) * dx, tr.f - r * dx)
+                if not g.intersects(cel):
+                    continue
+                sobre = min(hmax[r, c], z[r, c] + hmax[r, c] - terra)
+                if sobre <= 0:
+                    continue
+                cm = max(cm, int(round(sobre * 100)))
+                if np.isfinite(t15[r, c]) and sobre >= 0.15:
+                    mn = t15[r, c] if mn is None else min(mn, t15[r, c])
+                    if np.isfinite(durada[r, c]): du = max(du, durada[r, c])
+        if cm >= 5:
+            out[ref] = [cm, None if mn is None else int(mn), int(du)]
+    return len(per_ref), out
 
 
 def main():
@@ -103,6 +179,7 @@ def main():
     ap.add_argument("--n-urba", type=float, default=0.02, help="n de Manning de les zones construïdes")
     ap.add_argument("--extra-hores", type=float, default=0, help="hores addicionals sense pluja després de l'última dada de radar, per veure com es buida l'aigua")
     ap.add_argument("--cada", type=int, default=10, help="minuts entre fotogrames")
+    ap.add_argument("--edificis", help="edificis del Cadastre (cadastre.py: data/<conca>/cadastre/edificis.json.gz): obstacles i soterranis")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
     rad = json.loads(Path(a.radar).read_text())
@@ -117,6 +194,7 @@ def main():
         with np.errstate(all="ignore"):
             z = np.nanmin(np.nanmin(blocs, axis=3), axis=1)            # el mínim de cada bloc conserva els llits
         tr = f.transform * f.transform.scale(fac, fac)
+        tr_mdt = f.transform
         crs = f.crs
     mar = ~np.isfinite(z)
     z = np.where(mar, 0.0, z).astype(np.float64)
@@ -137,6 +215,7 @@ def main():
     ia = np.where(urba, a.ia_urba, a.ia_natural)
     sorti = np.where(urba, a.clavegueram, a.perdua_natural) / 1000 / 3600     # m/s que perd la làmina un cop superat el llindar
     n = np.where(urba, a.n_urba, a.n_natural)
+    phi, psx, psy, desti, edif = obstacles(a.edificis, tr, nf, nc, dx) if a.edificis else (np.ones((nf, nc)), np.ones((nf, nc)), np.ones((nf, nc)), None, None)
 
     # pluja: graella del radar a la reixa, amb correcció horària amb el pluviòmetre
     to_ll = Transformer.from_crs(crs, 4326, always_xy=True)
@@ -204,17 +283,19 @@ def main():
                 taxa = np.zeros_like(taxa); k_taxa = -2
         elif k_frame != k_taxa:                                       # la pluja només canvia amb cada fotograma de radar
             taxa = frames[k_frame][idx] * factor(temps_rad[k_frame]) / 1000 / (rad["interval_min"] * 60)   # m/s
+            if desti is not None:                                     # la pluja de les teulades sense carrer a la cel·la baixa al carrer més proper
+                taxa = np.bincount(desti, weights=taxa.ravel(), minlength=nf * nc).reshape(nf, nc)
             k_taxa = k_frame
         hm = hmax_actiu(h, actiu)
         dt = min(dt_max, 0.7 * dx / np.sqrt(G * max(hm, 0.01)))
         # pèrdues: només escorre la pluja per sobre del llindar
         pluja_acum += taxa * dt * 1000
         neta = np.maximum(pluja_acum - ia, 0.0)
-        h += (neta - neta_ant) / 1000
+        h += (neta - neta_ant) / 1000 / phi                       # la pluja de tota la cel·la (teulades incloses) va al carrer
         neta_ant = neta
         # al terreny natural, les lleres on ja corre aigua (> --h-llera m) tenen el fons saturat i no hi infiltren; el clavegueram sí que drena
-        np.maximum(h - np.where((pluja_acum >= ia) & (urba | (h < a.h_llera)), sorti * dt, 0.0), 0.0, out=h)
-        pas_temps(z, h, qx, qy, n, dx, dt, actiu)
+        np.maximum(h - np.where((pluja_acum >= ia) & (urba | (h < a.h_llera)), sorti * dt / np.where(urba, phi, 1.0), 0.0), 0.0, out=h)
+        pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi)
         np.maximum(hmax, h, out=hmax)
         t15[(h > 0.15) & ~np.isfinite(t15)] = t_seg / 60
         mullat = h > 0.05
@@ -224,10 +305,11 @@ def main():
             nom = f"{proxim:%d%H%M}.png"; png(h, nom)
             if cfg.get("aforador_mode") == "caixa":       # cabal que surt d'una caixa al voltant del punt, sigui quina sigui la direcció del curs
                 k = max(int(150 // dx), 1); r0, r1, c0, c1 = max(gr - k, 1), min(gr + k, nf - 2), max(gc - k, 1), min(gc + k, nc - 2)
-                q = float((np.maximum(qx[r0:r1 + 1, c1], 0).sum() + np.maximum(-qx[r0:r1 + 1, c0 - 1], 0).sum() +
-                           np.maximum(qy[r1, c0:c1 + 1], 0).sum() + np.maximum(-qy[r0 - 1, c0:c1 + 1], 0).sum()) * dx)
+                Qx, Qy = qx * psx, qy * psy
+                q = float((np.maximum(Qx[r0:r1 + 1, c1], 0).sum() + np.maximum(-Qx[r0:r1 + 1, c0 - 1], 0).sum() +
+                           np.maximum(Qy[r1, c0:c1 + 1], 0).sum() + np.maximum(-Qy[r0 - 1, c0:c1 + 1], 0).sum()) * dx)
             else:
-                q = float(sum(qx[r, gc] for r in tf) * dx)
+                q = float(sum(qx[r, gc] * psx[r, gc] for r in tf) * dx)
             fotos.append({"temps": proxim.strftime("%Y-%m-%dT%H:%M"), "png": nom}); hidro.append(round(q, 1))
             print(f"{proxim:%d %H:%M} dt {dt:.2f} s, calat màx {hm:.2f} m, cabal aforador {q:.1f} m³/s, inundat >15 cm {(h > 0.15).sum() * dx * dx / 1e6:.2f} km² ({time.time() - rellotge:.0f} s)")
             proxim += timedelta(minutes=a.cada)
@@ -251,6 +333,12 @@ def main():
     png_assecat("assecat.png")
     np.where(np.isfinite(durada), np.minimum(durada, 65534), 65535).astype("<u2").tofile(dest / "durada_min.u2")
     # graelles numèriques per al model d'inundació (UTM, mateixa reixa que la simulació): calat màxim en cm i minut d'inundació
+    sot = None
+    if edif is not None:
+        n_sot, sot = soterranis(edif, tr, nf, nc, dx, hmax, t15, durada, z, z0, tr_mdt)
+        (dest / "soterranis.json").write_text(json.dumps({"inici_utc": ini.strftime("%Y-%m-%dT%H:%M"), "toca_m": 5, "llindar_cm": 15,
+            "camps": ["aigua a tocar per sobre del terra de l'edifici, màxim (cm)", "minut des de inici_utc en què passa de 15 cm (null = mai)", "minuts amb aigua"], "edificis": sot}, separators=(",", ":")))
+        print(f"Soterranis: {sum(1 for v in sot.values() if v[0] >= 15)} de {n_sot} edificis amb soterrani tenen ≥15 cm d'aigua a tocar")
     np.minimum(np.rint(hmax * 100), 65534).astype("<u2").tofile(dest / "calat_max_cm.u2")
     np.where(np.isfinite(t15), np.minimum(t15, 65534), 65535).astype("<u2").tofile(dest / "minut_15cm.u2")
     (dest / "index.json").write_text(json.dumps({
@@ -259,7 +347,10 @@ def main():
                         "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai", "durada_min.u2": "uint16 minuts entre superar 15 cm i l'últim moment amb més de 5 cm; 65535 = mai superat"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png", "assecat": "assecat.png", "assecat_final_mullat_km2": round(float(mullat_final.sum()) * dx * dx / 1e6, 3), "llegenda_assecat_h": [0, 1, 3, 6, 12],
         "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "h_llera_m": a.h_llera, "manning": {"natural": a.n_natural, "construit": a.n_urba},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
-        "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2]}, ensure_ascii=False))
+        "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2],
+        "edificis": None if edif is None else {"font": "Cadastre (INSPIRE Buildings)", "metode": "porositat: els edificis treuen espai i amplada de pas a cada cel·la; la pluja de les teulades va al carrer",
+                                               "ocupacio_pct": edif["ocupacio_pct"], "soterranis": "soterranis.json",
+                                               "soterranis_risc": sum(1 for v in sot.values() if v[0] >= 15)}}, ensure_ascii=False))
     print(f"Fet en {time.time() - rellotge:.0f} s: {len(fotos)} fotogrames")
     return 0
 
