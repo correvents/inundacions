@@ -238,13 +238,15 @@ async function soterranis() {
   if (!capaSoter) capaSoter = L.geoJSON(CAD.geo, { pane: 'soterranis', renderer: L.canvas({ pane: 'soterranis' }),
     onEachFeature: (f, l) => l.bindTooltip(() => textSoter(f.properties)) }).addTo(mapes[3]);
   const ara = Date.parse(R.temps[fi] + 'Z'), t0 = SOTER ? Date.parse(SOTER.inici_utc + 'Z') : 0;
-  let n = 0;
+  let n = 0, np = 0;
   capaSoter.eachLayer(l => {
-    const v = SOTER && SOTER.edificis[l.feature.properties.ref], moll = v && v[1] != null && t0 + v[1] * 6e4 <= ara;
-    if (moll) n++;
-    l.setStyle(moll ? { color: '#67000d', weight: 1.5, fillColor: COL_SOTER(v[0]), fillOpacity: 0.85 } : { color: '#525252', weight: 1, fillColor: '#bdbdbd', fillOpacity: 0.25 });
+    // gris: sense aigua; vermell: aigua a tocar ara; lila: l'aigua del carrer ja ha marxat (el soterrani pot seguir ple fins que el buidin)
+    const v = SOTER && SOTER.edificis[l.feature.properties.ref], ini = v && v[1] != null ? t0 + v[1] * 6e4 : Infinity, fi = ini + (v ? v[2] : 0) * 6e4;
+    const moll = ara >= ini && ara < fi, passat = ara >= fi && ini < Infinity;
+    if (moll) n++; if (passat) np++;
+    l.setStyle(moll ? { color: '#67000d', weight: 1.5, fillColor: COL_SOTER(v[0]), fillOpacity: 0.85 } : passat ? { color: '#6a51a3', weight: 2, fillColor: '#bcbddc', fillOpacity: 0.45 } : { color: '#525252', weight: 1, fillColor: '#bdbdbd', fillOpacity: 0.25 });
   });
-  capaSoter._n = n;
+  capaSoter._n = n; capaSoter._np = np;
 }
 function textSoter(p) {
   const v = SOTER && SOTER.edificis[p.ref];
@@ -252,13 +254,16 @@ function textSoter(p) {
   if (!SOTER) return t + '<br><i>Sense simulació 2D amb edificis per a aquest episodi</i>';
   if (!v || v[0] < 15) return t + '<br>Aigua a tocar: ' + (v ? `màx. ${v[0]} cm (no passa de 15 cm)` : 'no');
   const h = new Date(Date.parse(SOTER.inici_utc + 'Z') + v[1] * 6e4).toISOString().slice(0, 16);
-  return t + `<br><b>Aigua a tocar: màx. ${v[0]} cm</b>, passa de 15 cm a les ${horaCurta(h)}` + (v[2] ? `, mullat ${fmt(v[2] / 60, 1)} h` : '');
+  const h2 = new Date(Date.parse(h + 'Z') + v[2] * 6e4).toISOString().slice(0, 16);
+  return t + `<br><b>Aigua a tocar: màx. ${v[0]} cm</b>, des de les ${horaCurta(h)}` + (v[2] ? ` fins a les ${horaCurta(h2)} (${fmt(v[2] / 60, 1)} h), quan al carrer baixa de 5 cm` : '') +
+    '<br><i>Dins el soterrani l\'aigua no marxa sola: cal bombar-la</i>';
 }
 function llegendaSoter() {
   if (!$('soterOn').checked || !capaSoter) return;
   const tot = SOTER ? Object.values(SOTER.edificis).filter(v => v[0] >= 15).length : 0;
   $('ll3').innerHTML += `<br>Soterranis amb ≥15 cm d'aigua a tocar: <b>${capaSoter._n || 0}</b> ara, ${tot} en tot l'episodi (de ${CAD.geo.features.length})` +
-    [[15, '#fb6a4a'], [30, '#cb181d'], [60, '#67000d']].map(([l, c]) => `<span style="background:${c}"></span>>${l} cm`).join('');
+    [[15, '#fb6a4a'], [30, '#cb181d'], [60, '#67000d']].map(([l, c]) => `<span style="background:${c}"></span>>${l} cm`).join('') +
+    ` · <span style="background:#bcbddc;outline:2px solid #6a51a3"></span>l'aigua del carrer ja ha marxat (${capaSoter._np || 0}): el soterrani pot seguir inundat fins que el buidin`;
 }
 async function carregaEpisodi(e) {
   EPI = e; $('episodi').value = e.id;

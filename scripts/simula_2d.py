@@ -144,7 +144,7 @@ def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, toca=5.0
         x0, y0, x1, y1 = g.bounds
         c0, c1 = max(int((x0 - tr.c) // dx), 0), min(int((x1 - tr.c) // dx), nc - 1)
         r0, r1 = max(int((tr.f - y1) // dx), 0), min(int((tr.f - y0) // dx), nf - 1)
-        cm, mn, du = 0, None, 0
+        cm, mn, fi = 0, None, 0
         for r in range(r0, r1 + 1):
             for c in range(c0, c1 + 1):
                 cel = box(tr.c + c * dx, tr.f - (r + 1) * dx, tr.c + (c + 1) * dx, tr.f - r * dx)
@@ -156,9 +156,9 @@ def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, toca=5.0
                 cm = max(cm, int(round(sobre * 100)))
                 if np.isfinite(t15[r, c]) and sobre >= 0.15:
                     mn = t15[r, c] if mn is None else min(mn, t15[r, c])
-                    if np.isfinite(durada[r, c]): du = max(du, durada[r, c])
+                    if np.isfinite(durada[r, c]): fi = max(fi, t15[r, c] + durada[r, c])   # l'última cel·la del voltant que s'asseca
         if cm >= 5:
-            out[ref] = [cm, None if mn is None else int(mn), int(du)]
+            out[ref] = [cm, None if mn is None else int(mn), 0 if mn is None else int(max(fi - mn, 0))]
     return len(per_ref), out
 
 
@@ -337,7 +337,7 @@ def main():
     if edif is not None:
         n_sot, sot = soterranis(edif, tr, nf, nc, dx, hmax, t15, durada, z, z0, tr_mdt)
         (dest / "soterranis.json").write_text(json.dumps({"inici_utc": ini.strftime("%Y-%m-%dT%H:%M"), "toca_m": 5, "llindar_cm": 15,
-            "camps": ["aigua a tocar per sobre del terra de l'edifici, màxim (cm)", "minut des de inici_utc en què passa de 15 cm (null = mai)", "minuts amb aigua"], "edificis": sot}, separators=(",", ":")))
+            "camps": ["aigua a tocar per sobre del terra de l'edifici, màxim (cm)", "minut des de inici_utc en què passa de 15 cm (null = mai)", "minuts des que passa de 15 cm fins que l'aigua del voltant baixa de 5 cm"], "edificis": sot}, separators=(",", ":")))
         print(f"Soterranis: {sum(1 for v in sot.values() if v[0] >= 15)} de {n_sot} edificis amb soterrani tenen ≥15 cm d'aigua a tocar")
     np.minimum(np.rint(hmax * 100), 65534).astype("<u2").tofile(dest / "calat_max_cm.u2")
     np.where(np.isfinite(t15), np.minimum(t15, 65534), 65535).astype("<u2").tofile(dest / "minut_15cm.u2")
