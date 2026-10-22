@@ -216,8 +216,13 @@ def main():
         if not r["sota"]:
             continue
         g = unary_union(r["pol"])
+        if g.geom_type == "GeometryCollection":
+            g = unary_union([x for x in g.geoms if x.geom_type in ("Polygon", "MultiPolygon")])
+        g = g.simplify(0.000005)
+        if g.is_empty or g.geom_type not in ("Polygon", "MultiPolygon"):
+            continue
         e = edif.get(ref, {})
-        fts.append({"type": "Feature", "geometry": json.loads(json.dumps(mapping(g.simplify(0.000005)), default=float)),
+        fts.append({"type": "Feature", "geometry": json.loads(json.dumps(mapping(g), default=float)),
                     "properties": {"ref": ref, "plantes_sota": r["sota"], "plantes_sobre": r["sobre"],
                                    "us": US.get(e.get("us"), e.get("us", "")), "habitatges": e.get("habitatges", 0)}})
     def arrodoneix(c):
