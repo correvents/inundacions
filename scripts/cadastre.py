@@ -25,7 +25,8 @@ from PIL import Image
 import rasterio.features
 from rasterio.transform import from_origin
 
-ATOM = "https://www.catastro.hacienda.gob.es/INSPIRE/buildings/ES.SDGC.BU.atom_{:02d}.xml"
+ATOM = ["https://www.catastro.hacienda.gob.es/INSPIRE/buildings/ES.SDGC.BU.atom.xml",
+        "http://www.catastro.minhap.es/INSPIRE/buildings/ES.SDGC.BU.atom.xml"]
 PROV = {"ridaura": [17], "granollers": [8], "cabrera": [8]}
 PAS_PNG = 4                                      # m per píxel de edificis.png
 H_PLANTA = 3.0
@@ -52,9 +53,32 @@ def get(url, **kw):
     raise err
 
 
+def xml_de(url):
+    r = get(url)
+    try:
+        return etree.fromstring(r.content)
+    except etree.XMLSyntaxError:
+        print(f"{url} no és XML ({r.status_code}, {r.headers.get('content-type')}):\n{r.text[:1500]}"); raise
+
+
+def feed_provincial(prov):
+    """El feed general enllaça un feed per gerència (província)."""
+    for top in ATOM:
+        try:
+            xml = xml_de(top)
+        except Exception:
+            continue
+        hrefs = [x.get("href") for x in xml.iter() if ln(x) == "link" and x.get("href")]
+        bo = [h for h in hrefs if re.search(rf"atom_{prov:02d}\.xml$", h, re.I)]
+        if bo:
+            return bo[0]
+        print(f"{top}: cap enllaç a la gerència {prov:02d}. Enllaços: {hrefs[:20]}")
+    raise RuntimeError("No trobo el feed ATOM del Cadastre")
+
+
 def municipis(prov, caixa, noms):
     """(nom, url del zip) dels municipis del feed provincial que toquen la caixa."""
-    xml = etree.fromstring(get(ATOM.format(prov)).content)
+    xml = xml_de(feed_provincial(prov))
     cx = box(*caixa); tria = []
     entrades = [e for e in xml.iter() if ln(e) == "entry"]
     print(f"Feed {prov:02d}: {len(entrades)} entrades")
@@ -83,7 +107,7 @@ def zip_de(url):
     """El feed provincial pot apuntar al zip o a un feed municipal que hi apunta."""
     if url.lower().endswith(".zip"):
         return url
-    xml = etree.fromstring(get(url).content)
+    xml = xml_de(url)
     return next(x.get("href") for x in xml.iter() if ln(x) == "link" and (x.get("href") or "").lower().endswith(".zip"))
 
 
