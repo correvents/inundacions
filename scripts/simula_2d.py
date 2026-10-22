@@ -127,10 +127,14 @@ def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, toca=5.0
     per_ref = {}
     for ref, sobre, sota, an in ed["parts"]:
         if sota > 0 and len(an[0]) >= 4:
-            per_ref.setdefault(ref, []).append(Polygon(an[0], an[1:]).buffer(0))
+            p = Polygon(an[0], an[1:]).buffer(0)
+            if not p.is_empty:
+                per_ref.setdefault(ref, []).append(p)
     out = {}
     for ref, pols in per_ref.items():
         pl = unary_union(pols)
+        if pl.is_empty:
+            continue
         g = pl.buffer(toca)
         mx = ~tr_mdt
         bx0, by0, bx1, by1 = pl.bounds
