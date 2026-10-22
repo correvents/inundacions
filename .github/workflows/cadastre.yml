@@ -1,0 +1,41 @@
+name: Edificis del Cadastre
+
+on:
+  workflow_dispatch:
+    inputs:
+      conques:
+        description: 'Llista JSON de conques'
+        default: '["ridaura", "granollers", "cabrera"]'
+  push:
+    paths:
+      - scripts/cadastre.py
+      - .github/workflows/cadastre.yml
+
+permissions:
+  contents: write
+
+jobs:
+  cadastre:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        conca: ${{ fromJSON(inputs.conques || '["ridaura", "granollers", "cabrera"]') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy rasterio pyproj shapely pillow lxml
+      - name: Edificis
+        run: python3 scripts/cadastre.py --config config/${{ matrix.conca }}.json
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A data/${{ matrix.conca }}/cadastre
+          git diff --cached --quiet && exit 0
+          git commit -m "Edificis del Cadastre: ${{ matrix.conca }}"
+          for i in 1 2 3 4 5 6; do git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME" && exit 0; sleep $((i*7)); done; exit 1

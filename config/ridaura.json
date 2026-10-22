@@ -63,5 +63,14 @@
       "Q100": 333.8,
       "Q500": 559.5
     }
-  }
+  },
+  "municipis_cadastre": [
+    "Castell-Platja d'Aro",
+    "Santa Cristina d'Aro",
+    "Sant Feliu de Guíxols",
+    "Calonge",
+    "Llagostera",
+    "Vall-llobrega",
+    "Cassà de la Selva"
+  ]
 }
