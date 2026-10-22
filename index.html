@@ -58,6 +58,7 @@
     <li><b>Terreny.</b> Relleu (MDE) i usos del sòl. El terreny absorbeix primer una part de la pluja (més o menys segons la pluja dels 60 dies anteriors) i després va perdent aigua a un ritme fix; a les zones urbanes el clavegueram n'evacua una part.</li>
     <li><b>Aigua que corre.</b> L'aigua que sobra baixa pel pendent, s'acumula als clots i circula per rieres i carrers. A cada moment es calcula l'aigua que queda, no la suma de la pluja.</li>
     <li><b>Simulació 2D.</b> Una simulació hidrodinàmica sobre cel·les de 20 m dona el calat (alçada de l'aigua) i el cabal que passa, i es compara amb l'aforador quan n'hi ha.</li>
+    <li><b>Edificis.</b> Els edificis del Cadastre fan d'obstacle: l'aigua no hi pot entrar i ha de passar pels carrers, i la pluja de les teulades baixa al carrer. Els edificis amb plantes sota rasant (soterranis, aparcaments) es marquen com a afectats quan l'aigua de la simulació passa de 15 cm a tocar de l'edifici, per sobre del seu terra.</li>
     <li><b>Assecat.</b> Després de la pluja el càlcul continua 24 h sense pluja per veure quant triga cada punt a quedar per sota de 5 cm.</li>
   </ol>
 
@@ -65,15 +66,16 @@
   <ul>
     <li>Quatre mapes sincronitzats amb un rellotge: radar, pluja acumulada, aigua que escola i aigua al carrer. El quart també es pot veure a pantalla completa (⛶ Gran) i en vista de temps d'assecat.</li>
     <li>La casella «Premsa» mostra els carrers que la premsa va citar com a afectats, per comparar-los amb el model.</li>
+    <li>Les caselles «Soterranis» i «Edificis» mostren al quart mapa els edificis amb soterrani (en vermell quan hi ha aigua a tocar) i els edificis per nombre de plantes.</li>
     <li>La gràfica de baix mostra la pluja, el cabal mesurat a l'aforador i el cabal calculat.</li>
   </ul>
 
   <h2>Què cal tenir en compte</h2>
   <div class="nota">
-    <p style="margin-top:0">És un model en desenvolupament. Els paràmetres del terreny (absorció inicial i ritme de pèrdua) s'han calibrat amb pocs episodis i <b>no es poden aplicar tal qual a una altra conca</b>: cada lloc cal calibrar-lo amb el seu cabal mesurat. Granollers està calibrat amb aforador; Platja d'Aro, amb un sol episodi gran, i Cabrera de Mar no es pot validar amb cabal. El radar pot sobreestimar o subestimar la pluja i la simulació 2D no recull tots els efectes del clavegueram ni del mar. <b>No és un servei d'avís oficial</b>: per a emergències, seguiu sempre les indicacions de Protecció Civil.</p>
+    <p style="margin-top:0">És un model en desenvolupament. Els paràmetres del terreny (absorció inicial i ritme de pèrdua) s'han calibrat amb pocs episodis i <b>no es poden aplicar tal qual a una altra conca</b>: cada lloc cal calibrar-lo amb el seu cabal mesurat. Granollers està calibrat amb aforador; Platja d'Aro, amb un sol episodi gran, i Cabrera de Mar no es pot validar amb cabal. El radar pot sobreestimar o subestimar la pluja i la simulació 2D no recull tots els efectes del clavegueram ni del mar. Els soterranis marcats són un indici de risc (aigua a tocar), no vol dir que s'hagin inundat: depèn de rampes, portes i desguassos que el Cadastre no recull. <b>No és un servei d'avís oficial</b>: per a emergències, seguiu sempre les indicacions de Protecció Civil.</p>
   </div>
 
-  <footer>Dades: radar OPERA (EUMETNET), estacions XEMA i aforadors ACA, relleu ICGC, zones inundables ACA. Codi obert a GitHub (correvents/inundacions). Si el mapa no carrega, força la recàrrega del navegador.</footer>
+  <footer>Dades: radar OPERA (EUMETNET), estacions XEMA i aforadors ACA, relleu ICGC, zones inundables ACA, edificis del Cadastre (INSPIRE). Codi obert a GitHub (correvents/inundacions). Si el mapa no carrega, força la recàrrega del navegador.</footer>
 </main>
 </body>
 </html>

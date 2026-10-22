@@ -6,10 +6,6 @@ on:
       conques:
         description: 'Llista JSON de conques'
         default: '["ridaura", "granollers", "cabrera"]'
-  push:
-    paths:
-      - scripts/cadastre.py
-      - .github/workflows/cadastre.yml
 
 permissions:
   contents: write
