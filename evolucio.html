@@ -216,7 +216,7 @@ document.addEventListener('fullscreenchange', () => {
 document.querySelectorAll('.cel').forEach(c => { const b = document.createElement('button'); b.className = 'gran-bt'; b.textContent = '⛶ Gran'; b.onclick = () => granMapa(c); c.appendChild(b); });
 let EPI, capesPremsa = [];
 function ponPremsa() { capesPremsa.forEach((c, k) => $('premsaOn').checked ? c.addTo(mapes[k]) : mapes[k].removeLayer(c)); }
-document.addEventListener('DOMContentLoaded', () => { $('premsaOn').onchange = ponPremsa; $('soterOn').onchange = () => { soterranis(); llegendaSoter(); }; $('edifOn').onchange = edificis; });
+document.addEventListener('DOMContentLoaded', () => { $('premsaOn').onchange = ponPremsa; $('soterOn').onchange = () => { soterranis(); llegendaSoter(); }; $('edifOn').onchange = () => edificis().then(calcula); });
 
 // Cadastre: edificis per alçada i soterranis amb aigua a tocar (només al mapa 4)
 let CAD = undefined, SOTER = null, capaSoter = null, capaEdif = null;
@@ -419,6 +419,7 @@ function calcula() {
     $('ll3').innerHTML = llegenda(RAMPA_Q, 'cabal ara (m³/s):') + '<br>' + llegenda(RAMPA_H, 'embassada ara (m):');
   }
   if (v3 === 'dues' || v3 === 'assecat') { if (capaFletxes) { mapes[3].removeLayer(capaFletxes); capaFletxes = null; } } else fletxes(3);
+  if ($('edifOn').checked && CAD) $('ll3').innerHTML += '<br>' + llegenda(CAD.resum.llegenda_plantes.map((l, k) => [l, [[189, 189, 189, 200], [150, 150, 150, 215], [99, 99, 99, 230], [37, 37, 37, 240]][k]]), 'edificis, plantes sobre rasant (≈3 m cada una):');
   if ($('soterOn').checked) soterranis().then(llegendaSoter);
   graf();
 }
