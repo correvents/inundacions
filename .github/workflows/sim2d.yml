@@ -24,6 +24,9 @@ on:
       extra_hores:
         description: "Hores sense pluja després del radar, per veure el buidat"
         default: "24"
+      edificis:
+        description: "Edificis del Cadastre com a obstacles i soterranis (si/no)"
+        default: "si"
       clavegueram:
         description: "Capacitat dels embornals a les zones construïdes (mm/h)"
         default: "30"
@@ -45,13 +48,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests numpy rasterio pyproj shapely pillow numba
+      - run: pip install requests numpy rasterio pyproj shapely pillow numba scipy
       - name: Relleu
         run: python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas 10 --nomes-mdt
       - name: Simulació
         run: |
           rm -rf "data/${{ inputs.conca }}/sim2d/${{ matrix.ep.id }}"
           EP=""; [ -n "${{ matrix.ep.episodi }}" ] && EP="--episodi data/${{ inputs.conca }}/episodis/${{ matrix.ep.episodi }}"
+          ED="data/${{ inputs.conca }}/cadastre/edificis.json.gz"; [ -f "$ED" ] && [ "${{ inputs.edificis }}" != "no" ] && EP="$EP --edificis $ED"
           python3 scripts/simula_2d.py --config config/${{ inputs.conca }}.json --mdt /tmp/relleu/mdt.tif --id "${{ matrix.ep.id }}" \
             --radar "data/${{ inputs.conca }}/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ inputs.pas }}" \
             --ia-natural "${{ matrix.ep.ia }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}" \
@@ -63,4 +67,4 @@ jobs:
           git add -A data/${{ inputs.conca }}/sim2d
           git diff --cached --quiet && exit 0
           git commit -m "Simulació 2D de l'episodi ${{ matrix.ep.id }}"
-          for i in 1 2 3 4 5 6; do git pull --rebase origin main && git push && exit 0; sleep $((i*7)); done; exit 1
+          for i in 1 2 3 4 5 6; do git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME" && exit 0; sleep $((i*7)); done; exit 1

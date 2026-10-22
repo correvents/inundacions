@@ -34,7 +34,7 @@ CAIXES = {"ridaura": [2.86, 41.75, 3.09, 41.89]}  # la de relleu.py quan la conf
 
 
 def ln(el):
-    return etree.QName(el).localname
+    return etree.QName(el).localname if isinstance(el.tag, str) else ""
 
 
 def normal(s):
