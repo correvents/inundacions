@@ -190,6 +190,9 @@ def main():
         t = el.get("tags", {})
         if el.get("type") != "way" or "geometry" not in el or not any(k in t for k in TIPUS):
             continue
+        if t.get("highway") in ("construction", "proposed") or t.get("railway") in ("construction", "proposed", "abandoned", "razed", "disused") \
+                or "construction" in t or "proposed" in t:
+            continue                                                   # encara no existeix (o ja no)
         xy = [a_utm(p["lon"], p["lat"]) for p in el["geometry"]]
         if len(xy) < 2:
             continue
@@ -201,12 +204,16 @@ def main():
 
     # passos candidats: (geometria del pas, descripció)
     passos = []
-    for v in vies:
-        if es_tunel(v) and v["g"].length <= a.llarg_max:
-            passos.append((v["g"], v, "túnel/culvert"))
     from shapely.strtree import STRtree
     baixes = [v for v in vies if v["t"].get("bridge", "no") == "no" and not es_tunel(v)]
     arbre = STRtree([v["g"] for v in baixes])
+    for v in vies:
+        if es_tunel(v) and v["g"].length <= a.llarg_max:
+            # una riera canalitzada sempre; un túnel de carretera o tren només si passa sota una altra via (pas inferior
+            # d'un terraplè): si no, és un túnel de muntanya i l'aigua no hi entra
+            sobre = [baixes[k] for k in arbre.query(v["g"], predicate="crosses") if "waterway" not in baixes[k]["t"]]
+            if v["t"].get("waterway") or sobre:
+                passos.append((v["g"], v, "túnel/culvert", sobre[0] if sobre else None))
     for p in ponts:
         for k in arbre.query(p["g"], predicate="intersects"):
             v = baixes[k]
@@ -238,8 +245,9 @@ def main():
     def mostra(pt):
         c, r = ~tr * (pt.x, pt.y)
         return (int(r), int(c)) if 0 <= r < nf and 0 <= c < nc else None
-    def terra_boca(g, extrem):
-        """terreny més baix entre la boca i --boca m més enllà, en la direcció del pas"""
+    def terra_boca(g, extrem, riera):
+        """terreny a la boca: per a una riera, el més baix entre la boca i --boca m més enllà (el llit); per a un camí o
+        una via, la mediana (el nivell del vial, sense la cuneta o la riera del costat)"""
         p0, p1 = (g.coords[0], g.coords[1]) if extrem == 0 else (g.coords[-1], g.coords[-2])
         dx, dy = p0[0] - p1[0], p0[1] - p1[1]; L = np.hypot(dx, dy) or 1
         vals = []
@@ -247,10 +255,11 @@ def main():
             rc = mostra(Point(p0[0] + dx / L * s, p0[1] + dy / L * s))
             if rc and np.isfinite(z[rc]):
                 vals.append(z[rc])
-        return min(vals) if vals else None
+        return (min(vals) if riera else float(np.median(vals))) if vals else None
     fets, fts, obres = 0, [], []
     for g, v, tipus, sobre in passos:
-        z0, z1 = terra_boca(g, 0), terra_boca(g, 1)
+        riera = bool(v["t"].get("waterway"))
+        z0, z1 = terra_boca(g, 0, riera), terra_boca(g, 1, riera)
         if z0 is None or z1 is None:
             continue
         rebaix, cel, baixades = 0.0, set(), []
