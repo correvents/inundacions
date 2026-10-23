@@ -149,12 +149,18 @@ def capacitats(z, tr, crs, obres, conca):
         if win.size == 0:
             continue
         dr, dc = np.unravel_index(np.argmax(win), win.shape); r, c = max(r0 - k, 0) + dr, max(c0 - k, 0) + dc
-        xo, yo = tr * (c + 0.5, r + 0.5)
-        mask = np.asarray(g.catchment(x=xo, y=yo, fdir=fd, xytype="coordinate"))
+        try:
+            mask = np.asarray(g.catchment(x=int(c), y=int(r), fdir=fd, xytype="index")).astype(bool)
+        except Exception as ex:
+            print(f"obra {ft['properties']['osm']}: sense conca ({ex})"); continue
+        mask[r, c] = True
         a_km2 = float(mask.sum() * cel)
         if a_km2 < 0.01:
             continue
-        l_km = recorregut(np.asarray(fd), mask, r, c) * tr.a / 1000
+        try:
+            l_km = recorregut(np.asarray(fd), mask, r, c) * tr.a / 1000
+        except Exception as ex:
+            print(f"obra {ft['properties']['osm']}: sense recorregut ({ex})"); continue
         j = (float(np.nanmax(np.where(mask, zz, np.nan))) - zz[r, c]) / max(l_km * 1000, 1)
         q, tc, cc = q_disseny(a_km2, max(l_km, 0.05), j, p24, p0)
         ft["properties"].update({"conca_km2": round(a_km2, 2), "q_disseny_m3s": round(q, 1), "tc_h": round(tc, 2)})
