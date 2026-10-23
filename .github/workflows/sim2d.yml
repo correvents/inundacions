@@ -24,6 +24,9 @@ on:
       extra_hores:
         description: "Hores sense pluja després del radar, per veure el buidat"
         default: "24"
+      passos:
+        description: "Obre els passos inferiors sota terraplens amb OpenStreetMap (si/no)"
+        default: "si"
       edificis:
         description: "Edificis del Cadastre com a obstacles i soterranis (si/no)"
         default: "si"
@@ -51,6 +54,9 @@ jobs:
       - run: pip install requests numpy rasterio pyproj shapely pillow numba scipy
       - name: Relleu
         run: python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas 10 --nomes-mdt
+      - name: Passos inferiors
+        if: inputs.passos != 'no'
+        run: python3 scripts/passos.py --config config/${{ inputs.conca }}.json --mdt /tmp/relleu/mdt.tif
       - name: Simulació
         run: |
           rm -rf "data/${{ inputs.conca }}/sim2d/${{ matrix.ep.id }}"
@@ -64,7 +70,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A data/${{ inputs.conca }}/sim2d
+          git add -A data/${{ inputs.conca }}/sim2d data/${{ inputs.conca }}/passos
           git diff --cached --quiet && exit 0
           git commit -m "Simulació 2D de l'episodi ${{ matrix.ep.id }}"
           for i in 1 2 3 4 5 6; do git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME" && exit 0; sleep $((i*7)); done; exit 1
