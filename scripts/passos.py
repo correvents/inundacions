@@ -6,6 +6,8 @@ tapats pel terraplè, que fa de presa i embassa l'aigua aigües amunt. Amb OpenS
   - Trams amb tunnel=yes/culvert (o layer negatiu) de menys de --llarg-max m: el pas és el mateix tram.
   - Trams amb bridge=*: cada via, riera o camí que hi passa per sota (sense pont i que el creua) és un pas, en un tram de
     --mig m a cada banda del creuament.
+  - Rieres i torrents d'OSM que creuen una carretera o una via de tren sense pont ni culvert dibuixat: s'hi suposa l'obra
+    de drenatge transversal que sempre s'hi fa, en el mateix tram de --mig m. Es marquen com a «suposat».
 A cada pas, el fons del pas es fa anar en línia recta entre el terreny més baix just fora de cada boca (--boca m més enllà)
 i les cel·les del MDT que travessa el pas que quedin per sobre d'aquesta línia es rebaixen fins a la línia. Si el pas ja és
 obert al MDT (cap cel·la per sobre), no es toca res.
@@ -28,6 +30,9 @@ OVERPASS = ["https://overpass.private.coffee/api/interpreter", "https://overpass
 UA = {"User-Agent": "inundacions/0.1 (github.com/correvents/inundacions)"}
 CAIXES = {"ridaura": [2.86, 41.75, 3.09, 41.89]}
 TIPUS = ("highway", "railway", "waterway")
+RIERES = ("river", "stream", "ditch", "drain", "canal")
+VIALS = ("motorway", "trunk", "primary", "secondary", "tertiary", "unclassified", "residential",
+         "motorway_link", "trunk_link", "primary_link", "secondary_link", "tertiary_link")
 
 
 def consulta(caixa):
@@ -106,7 +111,20 @@ def main():
                 s = v["g"].project(pt)
                 seg = substring(v["g"], max(s - a.mig, 0), min(s + a.mig, v["g"].length))
                 if seg.length > 1:
-                    passos.append((seg, v, f"sota pont ({p['t'].get('highway') or p['t'].get('railway') or 'pont'})"))
+                    passos.append((seg, v, f"sota pont ({p['t'].get('highway') or p['t'].get('railway') or 'pont'})", p))
+
+    # obres de drenatge suposades: riera que creua un vial o una via de tren (cap dels dos amb pont o túnel)
+    rieres = [v for v in baixes if v["t"].get("waterway") in RIERES]
+    vials = [v for v in baixes if v["t"].get("highway") in VIALS or v["t"].get("railway") in ("rail", "light_rail")]
+    arbre_v = STRtree([v["g"] for v in vials])
+    for r in rieres:
+        for k in arbre_v.query(r["g"], predicate="intersects"):
+            x = r["g"].intersection(vials[k]["g"])
+            for pt in getattr(x, "geoms", [x]) if x.geom_type in ("Point", "MultiPoint") else []:
+                s = r["g"].project(pt)
+                seg = substring(r["g"], max(s - a.mig, 0), min(s + a.mig, r["g"].length))
+                if seg.length > 1:
+                    passos.append((seg, r, "obra de drenatge suposada", vials[k]))
 
     nf, nc = z.shape
     def mostra(pt):
@@ -123,7 +141,7 @@ def main():
                 vals.append(z[rc])
         return min(vals) if vals else None
     fets, fts = 0, []
-    for g, v, tipus in passos:
+    for g, v, tipus, sobre in passos:
         z0, z1 = terra_boca(g, 0), terra_boca(g, 1)
         if z0 is None or z1 is None:
             continue
@@ -141,15 +159,16 @@ def main():
             q = LineString([a_ll(*c) for c in g.coords])
             fts.append({"type": "Feature", "geometry": mapping(q), "properties": {
                 "osm": v["id"], "tipus": tipus, "via": v["t"].get("name") or v["t"].get("highway") or v["t"].get("waterway") or v["t"].get("railway"),
-                "rebaix_m": round(rebaix, 1), "fons_m": [round(float(z0), 1), round(float(z1), 1)]}})
+                "rebaix_m": round(rebaix, 1), "fons_m": [round(float(z0), 1), round(float(z1), 1)], "suposat": tipus.endswith("suposada"),
+                "sobre": sobre and (sobre["t"].get("ref") or sobre["t"].get("name") or sobre["t"].get("highway") or sobre["t"].get("railway"))}})
     fts.sort(key=lambda f: -f["properties"]["rebaix_m"])
     (d / "passos.geojson").write_text(json.dumps({"type": "FeatureCollection", "features": fts}, ensure_ascii=False))
     with rasterio.open(a.mdt, "w", **perfil) as f:
         f.write(z, 1)
-    print(f"{len(passos)} passos candidats; {fets} obren un terraplè de més de 30 cm. Els més grans:")
+    print(f"{len(passos)} passos candidats; {fets} obren un terraplè de més de 30 cm ({sum(f['properties']['suposat'] for f in fts)} suposats). Els més grans:")
     for f in fts[:15]:
         p = f["properties"]; c = f["geometry"]["coordinates"][len(f["geometry"]["coordinates"]) // 2]
-        print(f"  {p['rebaix_m']:5.1f} m  {p['tipus']:28s} {p['via']}  ({c[1]:.5f}, {c[0]:.5f})")
+        print(f"  {p['rebaix_m']:5.1f} m  {p['tipus']:28s} {p['via']} sota {p['sobre']}  ({c[1]:.5f}, {c[0]:.5f})")
     return 0
 
 
