@@ -35,10 +35,11 @@ WORLDCOVER = "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map
 
 
 @njit(cache=True)
-def pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi):
+def pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi, limx, limy):
     """Un pas de l'esquema inercial local. qx a la cara est de cada cel·la, qy a la cara sud.
     Porositat dels edificis: q és el cabal per metre d'amplada lliure; psx/psy, la fracció lliure de cada cara, i phi, la
-    fracció lliure de cada cel·la (h és el calat a la part lliure, el carrer). Sense edificis tot val 1."""
+    fracció lliure de cada cel·la (h és el calat a la part lliure, el carrer). Sense edificis tot val 1.
+    limx/limy: cabal màxim per metre a cada cara (obres de drenatge sota terraplens; infinit a la resta)."""
     nf, nc = z.shape
     for i in range(nf):
         for j in range(nc - 1):
@@ -51,7 +52,7 @@ def pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi):
             nn = 0.5 * (n[i, j] + n[i, j + 1])
             s = (eta2 - eta1) / dx
             q = (qx[i, j] - G * hf * dt * s) / (1 + G * dt * nn * nn * abs(qx[i, j]) / hf ** (7 / 3))
-            qmax = hf * np.sqrt(G * hf)                   # limitador de Froude 1 per estabilitat
+            qmax = min(hf * np.sqrt(G * hf), limx[i, j])   # limitador de Froude 1 per estabilitat
             qx[i, j] = min(max(q, -qmax), qmax)
     for i in range(nf - 1):
         for j in range(nc):
@@ -64,7 +65,7 @@ def pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi):
             nn = 0.5 * (n[i, j] + n[i + 1, j])
             s = (eta2 - eta1) / dx
             q = (qy[i, j] - G * hf * dt * s) / (1 + G * dt * nn * nn * abs(qy[i, j]) / hf ** (7 / 3))
-            qmax = hf * np.sqrt(G * hf)
+            qmax = min(hf * np.sqrt(G * hf), limy[i, j])
             qy[i, j] = min(max(q, -qmax), qmax)
     for i in range(nf):
         for j in range(nc):
@@ -179,6 +180,8 @@ def main():
     ap.add_argument("--n-urba", type=float, default=0.02, help="n de Manning de les zones construïdes")
     ap.add_argument("--extra-hores", type=float, default=0, help="hores addicionals sense pluja després de l'última dada de radar, per veure com es buida l'aigua")
     ap.add_argument("--cada", type=int, default=10, help="minuts entre fotogrames")
+    ap.add_argument("--passos-cap", help="capacitat de les obres de drenatge (passos.py: data/<conca>/passos/capacitat.json)")
+    ap.add_argument("--obstruccio", type=float, default=0, help="fracció obstruïda de les obres de drenatge (0 = netes)")
     ap.add_argument("--edificis", help="edificis del Cadastre (cadastre.py: data/<conca>/cadastre/edificis.json.gz): obstacles i soterranis")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
@@ -248,6 +251,20 @@ def main():
 
     h = np.zeros((nf, nc)); qx = np.zeros((nf, nc)); qy = np.zeros((nf, nc))
     actiu = ~mar
+    # obres de drenatge: per cada cara d'una cel·la de l'obra no hi passa més del cabal de disseny (× la part no obstruïda)
+    limx = np.full((nf, nc), np.inf); limy = np.full((nf, nc), np.inf); n_obres = 0
+    if a.passos_cap and Path(a.passos_cap).exists():
+        for o in json.loads(Path(a.passos_cap).read_text())["obres"]:
+            q = o["q_m3s"] * (1 - a.obstruccio) / dx                  # m²/s per metre d'amplada
+            cels = {(int((tr.f - y) // dx), int((x - tr.c) // dx)) for x, y in o["xy"]}
+            for i, j in cels:
+                if not (0 <= i < nf and 0 <= j < nc):
+                    continue
+                for ii, jj, lim, ps in ((i, j, limx, psx), (i, j - 1, limx, psx), (i, j, limy, psy), (i - 1, j, limy, psy)):
+                    if 0 <= ii < nf and 0 <= jj < nc:
+                        lim[ii, jj] = min(lim[ii, jj], q / max(ps[ii, jj], 1e-3))
+            n_obres += 1
+        print(f"Obres de drenatge limitades al cabal de disseny: {n_obres} (obstrucció {a.obstruccio * 100:.0f} %)")
     actiu[0, :] = actiu[-1, :] = actiu[:, 0] = actiu[:, -1] = False   # vores del domini obertes: l'aigua surt
     pluja_acum = np.zeros((nf, nc)); neta_ant = np.zeros((nf, nc))
     hmax = np.zeros((nf, nc))
@@ -295,7 +312,7 @@ def main():
         neta_ant = neta
         # al terreny natural, les lleres on ja corre aigua (> --h-llera m) tenen el fons saturat i no hi infiltren; el clavegueram sí que drena
         np.maximum(h - np.where((pluja_acum >= ia) & (urba | (h < a.h_llera)), sorti * dt / np.where(urba, phi, 1.0), 0.0), 0.0, out=h)
-        pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi)
+        pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi, limx, limy)
         np.maximum(hmax, h, out=hmax)
         t15[(h > 0.15) & ~np.isfinite(t15)] = t_seg / 60
         mullat = h > 0.05
@@ -345,7 +362,7 @@ def main():
         "limits": [[s, w], [nn, e]], "pas_m": dx, "inici_utc": ini.strftime("%Y-%m-%dT%H:%M"),
         "graella_utm": {"crs": str(crs), "x0": tr.c, "y0": tr.f, "nf": nf, "nc": nc, "fitxers": {"calat_max_cm.u2": "uint16 cm",
                         "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai", "durada_min.u2": "uint16 minuts entre superar 15 cm i l'últim moment amb més de 5 cm; 65535 = mai superat"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png", "assecat": "assecat.png", "assecat_final_mullat_km2": round(float(mullat_final.sum()) * dx * dx / 1e6, 3), "llegenda_assecat_h": [0, 1, 3, 6, 12],
-        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "h_llera_m": a.h_llera, "manning": {"natural": a.n_natural, "construit": a.n_urba},
+        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "obres_drenatge": n_obres, "obstruccio_obres": a.obstruccio, "h_llera_m": a.h_llera, "manning": {"natural": a.n_natural, "construit": a.n_urba},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2],
         "edificis": None if edif is None else {"font": "Cadastre (INSPIRE Buildings)", "metode": "porositat: els edificis treuen espai i amplada de pas a cada cel·la; la pluja de les teulades va al carrer",

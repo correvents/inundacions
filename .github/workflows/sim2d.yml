@@ -25,7 +25,7 @@ on:
         description: "Hores sense pluja després del radar, per veure el buidat"
         default: "24"
       passos:
-        description: "Obre els passos inferiors sota terraplens amb OpenStreetMap (si/no)"
+        description: "Passos sota terraplens (OSM): si = oberts, amb les obres de drenatge al cabal de disseny; obstruits = obres a la meitat; no"
         default: "si"
       edificis:
         description: "Edificis del Cadastre com a obstacles i soterranis (si/no)"
@@ -51,7 +51,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests numpy rasterio pyproj shapely pillow numba scipy
+      - run: pip install requests numpy pandas rasterio pyproj shapely pillow numba scipy pysheds
       - name: Relleu
         run: python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas 10 --nomes-mdt
       - name: Passos inferiors
@@ -61,6 +61,8 @@ jobs:
         run: |
           rm -rf "data/${{ inputs.conca }}/sim2d/${{ matrix.ep.id }}"
           EP=""; [ -n "${{ matrix.ep.episodi }}" ] && EP="--episodi data/${{ inputs.conca }}/episodis/${{ matrix.ep.episodi }}"
+          CAP="data/${{ inputs.conca }}/passos/capacitat.json"
+          if [ "${{ inputs.passos }}" != "no" ] && [ -f "$CAP" ]; then EP="$EP --passos-cap $CAP"; [ "${{ inputs.passos }}" = "obstruits" ] && EP="$EP --obstruccio 0.5"; fi
           ED="data/${{ inputs.conca }}/cadastre/edificis.json.gz"; [ -f "$ED" ] && [ "${{ inputs.edificis }}" != "no" ] && EP="$EP --edificis $ED"
           python3 scripts/simula_2d.py --config config/${{ inputs.conca }}.json --mdt /tmp/relleu/mdt.tif --id "${{ matrix.ep.id }}" \
             --radar "data/${{ inputs.conca }}/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ inputs.pas }}" \
