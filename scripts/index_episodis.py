@@ -43,8 +43,11 @@ def main():
         api = float(sum(v * 0.92 ** ((t0 - t).days) for t, v in dies.items()))
         e.update({"api_mm": round(api), "ia_mm": round(150 - 100 * min(api / 100, 1)), "perdua_mm_h": 12, "estacio_api": codi})
         print(f"{e['id']}: API {api:.0f} mm → absorbeix {e['ia_mm']} mm")
+    nous = {e["id"] for e in eps}                              # els episodis d'abans que no es refan es conserven
+    eps = sorted(eps + [e for i, e in previ.items() if i not in nous], key=lambda e: e["id"])
     (d / "episodis" / "index.json").write_text(json.dumps({"episodis": eps, "sense_radar": [], "pendents_de_radar": []}, ensure_ascii=False, indent=1))
-    (d / "episodis" / "premsa.geojson").write_text('{"type":"FeatureCollection","features":[]}')
+    if not (d / "episodis" / "premsa.geojson").exists():
+        (d / "episodis" / "premsa.geojson").write_text('{"type":"FeatureCollection","features":[]}')
     return 0
 
 
