@@ -1,6 +1,106 @@
 {
  "episodis": [
   {
+   "id": "2013-07-18",
+   "titol": "Xàfec de juliol de 2013 (cap actuació)",
+   "resum": "45 mm, màxim 36 mm en 30 min a les estacions; cap actuació dels Bombers per inundació als municipis de la zona",
+   "radar": "2013-07-17_radar.json",
+   "api_mm": 2,
+   "ia_mm": 148,
+   "perdua_mm_h": 12,
+   "estacio_api": "XG"
+  },
+  {
+   "id": "2014-06-15",
+   "titol": "Xàfec de juny de 2014 (3 actuacions)",
+   "resum": "30 mm, màxim 27 mm en 30 min a les estacions; 3 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2014-06-14_radar.json",
+   "api_mm": 12,
+   "ia_mm": 138,
+   "perdua_mm_h": 12,
+   "estacio_api": "XG"
+  },
+  {
+   "id": "2014-09-28",
+   "titol": "Aiguat de setembre de 2014 (25 actuacions)",
+   "resum": "94 mm, màxim 27 mm en 30 min a les estacions; 25 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2014-09-28_radar.json",
+   "api_mm": 19,
+   "ia_mm": 131,
+   "perdua_mm_h": 12,
+   "estacio_api": "XG"
+  },
+  {
+   "id": "2015-08-13",
+   "titol": "Tempesta d'agost de 2015 (16 actuacions)",
+   "resum": "46 mm, màxim 32 mm en 30 min a les estacions; 16 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2015-08-13_radar.json",
+   "api_mm": 11,
+   "ia_mm": 139,
+   "perdua_mm_h": 12,
+   "estacio_api": "XG"
+  },
+  {
+   "id": "2018-09-07",
+   "titol": "Tempesta del 7 de setembre de 2018 (55 actuacions)",
+   "resum": "24 mm, màxim 17 mm en 30 min a les estacions; 55 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2018-09-07_radar.json",
+   "api_mm": 6,
+   "ia_mm": 144,
+   "perdua_mm_h": 12,
+   "estacio_api": "XG"
+  },
+  {
+   "id": "2018-10-14",
+   "titol": "Aiguat d'octubre de 2018 (25 actuacions)",
+   "resum": "99 mm, màxim 25 mm en 30 min a les estacions; 25 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2018-10-13_radar.json",
+   "api_mm": 26,
+   "ia_mm": 124,
+   "perdua_mm_h": 12,
+   "estacio_api": "XG"
+  },
+  {
+   "id": "2019-10-22",
+   "titol": "Aiguat d'octubre de 2019 (26 actuacions)",
+   "resum": "91 mm, màxim 28 mm en 30 min a les estacions; 26 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2019-10-21_radar.json",
+   "api_mm": 13,
+   "ia_mm": 137,
+   "perdua_mm_h": 12,
+   "estacio_api": "XG"
+  },
+  {
+   "id": "2020-09-07",
+   "titol": "Xàfec de setembre de 2020 (2 actuacions)",
+   "resum": "44 mm, màxim 29 mm en 30 min a les estacions; 2 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2020-09-06_radar.json",
+   "api_mm": 18,
+   "ia_mm": 132,
+   "perdua_mm_h": 12,
+   "estacio_api": "XG"
+  },
+  {
+   "id": "2022-08-21",
+   "titol": "Tempesta d'agost de 2022 (15 actuacions)",
+   "resum": "39 mm, màxim 30 mm en 30 min a les estacions; 15 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2022-08-21_radar.json",
+   "api_mm": 15,
+   "ia_mm": 135,
+   "perdua_mm_h": 12,
+   "estacio_api": "XG"
+  },
+  {
+   "id": "2024-09-04",
+   "titol": "Pluja forta de setembre de 2024 (2 actuacions)",
+   "resum": "59 mm, màxim 25 mm en 30 min a les estacions; 2 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2024-09-04_radar.json",
+   "api_mm": 6,
+   "ia_mm": 144,
+   "perdua_mm_h": 12,
+   "estacio_api": "XG"
+  },
+  {
    "id": "2026-10-04",
    "titol": "3-5 d'octubre de 2026: el Congost es desborda a Granollers",
    "resum": "361 mm en dos dies, 75 mm en una hora. Esvoranc al carrer Josep Umbert, hospital, passos soterrats de les Rondes i centenars de baixos.",
