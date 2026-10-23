@@ -6,6 +6,8 @@ Dades: analisi.transparenciacatalunya.cat, estacions yqwd-vj5e, lectures nzvn-ap
 Escriu data/<conca>/xema/<codi>.csv (temps UTC, mm en 30 min), estacions.json i episodis_pluja.csv:
 un episodi és un període amb pluja separat de l'anterior per 12 h seques i amb ≥ 30 mm o ≥ 20 mm/h.
 
+Es baixa any per any i s'afegeix al CSV que ja hi hagi (no es perd res d'abans); els anys ja complets no es tornen a demanar.
+
 Ús:  python3 scripts/pluja_xema.py --config config/ridaura.json [--radi-km 20]"""
 import argparse, json, math, sys, time, csv
 from pathlib import Path
@@ -15,8 +17,8 @@ import requests
 API = "https://analisi.transparenciacatalunya.cat/resource/"
 
 
-def socrata(ds, params):
-    for i in range(5):
+def socrata(ds, params, intents=5):
+    for i in range(intents):
         try:
             r = requests.get(API + ds + ".json", params=params, timeout=120); r.raise_for_status(); return r.json()
         except Exception as e:
@@ -43,14 +45,35 @@ def main():
     print("estacions:", [(e["codi_estacio"], e["nom_estacio"], e["km"], e.get("data_inici"), e.get("data_fi")) for e in prop])
     episodis = []
     for e in prop:
-        codi, files, off = e["codi_estacio"], [], 0
-        while True:
-            q = {"codi_estacio": codi, "codi_variable": "35", "$select": "data_lectura,valor_lectura", "$order": "data_lectura", "$limit": 50000, "$offset": off}
-            if a.des:
-                q["$where"] = f"data_lectura >= '{a.des}T00:00:00.000'"
-            r = socrata("nzvn-apee", q)
-            files += r; off += len(r)
-            if len(r) < 50000: break
+        codi = e["codi_estacio"]
+        # any per any (les consultes llargues de Socrata es pengen) i sumant el que ja hi havia al CSV
+        f_csv = d / f"{codi}.csv"
+        prev = {}
+        if f_csv.exists():
+            with open(f_csv) as f:
+                prev = {r["temps"]: r["mm"] for r in csv.DictReader(f)}
+        any0 = int((a.des or e.get("data_inici") or "2009")[:4])
+        des = a.des or f"{max(any0, 2009)}-01-01"
+        for y in range(int(des[:4]), datetime.utcnow().year + 1):
+            ini, fi = max(des, f"{y}-01-01"), f"{y + 1}-01-01"
+            if e.get("data_fi") and e["data_fi"][:10] < ini:
+                break
+            n_prev = sum(1 for t in prev if ini <= t < fi)
+            if n_prev >= 17000 and y < datetime.utcnow().year:
+                continue                                               # any ja complet al CSV
+            off = 0
+            while True:
+                q = {"codi_estacio": codi, "codi_variable": "35", "$select": "data_lectura,valor_lectura", "$order": "data_lectura",
+                     "$limit": 50000, "$offset": off, "$where": f"data_lectura >= '{ini}T00:00:00.000' AND data_lectura < '{fi}T00:00:00.000'"}
+                try:
+                    r = socrata("nzvn-apee", q, intents=3)
+                except SystemExit:
+                    print(f"{codi} {y}: no respon, se salta"); break
+                for x in r:
+                    prev[x["data_lectura"][:16]] = x["valor_lectura"]
+                off += len(r)
+                if len(r) < 50000: break
+        files = [{"data_lectura": t, "valor_lectura": v} for t, v in sorted(prev.items())]
         if not files: continue
         with open(d / f"{codi}.csv", "w", newline="") as f:
             w = csv.writer(f); w.writerow(["temps", "mm"])
