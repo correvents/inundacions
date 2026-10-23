@@ -31,6 +31,9 @@ WORLDCOVER = "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map
 DIRMAP = (1, 2, 4, 8, 16, 32, 64, 128)  # pysheds en l'ordre N, NE, E, SE, S, SO, O, NO → codi 0–7
 
 
+FONS_LLERA, FONS_FRANJA, FRANJA_M = 5.0, 2.0, 80.0   # només per a les direccions de l'aigua; l'embassament usa el relleu real
+
+
 def crema_rius(z, mar, tr, crs, conca):
     """Grava al relleu (només per a les direccions) els rius i rieres d'OSM. Torna el relleu gravat i la màscara de llera."""
     f = Path("data") / conca / "passos" / "osm.json"
@@ -49,9 +52,15 @@ def crema_rius(z, mar, tr, crs, conca):
             if not (0 <= r < nf and 0 <= c < nc) or mar[r, c]:
                 continue
             with np.errstate(all="ignore"):
-                v = np.nanmin(z[max(r - 1, 0): r + 2, max(c - 1, 0): c + 2]) - 0.01   # 1 cm per desfer empats amb el veí
-            prev = min(prev, v); zb[r, c] = min(zb[r, c], prev); llera[r, c] = True
-    print(f"Rius i rieres d'OSM gravats: {n} trams, {llera.sum()} cel·les")
+                v = np.nanmin(z[max(r - 1, 0): r + 2, max(c - 1, 0): c + 2])
+            prev = min(prev, v); zb[r, c] = min(zb[r, c], prev - FONS_LLERA); llera[r, c] = True
+    # franja als costats que baixa cap a la llera (com AGREE), perquè l'aigua del vessant hi entri i no corri en paral·lel
+    from scipy.ndimage import distance_transform_edt
+    dist = distance_transform_edt(~llera) * tr.a
+    franja = ~llera & (dist < FRANJA_M)
+    zb[franja] -= FONS_FRANJA * (1 - dist[franja] / FRANJA_M)
+    print(f"Rius i rieres d'OSM gravats: {n} trams, {llera.sum()} cel·les ({FONS_LLERA:.0f} m de llera, "
+          f"franja de {FRANJA_M:.0f} m que hi baixa {FONS_FRANJA:.0f} m)")
     return zb, llera
 
 
