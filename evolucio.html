@@ -44,6 +44,7 @@
     <button id="play">▶ Reprodueix</button>
     <select id="vel"><option value="900">lent</option><option value="450" selected>normal</option><option value="150">ràpid</option></select>
     <label class="nota"><input type="checkbox" id="premsaOn" checked> Premsa</label>
+    <label class="nota" title="Simulació 2D amb els embornals tapats: el clavegueram no s'empassa res (com el 21/9/2019). Només als episodis on s'ha calculat"><input type="checkbox" id="tapatOn" disabled> Embornals tapats</label>
     <label class="nota" title="Edificis del Cadastre amb plantes sota rasant: en vermell quan l'aigua de la simulació 2D hi passa de 15 cm a tocar"><input type="checkbox" id="soterOn"> Soterranis</label>
     <label class="nota" title="Edificis del Cadastre pintats per nombre de plantes (≈3 m cada una). A la simulació 2D l'aigua els ha de voltar pels carrers"><input type="checkbox" id="edifOn"> Edificis</label>
     <span id="via" title="Calculat amb la pluja dels 60 dies anteriors (fix per a cada episodi)"></span>
@@ -219,6 +220,18 @@ function ponPremsa() { capesPremsa.forEach((c, k) => $('premsaOn').checked ? c.a
 document.addEventListener('DOMContentLoaded', () => { $('premsaOn').onchange = ponPremsa; $('soterOn').onchange = () => { soterranis(); llegendaSoter(); }; $('edifOn').onchange = () => edificis().then(calcula); });
 
 // Cadastre: edificis per alçada i soterranis amb aigua a tocar (només al mapa 4)
+// simulació 2D de l'episodi: la normal (clavegueram de 30 mm/h) o amb els embornals tapats (sim2d/<id>_tapat)
+let SIMDIR = '';
+async function carregaSim(e) {
+  const vol = id => fetch(BASE + 'sim2d/' + id + '/index.json').then(r => r.ok ? r.json() : null).catch(() => null);
+  const tapat = await vol(e.id + '_tapat');
+  $('tapatOn').disabled = !tapat; if (!tapat) $('tapatOn').checked = false;
+  const id = $('tapatOn').checked ? e.id + '_tapat' : e.id;
+  SIM = $('tapatOn').checked ? tapat : await vol(e.id); SIMDIR = BASE + 'sim2d/' + id + '/';
+  SOTER = SIM && SIM.edificis ? await fetch(SIMDIR + SIM.edificis.soterranis).then(r => r.ok ? r.json() : null).catch(() => null) : null;
+  if (SIM) SIM.fotogrames.forEach(f => { const im = new Image(); im.src = SIMDIR + f.png; });   // precàrrega
+}
+document.addEventListener('DOMContentLoaded', () => { $('tapatOn').onchange = () => carregaSim(EPI).then(calcula); });
 let CAD = undefined, SOTER = null, capaSoter = null, capaEdif = null;
 async function cadastre() {
   if (CAD !== undefined) return CAD;
@@ -271,8 +284,7 @@ async function carregaEpisodi(e) {
   EP = e.episodi ? await fetch(BASE + 'episodis/' + e.episodi).then(r => r.json()) : null;
   ES = await fetch(BASE + 'episodis/' + e.id + '_estacio.json').then(r => r.ok ? r.json() : null).catch(() => null);
   FACT = EP ? G.factor_radar : ES ? factorsEstacio(ES) : R.temps.map(() => 1);
-  SIM = await fetch(BASE + 'sim2d/' + e.id + '/index.json').then(r => r.ok ? r.json() : null).catch(() => null);
-  SOTER = SIM && SIM.edificis ? await fetch(BASE + 'sim2d/' + e.id + '/' + SIM.edificis.soterranis).then(r => r.ok ? r.json() : null).catch(() => null) : null;
+  await carregaSim(e);
   if (SIM && SIM.fotogrames.length) {                          // després del radar no plou: el rellotge segueix mentre la simulació 2D buida l'aigua
     const ultim = SIM.fotogrames[SIM.fotogrames.length - 1].temps, nR0 = R.lons.length * R.lats.length, pas = R.interval_min * 60000;
     FACT = Array.from(FACT);
@@ -281,7 +293,6 @@ async function carregaEpisodi(e) {
     while (t <= fins) { R.temps.push(new Date(t).toISOString().slice(0, 16)); R.mm.push(new Array(nR0).fill(0)); FACT.push(1); t += pas; }
   }
   $('vista3').value = SIM ? 'sim' : 'd8'; $('vista3').options[0].disabled = $('vista3').options[2].disabled = !SIM; $('vista3').options[3].disabled = !(SIM && SIM.assecat);
-  if (SIM) SIM.fotogrames.forEach(f => { const im = new Image(); im.src = BASE + 'sim2d/' + e.id + '/' + f.png; });   // precàrrega
   const UP = new URLSearchParams(location.search);          // ?ia=&phi= només per calibrar amb un cabal mesurat
   IA = UP.get('ia') !== null ? +UP.get('ia') : (e.ia_mm ?? 150); PHI = UP.get('phi') !== null ? +UP.get('phi') : (e.perdua_mm_h ?? 12);
   $('via').innerHTML = `El terreny absorbeix <b>${IA} mm</b> i després ${PHI} mm/h` + (e.api_mm != null ? ` (pluja dels dies abans: ${e.api_mm} mm)` : '') + ` · clavegueram ${SEW} mm/h` + (e.calibrat ? ` · <i>${e.calibrat}</i>` : '');
@@ -411,11 +422,11 @@ function calcula() {
   const fr = v3 !== 'd8' && v3 !== 'assecat' ? SIM.fotogrames.filter(f => f.temps <= R.temps[fi]).pop() : null;
   if (capaCorrents) { mapes[3].removeLayer(capaCorrents); capaCorrents = null; }
   if (v3 === 'assecat') {
-    posa(3, BASE + 'sim2d/' + EPI.id + '/' + SIM.assecat, SIM.limits, false);
+    posa(3, SIMDIR + SIM.assecat, SIM.limits, false);
     $('ll3').innerHTML = llegenda(SIM.llegenda_assecat_h.map((l, k) => [l, [[255, 255, 178, 200], [254, 204, 92, 210], [253, 141, 60, 220], [240, 59, 32, 230], [189, 0, 38, 240]][k]]), 'hores amb més de 5 cm d\'aigua des que passa de 15 cm:') +
       ` · <span style="background:#54278f;color:#fff;padding:0 4px">lila</span> encara mullat al final (${SIM.assecat_final_mullat_km2} km²)`;
   } else if (v3 !== 'd8') {
-    if (fr) posa(3, BASE + 'sim2d/' + EPI.id + '/' + fr.png, SIM.limits, false); else if (capes[3]) { mapes[3].removeLayer(capes[3]); capes[3] = null; }
+    if (fr) posa(3, SIMDIR + fr.png, SIM.limits, false); else if (capes[3]) { mapes[3].removeLayer(capes[3]); capes[3] = null; }
     $('ll3').innerHTML = llegenda(SIM.llegenda_calat_m.map((l, k) => [l, [[189, 215, 238, 120], [107, 174, 214, 170], [33, 113, 181, 200], [8, 69, 148, 220], [63, 0, 125, 235]][k]]), 'calat (m):') +
       (v3 === 'dues' ? '<br>' + llegenda(RAMPA_C, 'corrents del model ràpid (m³/s):') : ' · fletxes: per on baixa l\'aigua');
     if (v3 === 'dues') corrents(3);
