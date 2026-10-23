@@ -11,7 +11,7 @@ on:
         required: false
         default: "[]"
       des_xema:
-        description: "Pluja XEMA des d'aquesta data (AAAA-MM-DD); buit = tot l'històric"
+        description: "Pluja XEMA des d'aquesta data (AAAA-MM-DD); 'tot' = tot l'històric (des de 2009)"
         required: false
         default: "2026-07-15"
 
@@ -29,7 +29,7 @@ jobs:
           python-version: "3.12"
       - run: pip install requests numpy pandas h5py pyproj shapely rasterio pysheds pillow numba
       - name: Estacions XEMA properes
-        run: python3 scripts/pluja_xema.py --config config/${{ inputs.conca }}.json ${{ inputs.des_xema && format('--des {0}', inputs.des_xema) || '' }} --max-estacions 8
+        run: python3 scripts/pluja_xema.py --config config/${{ inputs.conca }}.json ${{ inputs.des_xema != 'tot' && format('--des {0}', inputs.des_xema) || '' }} --max-estacions 8
       - name: Radar, correcció amb estacions i índex
         if: inputs.episodis != '[]'
         env:
