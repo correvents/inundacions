@@ -64,10 +64,10 @@ def crema_rius(z, mar, tr, crs, conca):
     return zb, llera
 
 
-def dins_rius(acc, llera, cel_km2, dist_m=40, pas=20):
-    """Part de les cel·les amb més d'1 km² de conca que queden a menys de dist_m d'una llera d'OSM."""
+def dins_rius(acc, llera, cel_km2, mar, dist_m=40, pas=20):
+    """Part de les cel·les de terra amb més d'1 km² de conca que queden a menys de dist_m d'una llera d'OSM."""
     from scipy.ndimage import distance_transform_edt
-    fort = acc * cel_km2 > 1
+    fort = (acc * cel_km2 > 1) & ~mar
     dist = distance_transform_edt(~llera) * pas
     return float((dist[fort] <= dist_m).mean()) if fort.any() else float("nan")
 
@@ -111,10 +111,10 @@ def main():
     zb, llera = crema_rius(z, mar, tr, crs, cfg["conca"])
     omplert, fd, acc = direccions(z, "web")
     if llera is not None:
-        abans = dins_rius(acc, llera, tr.a ** 2 / 1e6, pas=tr.a)
+        abans = dins_rius(acc, llera, tr.a ** 2 / 1e6, mar, pas=tr.a)
         _, fd, acc = direccions(zb, "web_rius")                        # direccions amb els rius gravats; l'embassament, amb el relleu real
         print(f"Cabal fort (> 1 km² de conca) a menys de 40 m d'un riu d'OSM: {abans * 100:.0f} % sense gravar, "
-              f"{dins_rius(acc, llera, tr.a ** 2 / 1e6, pas=tr.a) * 100:.0f} % gravant-los")
+              f"{dins_rius(acc, llera, tr.a ** 2 / 1e6, mar, pas=tr.a) * 100:.0f} % gravant-los")
     codi = np.full(fd.shape, 255, dtype=np.uint8)
     for k, v in enumerate(DIRMAP):
         codi[fd == v] = k
