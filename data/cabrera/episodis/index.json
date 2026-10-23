@@ -1,6 +1,96 @@
 {
  "episodis": [
   {
+   "id": "2013-07-18",
+   "titol": "Xàfec de juliol de 2013 sense actuacions",
+   "resum": "45 mm, màxim 36 mm en 30 min; cap actuació dels Bombers per inundació als municipis de la zona",
+   "radar": "2013-07-17_radar.json",
+   "api_mm": 3,
+   "ia_mm": 147,
+   "perdua_mm_h": 12,
+   "estacio_api": "UP"
+  },
+  {
+   "id": "2013-10-03",
+   "titol": "Tempesta d'octubre de 2013 (18 actuacions)",
+   "resum": "34 mm, màxim 29 mm en 30 min; 18 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2013-10-03_radar.json",
+   "api_mm": 10,
+   "ia_mm": 140,
+   "perdua_mm_h": 12,
+   "estacio_api": "UP"
+  },
+  {
+   "id": "2014-07-28",
+   "titol": "Tempesta de juliol de 2014 (13 actuacions)",
+   "resum": "62 mm, màxim 40 mm en 30 min; 13 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2014-07-28_radar.json",
+   "api_mm": 6,
+   "ia_mm": 144,
+   "perdua_mm_h": 12,
+   "estacio_api": "UP"
+  },
+  {
+   "id": "2016-10-12",
+   "titol": "Aiguat d'octubre de 2016 (100 actuacions)",
+   "resum": "256 mm, màxim 78 mm en 30 min; 100 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2016-10-12_radar.json",
+   "api_mm": 13,
+   "ia_mm": 137,
+   "perdua_mm_h": 12,
+   "estacio_api": "UP"
+  },
+  {
+   "id": "2017-07-25",
+   "titol": "Xàfec de juliol de 2017 sense actuacions",
+   "resum": "51 mm, màxim 38 mm en 30 min; 1 actuació dels Bombers per inundació als municipis de la zona",
+   "radar": "2017-07-25_radar.json",
+   "api_mm": 4,
+   "ia_mm": 146,
+   "perdua_mm_h": 12,
+   "estacio_api": "UP"
+  },
+  {
+   "id": "2018-08-17",
+   "titol": "Xàfec d'agost de 2018 sense actuacions",
+   "resum": "46 mm, màxim 34 mm en 30 min; cap actuació dels Bombers per inundació als municipis de la zona",
+   "radar": "2018-08-17_radar.json",
+   "api_mm": 18,
+   "ia_mm": 132,
+   "perdua_mm_h": 12,
+   "estacio_api": "UP"
+  },
+  {
+   "id": "2018-09-07",
+   "titol": "Tempesta del 7 de setembre de 2018 (29 actuacions)",
+   "resum": "68 mm, màxim 29 mm en 30 min; 29 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2018-09-07_radar.json",
+   "api_mm": 21,
+   "ia_mm": 129,
+   "perdua_mm_h": 12,
+   "estacio_api": "UP"
+  },
+  {
+   "id": "2018-10-14",
+   "titol": "Pluja llarga d'octubre de 2018 (100 mm) sense inundacions",
+   "resum": "100 mm, màxim 25 mm en 30 min; 3 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2018-10-13_radar.json",
+   "api_mm": 42,
+   "ia_mm": 108,
+   "perdua_mm_h": 12,
+   "estacio_api": "UP"
+  },
+  {
+   "id": "2019-10-22",
+   "titol": "Aiguat d'octubre de 2019 (24 actuacions)",
+   "resum": "88 mm, màxim 23 mm en 30 min; 24 actuacions dels Bombers per inundació als municipis de la zona",
+   "radar": "2019-10-21_radar.json",
+   "api_mm": 7,
+   "ia_mm": 143,
+   "perdua_mm_h": 12,
+   "estacio_api": "UP"
+  },
+  {
    "id": "2026-10-17",
    "titol": "17 d'octubre de 2026: xàfec i riera de Cabrera de Mar",
    "resum": "60 mm en 40 minuts. La riera de Cabrera es desborda i arrossega una dona. Afecten Vilassar, Premià i Cabrils.",
