@@ -3,7 +3,11 @@
 
 A partir de la reixa de relleu.py (MDT 5 m de l'IGN) prepara, a --pas metres:
   - cota del terreny i cota amb les depressions omplertes (cm, uint16): la diferència és on l'aigua s'embassa,
-  - direcció de drenatge D8 sobre el relleu condicionat (pysheds), codi 0–7 (N, NE, E, SE, S, SO, O, NO), 255 = mar o vora,
+  - direcció de drenatge D8 sobre el relleu condicionat (pysheds), codi 0–7 (N, NE, E, SE, S, SO, O, NO), 255 = mar o vora.
+    Abans s'hi «graven» els rius i rieres d'OpenStreetMap (data/<conca>/passos/osm.json, de passos.py): a cada cel·la de la
+    llera la cota passa a ser la més baixa del voltant (3×3) i no puja mai riu avall. Amb cel·les de 20 m el LiDAR no
+    marca prou la llera a les planes i, sense això, el cabal fort es desvia per cunetes i camins. Es comprova quina part
+    de les cel·les amb més d'1 km² de conca queda a menys de 40 m d'un riu dibuixat, abans i després;
   - zones construïdes (ESA WorldCover 2021, classe 50),
   - índex de la cel·la del radar de l'episodi que cobreix cada cel·la.
 Ho desa tot en un binari (data/<conca>/web/graella.bin) amb la descripció a graella.json, i hi afegeix el factor horari
@@ -25,6 +29,38 @@ from pyproj import Transformer
 CAIXA = [2.90, 41.755, 3.08, 41.88]     # conca del Ridaura i plana de Platja d'Aro
 WORLDCOVER = "https://esa-worldcover.s3.eu-central-1.amazonaws.com/v200/2021/map/ESA_WorldCover_10m_2021_v200_N39E{:03d}_Map.tif"
 DIRMAP = (1, 2, 4, 8, 16, 32, 64, 128)  # pysheds en l'ordre N, NE, E, SE, S, SO, O, NO → codi 0–7
+
+
+def crema_rius(z, mar, tr, crs, conca):
+    """Grava al relleu (només per a les direccions) els rius i rieres d'OSM. Torna el relleu gravat i la màscara de llera."""
+    f = Path("data") / conca / "passos" / "osm.json"
+    if not f.exists():
+        print("Sense osm.json: no es graven els rius"); return z, None
+    from shapely.geometry import LineString
+    a_utm = Transformer.from_crs(4326, crs, always_xy=True).transform
+    nf, nc = z.shape; zb = z.copy(); llera = np.zeros(z.shape, bool); n = 0
+    for el in json.loads(f.read_text()).get("elements", []):
+        t = el.get("tags", {})
+        if t.get("waterway") not in ("river", "stream", "canal") or "geometry" not in el or len(el["geometry"]) < 2:
+            continue
+        g = LineString([a_utm(p["lon"], p["lat"]) for p in el["geometry"]]); prev = np.inf; n += 1
+        for d in np.arange(0, g.length + 0.1, tr.a / 2):                # en el sentit del dibuix d'OSM, que és el de l'aigua
+            q = g.interpolate(d); c, r = ~tr * (q.x, q.y); r, c = int(r), int(c)
+            if not (0 <= r < nf and 0 <= c < nc) or mar[r, c]:
+                continue
+            with np.errstate(all="ignore"):
+                v = np.nanmin(z[max(r - 1, 0): r + 2, max(c - 1, 0): c + 2]) - 0.01   # 1 cm per desfer empats amb el veí
+            prev = min(prev, v); zb[r, c] = min(zb[r, c], prev); llera[r, c] = True
+    print(f"Rius i rieres d'OSM gravats: {n} trams, {llera.sum()} cel·les")
+    return zb, llera
+
+
+def dins_rius(acc, llera, cel_km2, dist_m=40, pas=20):
+    """Part de les cel·les amb més d'1 km² de conca que queden a menys de dist_m d'una llera d'OSM."""
+    from scipy.ndimage import distance_transform_edt
+    fort = acc * cel_km2 > 1
+    dist = distance_transform_edt(~llera) * pas
+    return float((dist[fort] <= dist_m).mean()) if fort.any() else float("nan")
 
 
 def main():
@@ -54,14 +90,22 @@ def main():
     mar = ~np.isfinite(z)
     print(f"Malla: {nc}×{nf} cel·les de {tr.a:.0f} m")
 
-    tmp = Path("/tmp/relleu/web.tif")
-    with rasterio.open(tmp, "w", driver="GTiff", height=nf, width=nc, count=1, dtype="float32", crs=crs, transform=tr, nodata=-9999) as f:
-        f.write(np.where(mar, -9999, z).astype("float32"), 1)
     from pysheds.grid import Grid
-    g = Grid.from_raster(str(tmp))
-    dem = g.read_raster(str(tmp))
-    omplert = g.fill_depressions(g.fill_pits(dem))
-    fd = np.asarray(g.flowdir(g.resolve_flats(omplert), dirmap=DIRMAP))
+    def direccions(zz, nom):
+        tmp = Path(f"/tmp/relleu/{nom}.tif")
+        with rasterio.open(tmp, "w", driver="GTiff", height=nf, width=nc, count=1, dtype="float32", crs=crs, transform=tr, nodata=-9999) as f:
+            f.write(np.where(mar, -9999, zz).astype("float32"), 1)
+        g = Grid.from_raster(str(tmp))
+        om = g.fill_depressions(g.fill_pits(g.read_raster(str(tmp))))
+        fdir = g.flowdir(g.resolve_flats(om), dirmap=DIRMAP)
+        return om, np.asarray(fdir), np.asarray(g.accumulation(fdir, dirmap=DIRMAP))
+    zb, llera = crema_rius(z, mar, tr, crs, cfg["conca"])
+    omplert, fd, acc = direccions(z, "web")
+    if llera is not None:
+        abans = dins_rius(acc, llera, tr.a ** 2 / 1e6, pas=tr.a)
+        _, fd, acc = direccions(zb, "web_rius")                        # direccions amb els rius gravats; l'embassament, amb el relleu real
+        print(f"Cabal fort (> 1 km² de conca) a menys de 40 m d'un riu d'OSM: {abans * 100:.0f} % sense gravar, "
+              f"{dins_rius(acc, llera, tr.a ** 2 / 1e6, pas=tr.a) * 100:.0f} % gravant-los")
     codi = np.full(fd.shape, 255, dtype=np.uint8)
     for k, v in enumerate(DIRMAP):
         codi[fd == v] = k
