@@ -1,0 +1,775 @@
+dia,municipi,actuacions
+2010-01-08,Mataró,1
+2010-01-17,Mataró,1
+2010-02-08,Vilassar de Dalt,1
+2010-02-14,Vilassar de Dalt,1
+2010-02-16,Vilassar de Mar,1
+2010-03-08,Mataró,1
+2010-05-02,Mataró,1
+2010-05-03,Mataró,1
+2010-05-13,Cabrera de Mar,2
+2010-05-13,Mataró,5
+2010-05-13,Sant Andreu de Llavaneres,1
+2010-06-06,Mataró,1
+2010-07-09,Mataró,2
+2010-07-11,Premià de Mar,1
+2010-07-24,Mataró,1
+2010-07-29,Mataró,1
+2010-07-30,Mataró,1
+2010-08-05,Mataró,1
+2010-08-14,Mataró,1
+2010-08-14,Premià de Dalt,2
+2010-08-14,Premià de Mar,4
+2010-08-19,Mataró,1
+2010-09-16,Mataró,1
+2010-09-17,Mataró,1
+2010-09-20,Mataró,1
+2010-10-10,Mataró,4
+2010-10-12,Mataró,3
+2010-10-12,Sant Andreu de Llavaneres,1
+2010-10-13,Mataró,1
+2010-10-15,Mataró,1
+2010-11-01,Dosrius,1
+2010-11-01,Mataró,1
+2010-11-13,Mataró,1
+2010-11-15,Mataró,1
+2010-12-01,Mataró,1
+2010-12-22,Mataró,1
+2010-12-23,Mataró,2
+2010-12-27,Mataró,1
+2011-01-22,Mataró,1
+2011-01-26,Mataró,1
+2011-01-28,Mataró,1
+2011-02-27,Vilassar de Mar,1
+2011-03-21,Mataró,1
+2011-03-27,Premià de Dalt,1
+2011-03-28,Mataró,1
+2011-04-25,Mataró,1
+2011-05-05,Mataró,1
+2011-05-08,Mataró,1
+2011-05-18,Mataró,1
+2011-06-14,Mataró,1
+2011-06-19,Mataró,1
+2011-07-03,Sant Andreu de Llavaneres,1
+2011-07-26,Argentona,1
+2011-07-26,Premià de Mar,1
+2011-07-29,Vilassar de Mar,1
+2011-07-31,Mataró,1
+2011-08-10,Mataró,1
+2011-08-16,Sant Andreu de Llavaneres,1
+2011-09-10,Mataró,1
+2011-09-15,Vilassar de Mar,1
+2011-10-03,Mataró,1
+2011-10-24,Mataró,4
+2011-10-28,Mataró,2
+2011-11-06,Vilassar de Mar,1
+2011-11-15,Mataró,2
+2011-11-23,Premià de Dalt,1
+2011-12-20,Cabrils,1
+2012-01-05,Mataró,1
+2012-01-31,Mataró,1
+2012-02-04,Mataró,1
+2012-02-06,Vilassar de Mar,1
+2012-02-19,Mataró,1
+2012-02-24,Mataró,1
+2012-04-05,Cabrera de Mar,1
+2012-04-11,Mataró,1
+2012-05-07,Mataró,1
+2012-05-10,Mataró,1
+2012-05-22,Mataró,1
+2012-05-30,Mataró,1
+2012-06-12,Mataró,1
+2012-06-18,Mataró,2
+2012-06-28,Premià de Mar,1
+2012-07-02,Mataró,1
+2012-07-19,Argentona,1
+2012-07-25,Cabrera de Mar,1
+2012-07-28,Mataró,1
+2012-08-15,Mataró,1
+2012-08-17,Mataró,1
+2012-08-21,Mataró,1
+2012-09-01,Cabrera de Mar,1
+2012-09-24,Premià de Mar,1
+2012-09-29,Mataró,2
+2012-10-01,Mataró,1
+2012-10-31,Mataró,2
+2012-10-31,Vilassar de Dalt,1
+2012-11-27,Mataró,2
+2012-12-07,Vilassar de Dalt,1
+2012-12-31,Mataró,1
+2013-01-19,Vilassar de Mar,1
+2013-02-03,Dosrius,1
+2013-02-25,Mataró,1
+2013-02-26,Mataró,1
+2013-03-05,Mataró,1
+2013-03-06,Vilassar de Dalt,1
+2013-04-13,Mataró,1
+2013-05-15,Argentona,1
+2013-05-15,Mataró,1
+2013-05-17,Premià de Mar,1
+2013-06-08,Mataró,2
+2013-07-17,Mataró,1
+2013-07-17,Vilassar de Mar,1
+2013-07-28,Mataró,1
+2013-08-04,Mataró,1
+2013-08-14,Mataró,1
+2013-08-15,Dosrius,1
+2013-08-27,Mataró,1
+2013-08-27,Vilassar de Dalt,4
+2013-09-05,Mataró,1
+2013-09-07,Premià de Mar,1
+2013-09-08,Vilassar de Mar,1
+2013-09-11,Mataró,1
+2013-10-04,Argentona,1
+2013-10-04,Mataró,1
+2013-10-04,Sant Andreu de Llavaneres,2
+2013-10-05,Sant Andreu de Llavaneres,4
+2013-10-06,Mataró,5
+2013-10-06,Sant Andreu de Llavaneres,5
+2013-11-12,Premià de Mar,1
+2013-11-18,Argentona,3
+2013-11-18,Mataró,3
+2013-11-24,Mataró,1
+2013-12-25,Mataró,1
+2014-01-03,Mataró,1
+2014-01-18,Premià de Mar,1
+2014-02-05,Mataró,1
+2014-02-10,Mataró,1
+2014-02-16,Cabrera de Mar,1
+2014-02-26,Mataró,1
+2014-03-30,Mataró,1
+2014-04-06,Mataró,1
+2014-05-06,Premià de Dalt,1
+2014-05-21,Mataró,1
+2014-05-28,Mataró,1
+2014-06-15,Premià de Mar,1
+2014-06-22,Vilassar de Mar,1
+2014-06-27,Sant Andreu de Llavaneres,1
+2014-07-03,Mataró,1
+2014-07-29,Mataró,3
+2014-07-29,Vilassar de Mar,10
+2014-08-15,Mataró,1
+2014-08-22,Mataró,2
+2014-09-17,Mataró,3
+2014-09-22,Mataró,1
+2014-09-25,Mataró,1
+2014-09-28,Dosrius,1
+2014-09-28,Mataró,1
+2014-09-28,Premià de Mar,1
+2014-09-29,Mataró,3
+2014-10-05,Mataró,1
+2014-10-25,Mataró,1
+2014-11-20,Mataró,1
+2014-11-26,Cabrera de Mar,1
+2014-11-30,Mataró,1
+2014-11-30,Vilassar de Mar,1
+2014-12-01,Mataró,1
+2015-01-02,Mataró,1
+2015-01-28,Mataró,1
+2015-01-31,Mataró,1
+2015-02-09,Mataró,1
+2015-02-12,Mataró,1
+2015-03-03,Argentona,1
+2015-03-12,Mataró,1
+2015-03-24,Cabrera de Mar,1
+2015-03-26,Mataró,1
+2015-04-08,Mataró,1
+2015-05-04,Mataró,1
+2015-05-19,Vilassar de Dalt,1
+2015-06-08,Mataró,1
+2015-06-14,Sant Andreu de Llavaneres,1
+2015-06-21,Mataró,1
+2015-06-24,Premià de Mar,1
+2015-06-26,Dosrius,1
+2015-07-18,Mataró,1
+2015-08-13,Mataró,1
+2015-08-13,Premià de Dalt,1
+2015-08-14,Argentona,1
+2015-08-14,Mataró,3
+2015-08-16,Mataró,1
+2015-09-29,Mataró,1
+2015-10-15,Mataró,1
+2015-11-15,Mataró,1
+2015-11-28,Mataró,1
+2015-12-18,Mataró,1
+2015-12-28,Mataró,1
+2016-01-15,Mataró,1
+2016-01-30,Mataró,1
+2016-02-02,Premià de Mar,1
+2016-02-06,Vilassar de Mar,1
+2016-02-07,Mataró,1
+2016-02-14,Argentona,5
+2016-02-14,Mataró,12
+2016-02-14,Sant Andreu de Llavaneres,1
+2016-02-15,Mataró,1
+2016-02-25,Mataró,1
+2016-03-04,Mataró,1
+2016-03-22,Mataró,1
+2016-03-31,Premià de Mar,1
+2016-04-03,Mataró,1
+2016-04-22,Argentona,1
+2016-04-23,Argentona,1
+2016-05-04,Mataró,1
+2016-05-06,Mataró,1
+2016-05-13,Mataró,1
+2016-05-31,Mataró,1
+2016-06-22,Premià de Mar,1
+2016-06-28,Vilassar de Dalt,1
+2016-07-01,Mataró,1
+2016-07-09,Mataró,1
+2016-07-13,Vilassar de Mar,1
+2016-07-16,Mataró,1
+2016-07-17,Mataró,1
+2016-07-21,Mataró,1
+2016-07-23,Mataró,2
+2016-07-25,Premià de Mar,1
+2016-07-31,Mataró,1
+2016-08-10,Mataró,1
+2016-08-10,Premià de Mar,1
+2016-08-18,Mataró,1
+2016-08-25,Mataró,1
+2016-09-30,Mataró,1
+2016-10-08,Mataró,1
+2016-10-12,Argentona,2
+2016-10-12,Cabrera de Mar,1
+2016-10-12,Cabrils,2
+2016-10-12,Mataró,8
+2016-10-12,Premià de Dalt,1
+2016-10-12,Premià de Mar,11
+2016-10-12,Vilassar de Dalt,1
+2016-10-12,Vilassar de Mar,46
+2016-10-13,Argentona,1
+2016-10-13,Cabrils,4
+2016-10-13,Mataró,4
+2016-10-13,Premià de Mar,10
+2016-10-13,Vilassar de Mar,9
+2016-10-18,Premià de Mar,1
+2016-11-02,Argentona,1
+2016-11-22,Mataró,1
+2016-12-30,Premià de Mar,1
+2017-02-19,Vilassar de Mar,1
+2017-03-04,Mataró,1
+2017-03-11,Mataró,1
+2017-03-14,Mataró,1
+2017-03-17,Mataró,1
+2017-03-25,Argentona,1
+2017-04-09,Mataró,1
+2017-06-14,Mataró,1
+2017-06-24,Sant Andreu de Llavaneres,1
+2017-07-04,Mataró,1
+2017-07-05,Argentona,1
+2017-07-13,Mataró,1
+2017-07-14,Mataró,1
+2017-07-23,Cabrera de Mar,1
+2017-07-25,Mataró,1
+2017-07-28,Premià de Mar,1
+2017-08-04,Premià de Dalt,1
+2017-08-05,Mataró,2
+2017-08-24,Mataró,1
+2017-08-28,Mataró,1
+2017-09-03,Mataró,1
+2017-09-06,Premià de Mar,2
+2017-09-07,Mataró,1
+2017-09-07,Premià de Mar,1
+2017-09-07,Sant Andreu de Llavaneres,1
+2017-09-24,Mataró,1
+2017-10-11,Mataró,1
+2017-10-18,Mataró,1
+2017-10-19,Mataró,1
+2017-11-25,Mataró,1
+2017-11-25,Vilassar de Mar,1
+2017-12-20,Mataró,1
+2017-12-23,Premià de Mar,1
+2018-01-01,Premià de Mar,1
+2018-01-16,Mataró,1
+2018-01-26,Argentona,1
+2018-01-26,Mataró,1
+2018-02-16,Mataró,1
+2018-02-18,Mataró,1
+2018-03-03,Mataró,1
+2018-03-12,Premià de Mar,1
+2018-03-19,Premià de Mar,1
+2018-03-20,Cabrera de Mar,1
+2018-03-24,Mataró,2
+2018-03-31,Mataró,1
+2018-04-11,Mataró,1
+2018-04-16,Mataró,1
+2018-04-18,Premià de Dalt,1
+2018-05-12,Premià de Mar,1
+2018-05-13,Mataró,1
+2018-05-15,Mataró,1
+2018-05-19,Mataró,1
+2018-05-28,Mataró,1
+2018-05-30,Mataró,1
+2018-06-04,Mataró,1
+2018-06-07,Sant Andreu de Llavaneres,2
+2018-06-07,Vilassar de Dalt,1
+2018-06-20,Mataró,2
+2018-06-27,Mataró,1
+2018-07-05,Sant Andreu de Llavaneres,1
+2018-07-12,Mataró,1
+2018-07-16,Mataró,1
+2018-07-16,Premià de Mar,1
+2018-07-16,Vilassar de Mar,1
+2018-07-22,Cabrera de Mar,1
+2018-07-25,Mataró,1
+2018-08-06,Mataró,1
+2018-08-07,Mataró,1
+2018-08-08,Mataró,1
+2018-08-09,Premià de Dalt,1
+2018-08-10,Mataró,1
+2018-08-10,Vilassar de Dalt,1
+2018-08-25,Argentona,1
+2018-09-07,Mataró,21
+2018-09-07,Vilassar de Dalt,4
+2018-09-07,Vilassar de Mar,1
+2018-09-08,Mataró,3
+2018-09-11,Sant Andreu de Llavaneres,1
+2018-09-12,Mataró,1
+2018-09-28,Premià de Mar,1
+2018-10-07,Mataró,1
+2018-10-10,Mataró,2
+2018-10-14,Mataró,1
+2018-10-15,Cabrils,1
+2018-10-15,Mataró,1
+2018-11-26,Mataró,1
+2018-12-09,Mataró,1
+2018-12-13,Mataró,1
+2018-12-14,Mataró,1
+2018-12-29,Mataró,2
+2019-01-28,Mataró,1
+2019-01-31,Mataró,1
+2019-02-03,Mataró,1
+2019-02-04,Mataró,1
+2019-02-18,Mataró,1
+2019-03-03,Dosrius,1
+2019-03-04,Mataró,1
+2019-03-15,Mataró,1
+2019-03-24,Mataró,1
+2019-03-30,Mataró,1
+2019-04-15,Cabrils,1
+2019-04-17,Mataró,1
+2019-04-27,Mataró,1
+2019-04-29,Mataró,1
+2019-05-04,Mataró,1
+2019-05-11,Mataró,1
+2019-06-07,Mataró,1
+2019-06-21,Mataró,1
+2019-06-21,Vilassar de Mar,1
+2019-06-24,Vilassar de Mar,1
+2019-06-27,Mataró,2
+2019-06-28,Mataró,1
+2019-07-01,Mataró,1
+2019-07-03,Mataró,1
+2019-07-08,Mataró,1
+2019-07-12,Mataró,1
+2019-07-15,Mataró,1
+2019-07-19,Mataró,1
+2019-07-20,Mataró,1
+2019-07-24,Vilassar de Mar,1
+2019-07-27,Mataró,1
+2019-07-28,Mataró,1
+2019-08-03,Mataró,1
+2019-08-15,Mataró,1
+2019-08-20,Mataró,1
+2019-08-22,Mataró,1
+2019-08-27,Mataró,3
+2019-09-02,Mataró,1
+2019-09-09,Mataró,1
+2019-09-21,Cabrera de Mar,1
+2019-09-22,Mataró,1
+2019-10-06,Mataró,1
+2019-10-11,Premià de Dalt,1
+2019-10-20,Mataró,1
+2019-10-23,Argentona,2
+2019-10-23,Mataró,16
+2019-10-23,Premià de Dalt,1
+2019-10-23,Premià de Mar,1
+2019-10-23,Sant Andreu de Llavaneres,2
+2019-10-23,Vilassar de Mar,1
+2019-10-24,Mataró,1
+2019-10-25,Vilassar de Mar,1
+2019-11-16,Mataró,1
+2019-11-23,Premià de Mar,1
+2019-11-26,Mataró,1
+2019-12-04,Cabrils,1
+2019-12-04,Mataró,6
+2019-12-05,Mataró,1
+2019-12-05,Vilassar de Mar,1
+2020-01-20,Mataró,2
+2020-01-21,Mataró,2
+2020-01-21,Vilassar de Mar,1
+2020-01-22,Argentona,1
+2020-01-22,Mataró,4
+2020-01-22,Vilassar de Mar,1
+2020-01-24,Mataró,1
+2020-01-26,Cabrera de Mar,1
+2020-01-26,Mataró,1
+2020-01-28,Premià de Mar,1
+2020-02-02,Mataró,2
+2020-02-13,Mataró,1
+2020-02-14,Vilassar de Mar,1
+2020-02-23,Mataró,1
+2020-02-27,Mataró,1
+2020-03-13,Mataró,1
+2020-03-23,Argentona,1
+2020-03-23,Premià de Mar,1
+2020-03-23,Vilassar de Mar,1
+2020-04-20,Mataró,1
+2020-04-21,Mataró,1
+2020-04-22,Mataró,2
+2020-04-24,Sant Andreu de Llavaneres,1
+2020-04-27,Mataró,1
+2020-05-04,Mataró,1
+2020-05-10,Mataró,2
+2020-05-26,Mataró,1
+2020-05-29,Mataró,1
+2020-06-03,Cabrera de Mar,1
+2020-06-09,Mataró,8
+2020-06-11,Mataró,1
+2020-06-21,Mataró,1
+2020-06-29,Mataró,1
+2020-07-02,Mataró,1
+2020-07-05,Mataró,1
+2020-07-09,Mataró,1
+2020-07-10,Premià de Mar,1
+2020-07-15,Mataró,1
+2020-07-30,Mataró,1
+2020-07-30,Premià de Mar,1
+2020-08-14,Mataró,1
+2020-08-15,Mataró,1
+2020-08-19,Mataró,1
+2020-08-24,Mataró,1
+2020-08-26,Mataró,1
+2020-09-20,Mataró,1
+2020-09-26,Mataró,1
+2020-10-10,Argentona,1
+2020-10-10,Mataró,1
+2020-10-10,Premià de Dalt,1
+2020-10-10,Sant Andreu de Llavaneres,1
+2020-10-17,Mataró,1
+2020-10-19,Mataró,1
+2020-10-26,Mataró,1
+2020-11-21,Mataró,1
+2020-11-27,Sant Andreu de Llavaneres,1
+2020-12-11,Mataró,1
+2020-12-18,Mataró,1
+2020-12-19,Mataró,1
+2020-12-24,Mataró,1
+2020-12-31,Mataró,1
+2021-01-07,Mataró,1
+2021-01-27,Mataró,1
+2021-01-28,Mataró,1
+2021-02-07,Mataró,2
+2021-02-07,Premià de Mar,1
+2021-02-15,Mataró,1
+2021-02-25,Mataró,1
+2021-03-08,Mataró,1
+2021-03-17,Mataró,1
+2021-03-19,Mataró,1
+2021-04-11,Vilassar de Mar,1
+2021-04-20,Mataró,1
+2021-05-17,Mataró,1
+2021-05-21,Mataró,1
+2021-05-22,Mataró,1
+2021-05-27,Mataró,1
+2021-05-31,Mataró,1
+2021-06-02,Mataró,1
+2021-06-20,Mataró,1
+2021-06-25,Mataró,1
+2021-06-25,Vilassar de Dalt,1
+2021-06-28,Mataró,1
+2021-07-04,Mataró,1
+2021-07-08,Argentona,1
+2021-07-24,Dosrius,1
+2021-07-25,Vilassar de Mar,1
+2021-07-26,Mataró,1
+2021-08-13,Mataró,1
+2021-08-27,Mataró,1
+2021-08-31,Mataró,1
+2021-09-09,Mataró,1
+2021-09-10,Sant Andreu de Llavaneres,1
+2021-09-20,Argentona,1
+2021-09-20,Mataró,3
+2021-09-20,Sant Andreu de Llavaneres,1
+2021-09-28,Mataró,1
+2021-10-13,Mataró,1
+2021-10-15,Mataró,1
+2021-10-29,Mataró,2
+2021-11-05,Mataró,1
+2021-11-19,Mataró,1
+2021-11-21,Vilassar de Mar,1
+2021-11-30,Premià de Dalt,1
+2021-12-15,Mataró,1
+2022-01-07,Mataró,1
+2022-01-15,Mataró,1
+2022-01-23,Mataró,1
+2022-01-26,Vilassar de Mar,1
+2022-02-22,Sant Andreu de Llavaneres,1
+2022-03-12,Mataró,1
+2022-03-20,Mataró,1
+2022-03-23,Premià de Dalt,1
+2022-03-31,Vilassar de Dalt,1
+2022-04-11,Mataró,1
+2022-04-29,Mataró,1
+2022-04-30,Premià de Dalt,1
+2022-05-09,Argentona,1
+2022-05-09,Mataró,1
+2022-05-09,Premià de Mar,1
+2022-05-21,Cabrils,1
+2022-05-25,Mataró,1
+2022-06-05,Mataró,1
+2022-06-05,Sant Andreu de Llavaneres,1
+2022-06-07,Mataró,1
+2022-06-08,Mataró,1
+2022-06-11,Mataró,1
+2022-06-16,Mataró,1
+2022-06-20,Premià de Mar,1
+2022-06-29,Cabrera de Mar,1
+2022-06-29,Premià de Mar,1
+2022-06-30,Mataró,1
+2022-07-04,Mataró,1
+2022-07-17,Mataró,2
+2022-07-23,Mataró,1
+2022-07-26,Mataró,1
+2022-07-31,Premià de Mar,1
+2022-08-04,Mataró,1
+2022-08-05,Mataró,1
+2022-08-08,Mataró,1
+2022-08-14,Mataró,1
+2022-08-21,Mataró,2
+2022-08-21,Sant Andreu de Llavaneres,2
+2022-08-23,Mataró,1
+2022-08-26,Mataró,1
+2022-08-27,Mataró,1
+2022-08-28,Mataró,1
+2022-08-28,Vilassar de Mar,1
+2022-09-02,Sant Andreu de Llavaneres,1
+2022-09-03,Cabrera de Mar,1
+2022-09-06,Mataró,1
+2022-09-16,Mataró,15
+2022-09-16,Sant Andreu de Llavaneres,1
+2022-09-17,Mataró,1
+2022-09-17,Sant Andreu de Llavaneres,1
+2022-09-18,Mataró,1
+2022-09-24,Vilassar de Mar,1
+2022-09-25,Òrrius,1
+2022-10-07,Mataró,1
+2022-10-26,Mataró,1
+2022-11-02,Mataró,1
+2022-11-09,Mataró,1
+2022-11-19,Mataró,1
+2022-11-25,Mataró,2
+2022-11-26,Mataró,1
+2022-12-02,Vilassar de Dalt,1
+2022-12-03,Mataró,1
+2022-12-05,Mataró,1
+2022-12-07,Mataró,1
+2022-12-08,Mataró,1
+2022-12-25,Mataró,1
+2022-12-27,Mataró,1
+2022-12-31,Mataró,1
+2023-01-14,Mataró,1
+2023-01-22,Mataró,1
+2023-01-29,Mataró,1
+2023-02-06,Mataró,1
+2023-02-21,Mataró,1
+2023-03-07,Mataró,1
+2023-03-30,Mataró,1
+2023-04-30,Mataró,2
+2023-05-01,Mataró,1
+2023-05-06,Mataró,1
+2023-05-11,Mataró,3
+2023-05-12,Mataró,1
+2023-05-21,Mataró,1
+2023-05-23,Mataró,1
+2023-05-25,Mataró,1
+2023-05-30,Mataró,1
+2023-06-12,Mataró,1
+2023-06-13,Vilassar de Dalt,1
+2023-06-19,Sant Andreu de Llavaneres,1
+2023-06-23,Vilassar de Mar,1
+2023-06-25,Mataró,2
+2023-06-26,Mataró,1
+2023-07-01,Mataró,1
+2023-07-01,Vilassar de Mar,2
+2023-07-02,Mataró,2
+2023-07-14,Premià de Mar,1
+2023-07-15,Mataró,1
+2023-07-23,Mataró,1
+2023-08-15,Mataró,1
+2023-08-18,Mataró,1
+2023-08-19,Mataró,1
+2023-08-27,Vilassar de Mar,2
+2023-08-28,Mataró,1
+2023-08-30,Cabrera de Mar,1
+2023-08-30,Mataró,1
+2023-08-30,Premià de Dalt,1
+2023-08-30,Premià de Mar,3
+2023-08-30,Vilassar de Mar,1
+2023-08-31,Mataró,2
+2023-09-01,Mataró,1
+2023-09-13,Mataró,1
+2023-09-14,Mataró,1
+2023-09-18,Mataró,1
+2023-09-20,Mataró,1
+2023-10-04,Mataró,1
+2023-10-26,Mataró,1
+2023-10-30,Mataró,1
+2023-11-08,Mataró,1
+2023-11-15,Mataró,1
+2023-11-22,Premià de Dalt,1
+2023-11-25,Mataró,1
+2023-11-28,Mataró,1
+2023-12-03,Mataró,1
+2023-12-06,Mataró,1
+2023-12-08,Mataró,2
+2023-12-11,Mataró,1
+2023-12-23,Mataró,1
+2023-12-25,Mataró,1
+2024-01-02,Mataró,1
+2024-01-05,Mataró,1
+2024-01-06,Mataró,1
+2024-01-13,Mataró,1
+2024-01-18,Mataró,1
+2024-02-18,Premià de Mar,1
+2024-03-02,Mataró,1
+2024-03-03,Mataró,1
+2024-03-10,Premià de Mar,1
+2024-03-11,Argentona,1
+2024-03-26,Argentona,2
+2024-04-02,Premià de Dalt,1
+2024-04-19,Mataró,1
+2024-04-20,Mataró,2
+2024-04-27,Mataró,1
+2024-05-05,Mataró,1
+2024-06-08,Mataró,1
+2024-06-10,Mataró,1
+2024-06-18,Mataró,1
+2024-06-24,Mataró,1
+2024-07-14,Mataró,2
+2024-07-21,Mataró,1
+2024-07-23,Argentona,1
+2024-08-05,Mataró,1
+2024-08-10,Mataró,1
+2024-08-20,Premià de Mar,1
+2024-08-22,Mataró,1
+2024-08-23,Mataró,1
+2024-09-08,Mataró,1
+2024-09-21,Premià de Mar,1
+2024-10-02,Mataró,1
+2024-10-10,Mataró,1
+2024-10-20,Mataró,1
+2024-10-26,Premià de Dalt,1
+2024-10-26,Sant Andreu de Llavaneres,1
+2024-10-26,Vilassar de Mar,1
+2024-10-27,Mataró,1
+2024-10-31,Mataró,1
+2024-11-04,Cabrera de Mar,1
+2024-11-04,Mataró,1
+2024-11-07,Mataró,1
+2024-11-13,Mataró,1
+2024-11-14,Mataró,1
+2024-11-20,Mataró,1
+2024-12-13,Mataró,1
+2024-12-25,Mataró,2
+2025-01-28,Mataró,1
+2025-01-30,Mataró,1
+2025-02-03,Mataró,1
+2025-02-06,Mataró,1
+2025-02-20,Mataró,1
+2025-03-03,Mataró,1
+2025-03-08,Mataró,1
+2025-03-12,Mataró,1
+2025-03-20,Mataró,1
+2025-03-21,Argentona,1
+2025-04-03,Mataró,1
+2025-04-04,Mataró,1
+2025-04-05,Mataró,1
+2025-04-12,Mataró,1
+2025-04-17,Mataró,1
+2025-04-21,Mataró,1
+2025-04-26,Mataró,1
+2025-05-03,Premià de Mar,1
+2025-05-10,Premià de Mar,1
+2025-05-16,Premià de Mar,1
+2025-05-18,Mataró,1
+2025-05-21,Mataró,1
+2025-05-29,Mataró,1
+2025-06-07,Mataró,1
+2025-06-11,Mataró,2
+2025-06-13,Premià de Mar,1
+2025-06-25,Vilassar de Mar,1
+2025-07-02,Mataró,1
+2025-07-03,Mataró,1
+2025-07-07,Mataró,1
+2025-07-09,Mataró,1
+2025-07-25,Vilassar de Mar,2
+2025-08-08,Mataró,2
+2025-08-14,Mataró,1
+2025-08-17,Mataró,2
+2025-08-20,Mataró,1
+2025-08-25,Mataró,1
+2025-08-31,Mataró,1
+2025-09-05,Mataró,1
+2025-09-09,Mataró,1
+2025-09-11,Premià de Mar,1
+2025-09-14,Mataró,1
+2025-09-17,Mataró,1
+2025-09-20,Mataró,1
+2025-09-21,Mataró,1
+2025-09-22,Vilassar de Mar,1
+2025-09-25,Mataró,1
+2025-09-29,Premià de Mar,1
+2025-10-09,Vilassar de Mar,1
+2025-10-17,Mataró,1
+2025-10-19,Mataró,1
+2025-10-25,Premià de Dalt,1
+2025-10-28,Mataró,1
+2025-11-18,Mataró,1
+2025-11-22,Mataró,2
+2025-12-08,Mataró,1
+2025-12-17,Dosrius,1
+2025-12-18,Mataró,1
+2025-12-20,Cabrera de Mar,1
+2025-12-20,Mataró,1
+2025-12-20,Sant Andreu de Llavaneres,1
+2025-12-20,Vilassar de Mar,1
+2025-12-24,Mataró,1
+2025-12-27,Mataró,4
+2026-01-18,Mataró,3
+2026-01-20,Vilassar de Mar,1
+2026-01-22,Mataró,1
+2026-02-16,Premià de Mar,1
+2026-02-20,Mataró,1
+2026-03-01,Mataró,1
+2026-03-06,Mataró,1
+2026-03-15,Mataró,1
+2026-04-27,Mataró,1
+2026-04-30,Mataró,1
+2026-05-09,Mataró,1
+2026-05-14,Mataró,1
+2026-05-14,Vilassar de Mar,1
+2026-05-15,Mataró,1
+2026-05-16,Mataró,1
+2026-05-17,Mataró,1
+2026-05-18,Mataró,1
+2026-05-20,Mataró,1
+2026-05-24,Mataró,1
+2026-05-26,Mataró,1
+2026-05-27,Mataró,1
+2026-06-04,Mataró,1
+2026-06-05,Mataró,1
+2026-06-12,Argentona,1
+2026-06-19,Mataró,2
+2026-06-26,Mataró,1
+2026-06-30,Mataró,1
+2026-07-18,Mataró,1
+2026-07-20,Mataró,1
+2026-07-23,Mataró,1
+2026-07-24,Mataró,1
+2026-07-26,Mataró,1
+2026-08-07,Mataró,1
+2026-08-07,Vilassar de Dalt,1
+2026-08-08,Vilassar de Mar,1
+2026-08-10,Cabrils,1
