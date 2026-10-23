@@ -47,6 +47,7 @@
     <label class="nota" title="Simulació 2D amb els embornals tapats: el clavegueram no s'empassa res (com el 21/9/2019). Només als episodis on s'ha calculat"><input type="checkbox" id="tapatOn" disabled> Embornals tapats</label>
     <label class="nota" title="Edificis del Cadastre amb plantes sota rasant: en vermell quan l'aigua de la simulació 2D hi passa de 15 cm a tocar"><input type="checkbox" id="soterOn"> Soterranis</label>
     <label class="nota" title="Edificis del Cadastre pintats per nombre de plantes (≈3 m cada una). A la simulació 2D l'aigua els ha de voltar pels carrers"><input type="checkbox" id="edifOn"> Edificis</label>
+    <label class="nota" title="Passos per sota de terraplens, ponts i autopistes (OpenStreetMap) que el relleu LiDAR veu tapats i que la simulació 2D obre perquè l'aigua hi passi"><input type="checkbox" id="passosOn"> Passos</label>
     <span id="via" title="Calculat amb la pluja dels 60 dies anteriors (fix per a cada episodi)"></span>
     <span class="nota"><a href="pluja.html">eina de pluja</a> · <a href="./">inici</a> · <a href="previsio.html">previsió en directe</a></span>
   </div>
@@ -240,6 +241,16 @@ async function cadastre() {
   if (!CAD) ['soterOn', 'edifOn'].forEach(id => { $(id).disabled = true; $(id).parentNode.title = 'Encara no hi ha dades del Cadastre per a aquesta zona'; });
   return CAD;
 }
+let PASSOS, capaPassos;
+async function passos() {
+  if (capaPassos) { mapes[3].removeLayer(capaPassos); capaPassos = null; }
+  if (!$('passosOn').checked) return;
+  if (PASSOS === undefined) PASSOS = await fetch(BASE + 'passos/passos.geojson').then(r => r.ok ? r.json() : null).catch(() => null);
+  if (!PASSOS) { $('passosOn').checked = false; $('passosOn').disabled = true; $('passosOn').parentNode.title = 'Encara no hi ha passos calculats per a aquesta zona'; return; }
+  capaPassos = L.geoJSON(PASSOS, { pane: 'fletxes', style: f => ({ color: f.properties.rebaix_m >= 3 ? '#00429d' : f.properties.rebaix_m >= 1 ? '#2b8cbe' : '#7fcdbb', weight: 5, opacity: 0.9 }),
+    onEachFeature: (f, l) => { const p = f.properties; l.bindTooltip(`<b>${p.tipus}</b>${p.via ? ': ' + p.via : ''}<br>el relleu tapava el pas: s'hi ha obert ${p.rebaix_m} m<br>fons de les boques: ${p.fons_m[0]} i ${p.fons_m[1]} m`); } }).addTo(mapes[3]);
+}
+document.addEventListener('DOMContentLoaded', () => { $('passosOn').onchange = passos; });
 async function edificis() {
   if (capaEdif) { mapes[3].removeLayer(capaEdif); capaEdif = null; }
   if (!$('edifOn').checked || !await cadastre()) return;
