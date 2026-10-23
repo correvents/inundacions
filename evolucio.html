@@ -250,7 +250,7 @@ async function passos() {
   capaPassos = L.geoJSON(PASSOS, { pane: 'fletxes', style: f => ({ color: f.properties.rebaix_m >= 3 ? '#00429d' : f.properties.rebaix_m >= 1 ? '#2b8cbe' : '#7fcdbb', weight: 5, opacity: 0.9, dashArray: f.properties.suposat ? '6 5' : null }),
     onEachFeature: (f, l) => { const p = f.properties; l.bindTooltip(`<b>${p.tipus}</b>${p.via ? ': ' + p.via : ''}${p.sobre ? ' sota ' + p.sobre : ''}${p.suposat ? '<br>no és a OSM: es dona per fet que hi ha un tub o calaix sota el terraplè' : ''}<br>el relleu tapava el pas: s'hi ha obert ${p.rebaix_m} m<br>fons de les boques: ${p.fons_m[0]} i ${p.fons_m[1]} m`); } }).addTo(mapes[3]);
 }
-document.addEventListener('DOMContentLoaded', () => { $('passosOn').onchange = passos; });
+document.addEventListener('DOMContentLoaded', () => { $('passosOn').onchange = () => passos().then(calcula); });
 async function edificis() {
   if (capaEdif) { mapes[3].removeLayer(capaEdif); capaEdif = null; }
   if (!$('edifOn').checked || !await cadastre()) return;
@@ -446,6 +446,7 @@ function calcula() {
     $('ll3').innerHTML = llegenda(RAMPA_Q, 'cabal ara (m³/s):') + '<br>' + llegenda(RAMPA_H, 'embassada ara (m):');
   }
   if (v3 === 'dues' || v3 === 'assecat') { if (capaFletxes) { mapes[3].removeLayer(capaFletxes); capaFletxes = null; } } else fletxes(3);
+  if ($('passosOn').checked && PASSOS) $('ll3').innerHTML += '<br>passos sota terraplens oberts al relleu: <span style="color:#7fcdbb">━</span> &lt;1 m <span style="color:#2b8cbe">━</span> 1-3 m <span style="color:#00429d">━</span> &gt;3 m · ratllat: obra de drenatge suposada';
   if ($('edifOn').checked && CAD) $('ll3').innerHTML += '<br>' + llegenda(CAD.resum.llegenda_plantes.map((l, k) => [l, [[189, 189, 189, 200], [150, 150, 150, 215], [99, 99, 99, 230], [37, 37, 37, 240]][k]]), 'edificis, plantes sobre rasant (≈3 m cada una):');
   if ($('soterOn').checked) soterranis().then(llegendaSoter);
   graf();
