@@ -23,7 +23,9 @@ from pyproj import Transformer
 from shapely.geometry import LineString, Point, mapping
 from shapely.ops import substring
 
-OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]
+OVERPASS = ["https://overpass.private.coffee/api/interpreter", "https://overpass-api.de/api/interpreter",
+            "https://overpass.kumi.systems/api/interpreter", "https://maps.mail.ru/osm/tools/overpass/api/interpreter"]
+UA = {"User-Agent": "inundacions/0.1 (github.com/correvents/inundacions)"}
 CAIXES = {"ridaura": [2.86, 41.75, 3.09, 41.89]}
 TIPUS = ("highway", "railway", "waterway")
 
@@ -38,9 +40,9 @@ def consulta(caixa):
  way["highway"]({s},{w},{n},{e});
  way["railway"]({s},{w},{n},{e}););
 out tags geom;"""
-    for url in OVERPASS:
+    for url in OVERPASS * 2:
         try:
-            r = requests.post(url, data={"data": q}, timeout=300)
+            r = requests.post(url, data={"data": q}, headers=UA, timeout=300)
             r.raise_for_status()
             return r.json()
         except Exception as ex:
