@@ -14,6 +14,10 @@ on:
         description: "Pluja XEMA des d'aquesta data (AAAA-MM-DD); 'tot' = tot l'històric (des de 2009)"
         required: false
         default: "2026-07-15"
+      graella:
+        description: "Refà la graella del visor encara que ja hi sigui (si/no)"
+        required: false
+        default: "no"
 
 permissions:
   contents: write
@@ -49,13 +53,29 @@ jobs:
           subprocess.run([sys.executable, "scripts/index_episodis.py", "--config", f"config/{c}.json"] + idx, check=True)
           PY
       - name: Relleu i graella del visor
-        if: inputs.episodis != '[]' && hashFiles(format('data/{0}/web/graella.json', inputs.conca)) == ''
+        if: inputs.graella == 'si' || (inputs.episodis != '[]' && hashFiles(format('data/{0}/web/graella.json', inputs.conca)) == '')
+        env:
+          CONCA: ${{ inputs.conca }}
         run: |
-          python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas 10 --nomes-mdt
-          FIRST=$(python3 -c "import json;print(json.load(open('data/${{ inputs.conca }}/episodis/index.json'))['episodis'][0]['id'])")
-          RADAR=$(python3 -c "import json;print(json.load(open('data/${{ inputs.conca }}/episodis/index.json'))['episodis'][0]['radar'])")
-          PYTHONPATH=scripts python3 scripts/graella_web.py --config config/${{ inputs.conca }}.json --mdt /tmp/relleu/mdt.tif \
-            --radar data/${{ inputs.conca }}/episodis/$RADAR --episodi data/${{ inputs.conca }}/episodis/${FIRST}_estacio.json
+          python3 scripts/relleu.py --config config/$CONCA.json --pas 10 --nomes-mdt
+          # passos sota terraplens oberts també per al model ràpid del navegador (si no, l'aigua ressegueix els terraplens)
+          python3 scripts/passos.py --config config/$CONCA.json --mdt /tmp/relleu/mdt.tif
+          # l'episodi de referència de la graella: el que ja tenia, o el primer de l'índex
+          read RADAR EP <<< $(python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          d = Path("data") / os.environ["CONCA"]
+          eps = json.loads((d / "episodis/index.json").read_text())["episodis"]
+          g = d / "web/graella.json"
+          r = json.loads(g.read_text())["radar"] if g.exists() else eps[0]["radar"]
+          e = next((x for x in eps if x["radar"] == r), eps[0])
+          ep = e.get("episodi") or f"{e['id']}_estacio.json"
+          if not (d / "episodis" / ep).exists(): ep = f"{e['id']}_estacio.json"
+          print(r, ep)
+          PY
+          )
+          PYTHONPATH=scripts python3 scripts/graella_web.py --config config/$CONCA.json --mdt /tmp/relleu/mdt.tif \
+            --radar data/$CONCA/episodis/$RADAR --episodi data/$CONCA/episodis/$EP
       - name: Desa
         if: always()
         env:
