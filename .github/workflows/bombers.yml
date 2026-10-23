@@ -2,6 +2,10 @@ name: Actuacions dels Bombers
 
 on:
   workflow_dispatch:
+    inputs:
+      conca:
+        description: "Conca (config/<conca>.json)"
+        default: "ridaura"
 
 permissions:
   contents: write
@@ -15,12 +19,12 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install requests
-      - run: python3 scripts/bombers.py --config config/ridaura.json
+      - run: python3 scripts/bombers.py --config config/${{ inputs.conca }}.json
       - name: Desa
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/
           git diff --cached --quiet && exit 0
-          git commit -m "Actuacions dels Bombers"
-          for i in 1 2 3 4 5 6; do git pull --rebase origin main && git push && exit 0; sleep $((i*7)); done; exit 1
+          git commit -m "Actuacions dels Bombers: ${{ inputs.conca }}"
+          for i in 1 2 3 4 5 6; do git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME" && exit 0; sleep $((i*7)); done; exit 1

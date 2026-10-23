@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Actuacions dels Bombers de la Generalitat (dades obertes g2ay-3vnj) als municipis de la plana del Ridaura.
+"""Actuacions dels Bombers de la Generalitat (dades obertes g2ay-3vnj) als municipis de la conca (config "municipis_bombers",
+o si no n'hi ha, "municipis_cadastre"; per defecte, els de la plana del Ridaura).
 
 Serveixen d'etiqueta independent de la premsa: un dia amb actuacions per aigua (inundacions, sanejaments, salvaments
 en riera...) a Castell-Platja d'Aro és un dia que es va inundar alguna cosa, encara que no surti als diaris.
@@ -29,11 +30,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
     a = ap.parse_args()
-    d = Path("data") / json.loads(Path(a.config).read_text())["conca"] / "model"; d.mkdir(parents=True, exist_ok=True)
+    cfg = json.loads(Path(a.config).read_text())
+    d = Path("data") / cfg["conca"] / "model"; d.mkdir(parents=True, exist_ok=True)
+    municipis = cfg.get("municipis_bombers") or cfg.get("municipis_cadastre") or MUNICIPIS
     mostra = baixa({"$limit": 3})
     print("camps:", list(mostra[0].keys()) if mostra else "cap fila")
     files = []
-    for m in MUNICIPIS:
+    for m in municipis:
         off = 0
         while True:
             r = baixa({"$where": f"upper(municipi) like upper('%{m.replace(chr(39), chr(39)*2)}%')", "$limit": 50000, "$offset": off,
