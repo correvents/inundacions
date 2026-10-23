@@ -69,8 +69,8 @@ jobs:
           g = d / "web/graella.json"
           r = json.loads(g.read_text())["radar"] if g.exists() else eps[0]["radar"]
           e = next((x for x in eps if x["radar"] == r), eps[0])
-          ep = e.get("episodi") or f"{e['id']}_estacio.json"
-          if not (d / "episodis" / ep).exists(): ep = f"{e['id']}_estacio.json"
+          ep = f"{e['id']}_estacio.json"
+          if not (d / "episodis" / ep).exists(): ep = e.get("episodi") or ep
           print(r, ep)
           PY
           )
