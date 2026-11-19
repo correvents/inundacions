@@ -13,11 +13,14 @@ jobs:
           c="-sS -m 90 -A Mozilla/5.0 -c /tmp/ck -b /tmp/ck"
           curl $c "$B/index.jsp" -o /dev/null
           curl $c "$B/catalogo.do?Serie=MDT02" -o /tmp/cat.html
-          grep -oE 'id="(codSerie|series|codAgr|todaEspania|todoMundo|contieneArc|totalArchivos)"[^>]*' /tmp/cat.html | head
-          for co in "2.27 41.60" "2.27,41.60" "POINT(2.27 41.60)" "2.26 41.59,2.30 41.59,2.30 41.62,2.26 41.62,2.26 41.59"; do
-            echo "== coords: $co"
-            curl $c -X POST -H "X-Requested-With: XMLHttpRequest" -H "Referer: $B/catalogo.do?Serie=MDT02" -H "Origin: https://centrodedescargas.cnig.es" "$B/archivosSerie" --data-urlencode "numPagina=1" --data-urlencode "codAgr=MOMDT" --data-urlencode "codSerie=MDT02" --data-urlencode "series=MDT02" --data-urlencode "totalArchivos=8308" --data-urlencode "coordenadas=$co" -o /tmp/a.html
-            wc -c /tmp/a.html; grep -oE '(linkDescDir[A-Za-z0-9]*_[0-9]+|secuencial[^,]{0,40}|MDT02[^<"]{0,80}|totalArchivos[^>]{0,60})' /tmp/a.html | sort -u | head -20
-            sed 's/<[^>]*>/ /g' /tmp/a.html | tr -s ' \n\t' ' ' | head -c 800; echo
+          python3 - <<'PY'
+          import re
+          s=open('/tmp/cat.html',encoding='utf-8',errors='ignore').read()
+          for m in list(re.finditer(r'searchCoords|coordenadas\'\)\.val\(', s))[:6]:
+              print('=='); print(s[max(0,m.start()-700):m.start()+300])
+          PY
+          for co in "41.60 2.27" "41.60,2.27" "252690 5101000" "POINT(252690 5101000)" "POLYGON((2.26 41.59,2.30 41.59,2.30 41.62,2.26 41.62,2.26 41.59))" "2.26,41.59,2.30,41.62"; do
+            curl $c -X POST -H "X-Requested-With: XMLHttpRequest" -H "Referer: $B/catalogo.do?Serie=MDT02" "$B/archivosSerie" --data-urlencode "numPagina=1" --data-urlencode "codAgr=MOMDT" --data-urlencode "codSerie=MDT02" --data-urlencode "series=MDT02" --data-urlencode "coordenadas=$co" -o /tmp/a.html
+            echo "== $co: $(grep -oE 'id="totalArchivos"[^>]*' /tmp/a.html) $(grep -oE 'linkDescDir[A-Za-z0-9]*_[0-9]+' /tmp/a.html | sort -u | head -5 | tr '\n' ' ') $(grep -oE '[A-Za-z0-9_-]+\.(tif|zip|asc|laz)' /tmp/a.html | sort -u | head -5 | tr '\n' ' ')"
           done
           true
