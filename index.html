@@ -18,8 +18,7 @@
   a { color: var(--accent); }
 
   /* estat en directe */
-  #ara { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: var(--card); border: 1px solid var(--vora);
-         border-radius: 10px; padding: 12px 14px; font-size: 14px; }
+  #ara { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--vora); font-size: 13.5px; color: var(--text); }
   #ara .punt { width: 10px; height: 10px; border-radius: 50%; background: #2e8b57; box-shadow: 0 0 0 3px rgba(46,139,87,.2); }
   #ara b { font-size: 15px; }
   #ara .xip { padding: 3px 9px; border-radius: 99px; color: #fff; font-weight: 700; font-size: 13px; }
@@ -53,13 +52,21 @@
 
   /* targetes */
   .llocs { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
-  a.lloc { display: block; background: var(--card); border: 1px solid var(--vora); border-radius: 10px; padding: 14px 16px; color: inherit; text-decoration: none; }
-  a.lloc:hover { border-color: var(--accent); }
+  a.lloc, div.lloc { display: block; background: var(--card); border: 1px solid var(--vora); border-radius: 10px; padding: 14px 16px; color: inherit; text-decoration: none; }
+  a.lloc:hover, div.lloc:hover { border-color: var(--accent); }
   .lloc .et { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--suau); }
   .lloc h3 { margin: 2px 0 4px; font-size: 18px; color: var(--accent); }
   .lloc p { margin: 4px 0; font-size: 14px; color: var(--suau); }
   .lloc .ob { color: var(--text); font-weight: 600; font-size: 14px; }
   .amaga { display: none !important; }
+  .heroi { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  a.gran { display: block; background: linear-gradient(135deg, #14212e, #1f4e8c); color: #fff; border-radius: 12px; padding: 20px 22px; text-decoration: none; }
+  a.gran:hover { filter: brightness(1.12); }
+  a.gran .et { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #9cc8ef; }
+  a.gran h3 { margin: 4px 0 6px; font-size: 22px; }
+  a.gran p { margin: 0 0 12px; color: #d3e1ee; font-size: 14.5px; }
+  a.gran .veure { font-weight: 600; color: #fff; }
+  @media (max-width: 700px) { .heroi { grid-template-columns: 1fr; } }
 
   details { background: var(--card); border: 1px solid var(--vora); border-radius: 10px; padding: 10px 14px; margin-top: 10px; }
   summary { cursor: pointer; font-weight: 600; }
@@ -70,15 +77,29 @@
 </head>
 <body>
 <main>
-  <h1>Inundacions per conca</h1>
-  <p class="sub">Quins carrers i punts de pobles s'inunden amb pluges fortes, i quan. Es calcula a partir del radar, el relleu i mesures reals, i es comprova amb episodis passats.</p>
+  <h1>Inundacions a Catalunya</h1>
+  <p class="sub">Vigilar tot Catalunya amb el radar per detectar on plou fort i quines conques, torrents i punts baixos es poden inundar, i quan. Els episodis passats serveixen per comprovar-ho i millorar el model.</p>
 
-  <div id="ara"><span class="punt"></span><span>Carregant l'estat de Platja d'Aro...</span></div>
+  <div class="heroi">
+    <a class="gran" href="catalunya.html">
+      <span class="et">Pas 1 · on plou</span>
+      <h3>Pluja a Catalunya</h3>
+      <p>Radar corregit amb pluviòmetres, hora a hora a tot el país. Tria dates, reprodueix l'episodi i mira l'acumulat.</p>
+      <span class="veure">Obrir el mapa de pluja →</span>
+    </a>
+    <a class="gran" href="conques.html">
+      <span class="et">Pas 2 · on va l'aigua</span>
+      <h3>Conques de Catalunya</h3>
+      <p>Tot Catalunya partit en conques de 25 i 100 km². Clica una conca i veuràs d'on li ve l'aigua i on va a parar.</p>
+      <span class="veure">Obrir el mapa de conques →</span>
+    </a>
+  </div>
+  <p class="intro2" style="margin-top:12px">Objectiu: quan el radar detecti pluja forta o molta pluja acumulada en un lloc, calcular la conca afectada i dir quins punts s'inunden. De moment el càlcul complet es fa en els <a href="#casos">casos d'estudi</a>.</p>
 
-  <h2>Què fa el sistema, pas a pas</h2>
+  <h2>Com es calcula, pas a pas</h2>
   <p class="intro2">Cada pas alimenta el següent. Fes clic a un pas per veure'l en un mapa.</p>
   <div class="cadena">
-    <a class="pas" style="--c: var(--c1)" href="evolucio.html" data-alt="catalunya.html">
+    <a class="pas" style="--c: var(--c1)" href="catalunya.html">
       <span class="n">1 · Radar corregit</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 15a4 4 0 0 1 .9-7.9A5.5 5.5 0 0 1 16.6 6 4.5 4.5 0 0 1 18 15"/><path d="M8 18l-1 3M12 17l-1 4M16 18l-1 3"/></svg>
       <h3>Quanta pluja cau</h3>
@@ -86,20 +107,20 @@
       <span class="xifra">Arxiu des de 2011</span>
       <span class="veure">Veure la pluja →</span>
     </a>
-    <a class="pas" style="--c: var(--c2)" href="pluja.html">
+    <a class="pas" style="--c: var(--c2)" href="conques.html">
       <span class="n">2 · Pluja per conca</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20l5-9 4 5 3-4 6 8z"/><path d="M12 4c1.5 2 2.5 3.4 2.5 4.6a2.5 2.5 0 0 1-5 0C9.5 7.4 10.5 6 12 4z"/></svg>
       <h3>On va a parar</h3>
       <p>La pluja es reparteix pel relleu. El terreny n'absorbeix una part segons com de moll estava els 60 dies anteriors.</p>
       <span class="xifra">MDT 5 m · clavegueram ~30 mm/h</span>
-      <span class="veure">Veure-ho al relleu →</span>
+      <span class="veure">Veure les conques →</span>
     </a>
     <a class="pas" style="--c: var(--c3)" href="previsio.html">
       <span class="n">3 · Cabal</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 9c2 0 2-2 4.5-2S10 9 12 9s2.5-2 4.5-2S19 9 21 9"/><path d="M3 14c2 0 2-2 4.5-2S10 14 12 14s2.5-2 4.5-2S19 14 21 14"/><path d="M3 19c2 0 2-2 4.5-2S10 19 12 19s2.5-2 4.5-2S19 19 21 19"/></svg>
       <h3>Quanta aigua baixa</h3>
       <p>Model de cabal comprovat amb els aforadors de l'ACA. Previsió de les properes 3 h cada 10 min.</p>
-      <span class="xifra">4/10/2026: 304 m³/s a la Ridaura</span>
+      <span class="xifra">Ex.: Ridaura, 304 m³/s el 4/10/2026</span>
       <span class="veure">Veure la previsió →</span>
     </a>
     <a class="pas" style="--c: var(--c4)" href="previsio.html">
@@ -107,15 +128,15 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 20V10M9 20V6M14 20v-8M19 20V3"/></svg>
       <h3>Com d'excepcional és</h3>
       <p>El cabal es compara amb els cabals oficials de l'ACA per tram (T10, T50, T100, T500).</p>
-      <span class="xifra">304 m³/s ≈ T300</span>
+      <span class="xifra">Ex.: aquells 304 m³/s ≈ T300</span>
       <span class="veure">Veure l'estat →</span>
     </a>
     <a class="pas" style="--c: var(--c5)" href="previsio.html">
       <span class="n">5 · Zones inundables</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/></svg>
       <h3>Fins on arriba</h3>
-      <p>S'activa la zona inundable de l'ACA que toca, més una simulació 2D de l'aigua als carrers.</p>
-      <span class="xifra">Fenals: 754 de 844 elements dins</span>
+      <p>La zona inundable de l'ACA que toca i, on no n'hi ha, una simulació 2D de l'aigua sobre el relleu.</p>
+      <span class="xifra">I fora de zona: torrents i clots</span>
       <span class="veure">Veure les zones →</span>
     </a>
     <a class="pas" style="--c: var(--c6)" href="evolucio.html">
@@ -137,66 +158,25 @@
     <div class="via"><h3>Temporal de mar</h3><p>Amb llevant i onatge fort, el mar frena la sortida de rieres i clavegueram a la costa.</p></div>
   </div>
 
-  <h2>En directe</h2>
+  <h2 id="casos">Casos d'estudi</h2>
+  <p class="intro2">Episodis reals reconstruïts sense ajustar res a mà, comparats amb aforadors, premsa i intervencions. Cada cas serveix per calibrar i millorar el model, i se n'aniran afegint més.</p>
+  <div class="llocs" id="llista-casos"></div>
+
+  <h2>Previsió en directe</h2>
+  <p class="intro2">Previsió de cabal cada 10 minuts. Ara només a la primera conca calibrada; s'hi afegiran les altres a mesura que es validin.</p>
   <div class="llocs">
     <a class="lloc" href="previsio.html">
       <span class="et">Cada 10 min</span>
-      <h3>Previsió a Platja d'Aro</h3>
-      <p>Riera Ridaura i Fenals</p>
+      <h3>Ridaura · Platja d'Aro</h3>
       <p class="ob">Cabal mesurat i previst a 3 h, període de retorn i què s'inunda segons la crescuda.</p>
+      <div id="ara"><span>Carregant l'estat actual...</span></div>
     </a>
   </div>
 
-  <h2>Episodis reconstruïts</h2>
-  <p class="intro2">Reconstrucció amb dades reals, sense ajustar res a mà: radar, pluja acumulada, aigua que escola i aigua al carrer.</p>
+  <h2>Eines</h2>
   <div class="llocs">
-    <a class="lloc" href="evolucio.html">
-      <span class="et">Pilot</span>
-      <h3>Platja d'Aro</h3>
-      <p>Riera Ridaura i Fenals</p>
-      <p class="ob">14 episodis des de 2016. Calibrat amb l'aforador de Santa Cristina d'Aro (4/10/2026, 304 m³/s).</p>
-    </a>
-    <a class="lloc" href="evolucio.html?conca=granollers">
-      <span class="et">Amb aforador</span>
-      <h3>Granollers</h3>
-      <p>Riu Congost</p>
-      <p class="ob">3-5/10/2026. Calibrat amb l'aforador de La Garriga: pic simulat 60,6 m³/s davant dels 67,2 mesurats.</p>
-    </a>
-    <a class="lloc" href="evolucio.html?conca=cabrera">
-      <span class="et">Sense aforador</span>
-      <h3>Cabrera de Mar</h3>
-      <p>Torrents de Valldoriol i la Torreta</p>
-      <p class="ob">17/10/2026. Resultats orientatius, sense validar amb cabal.</p>
-    </a>
-    <a class="lloc" href="episodi.html">
-      <span class="et">Pas a pas</span>
-      <h3>Reproducció del 4 d'octubre</h3>
-      <p>Platja d'Aro</p>
-      <p class="ob">L'episodi més gran mesurat, reproduït minut a minut.</p>
-    </a>
-    <a class="lloc" href="pluja.html">
-      <span class="et">Eina</span>
-      <h3>Pluja sobre el relleu</h3>
-      <p>Tria episodi i franja</p>
-      <p class="ob">Mira cap on corre l'aigua i on s'embassa, i compara-ho amb la premsa.</p>
-    </a>
-  </div>
-
-  <div id="seccio-cat" class="amaga">
-    <h2>Catalunya</h2>
-    <p class="intro2">El pas següent: vigilar tot Catalunya amb el radar i calcular només la conca on plou fort.</p>
-    <div class="llocs">
-      <a class="lloc amaga" href="catalunya.html" data-opcional>
-        <span class="et">Radar</span>
-        <h3>Pluja a Catalunya</h3>
-        <p>Tria dates, reprodueix i mira l'acumulat</p>
-      </a>
-      <a class="lloc amaga" href="conques.html" data-opcional>
-        <span class="et">Mapa</span>
-        <h3>Conques de Catalunya</h3>
-        <p>Catalunya partida per conques i subconques</p>
-      </a>
-    </div>
+    <a class="lloc" href="evolucio.html"><span class="et">Episodis</span><h3>Evolució en 4 mapes</h3><p>Radar, pluja acumulada, aigua que escola i aigua al carrer, sincronitzats.</p></a>
+    <a class="lloc" href="pluja.html"><span class="et">Relleu</span><h3>Pluja sobre el relleu</h3><p>Tria episodi i franja i mira cap on corre l'aigua i on s'embassa.</p></a>
   </div>
 
   <h2>Més detall</h2>
@@ -229,16 +209,29 @@
   <footer>Dades: radar OPERA (EUMETNET), estacions XEMA i aforadors ACA, relleu ICGC i IGN, zones inundables ACA, edificis del Cadastre (INSPIRE). Codi obert a GitHub (correvents/inundacions). Si el mapa no carrega, força la recàrrega del navegador.</footer>
 </main>
 <script>
-// pestanyes de Catalunya: es mostren quan existeixen
-const opc = [...document.querySelectorAll('[data-opcional]')];
-Promise.all(opc.map(a => fetch(a.getAttribute('href'), { method: 'HEAD' }).then(r => r.ok).catch(() => false).then(ok => {
-  if (ok) a.classList.remove('amaga');
-  return ok;
-}))).then(oks => {
-  if (oks.some(Boolean)) document.getElementById('seccio-cat').classList.remove('amaga');
-  // el pas 1 porta a la pluja de Catalunya quan existeixi
-  if (oks[0]) document.querySelectorAll('[data-alt]').forEach(a => a.href = a.dataset.alt);
-});
+// Casos d'estudi: per afegir-ne un, afegeix-lo aquí
+const CASOS = [
+  { et: 'Amb aforador', nom: "Platja d'Aro", riu: 'Riera Ridaura i Fenals', href: 'evolucio.html',
+    text: "14 episodis des de 2016. Calibrat amb l'aforador de Santa Cristina d'Aro (4/10/2026, 304 m³/s).",
+    extra: [['episodi.html', "Reproducció del 4 d'octubre"]] },
+  { et: 'Amb aforador', nom: 'Granollers', riu: 'Riu Congost', href: 'evolucio.html?conca=granollers',
+    text: "3-5/10/2026. Calibrat amb l'aforador de La Garriga: pic simulat 60,6 m³/s davant dels 67,2 mesurats." },
+  { et: 'Sense aforador', nom: 'Cabrera de Mar', riu: 'Torrents de Valldoriol i la Torreta', href: 'evolucio.html?conca=cabrera',
+    text: '17/10/2026. Torrents que ningú no mesura: resultats orientatius, comparats amb premsa.' },
+];
+document.getElementById('llista-casos').innerHTML = CASOS.map(c => `
+  <div class="lloc">
+    <span class="et">${c.et}</span>
+    <h3><a href="${c.href}" style="text-decoration:none">${c.nom}</a></h3>
+    <p>${c.riu}</p>
+    <p class="ob">${c.text}</p>
+    <p><a href="${c.href}">Veure l'episodi →</a>${(c.extra || []).map(([h, t]) => ` · <a href="${h}">${t}</a>`).join('')}</p>
+  </div>`).join('') + `
+  <div class="lloc" style="border-style:dashed">
+    <span class="et">Properament</span>
+    <h3 style="color:var(--suau)">Més conques</h3>
+    <p>Fenals, Tossa, Lloret i els aiguats d'octubre de 2026, i les conques on el radar detecti episodis forts.</p>
+  </div>`;
 
 // estat en directe de la Ridaura (mateixes dades que previsio.html)
 const SB = 'https://rxfjwklbvqkwgzmpzwae.supabase.co/rest/v1/';
@@ -269,11 +262,11 @@ async function ara() {
   const avRecent = av.length && Date.now() - new Date(av[0].temps) < 3 * 3600e3 && av[0].nivell > 0;
   const vell = Date.now() - new Date(q[0].temps) > 2 * 3600e3;
   el.innerHTML = `<span class="punt" style="background:${ll[2]}"></span>
-    <span>Ara a la Ridaura (Santa Cristina d'Aro): <b>${v.toFixed(1)} m³/s</b></span>
+    <span>Ara a Santa Cristina d'Aro: <b>${v.toFixed(1)} m³/s</b></span>
     <span class="xip" style="background:${ll[2]}">${ll[1]}</span>
     <span>${T === null ? 'per sota de la crescuda ordinària' : T > 500 ? 'més de T500' : '≈ T' + Math.round(T)}</span>
     ${avRecent ? `<span class="xip" style="background:${NIVELL[av[0].nivell][1]}">${NIVELL[av[0].nivell][0]}</span>` : ''}
-    <span class="dret" style="color:var(--suau)">${vell ? '⚠ dada antiga, ' : ''}${hora} · <a href="previsio.html">previsió →</a></span>`;
+    <span class="dret" style="color:var(--suau)">${vell ? '⚠ dada antiga, ' : ''}${hora}</span>`;
 }
 ara().catch(() => { document.getElementById('ara').innerHTML = '<span>No s\'han pogut carregar les dades en directe.</span>'; });
 </script>
