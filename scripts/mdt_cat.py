@@ -17,7 +17,7 @@ petites de costa, perquè no quedin forats). Per a cada conca:
      data/catalunya/relleu/cNNN/zones_baixes.png  PNG de paleta (5 colors), en lat/lon
      data/catalunya/relleu/cNNN/resum.json        límits del PNG, classes, km² de cada classe, trams
 
-Ús:  python3 scripts/mdt_cat.py lots --lots 30 [--conques 1,2,3]       → matriu JSON per al workflow
+Ús:  python3 scripts/mdt_cat.py lots --lots 30 [--conques 1,2,3 | totes | pendents]       → matriu JSON per al workflow
      python3 scripts/mdt_cat.py conca --id 124 [--mdt fitxer.tif] [--pas 10] [--llindar-km2 0.05]
      python3 scripts/mdt_cat.py index                                     → data/catalunya/relleu/index.json"""
 import argparse, json, sys, time
@@ -79,6 +79,8 @@ def baixa_mdt(geom, nom):
     for xa in np.arange(x0, x1, TROS):
         for ya in np.arange(y0, y1, TROS):
             xb, yb = min(xa + TROS, x1), min(ya + TROS, y1)
+            if xb - xa < 50 or yb - ya < 50:     # tros massa estret: l'amplia (el WCS en torna de buits)
+                xa, ya = min(xa, xb - 50), min(ya, yb - 50)
             from shapely.geometry import box
             if not pg.intersects(box(xa, ya, xb, yb)):
                 continue
@@ -87,7 +89,11 @@ def baixa_mdt(geom, nom):
                 continue
             f = TMP / f"{nom}_{len(trossos)}.tif"
             f.write_bytes(c)
-            trossos.append(rasterio.open(f))
+            r = rasterio.open(f)
+            if r.width < 2 or r.height < 2 or not all(np.isfinite(r.bounds)):
+                print(f"  tros {xa:.0f},{ya:.0f} buit o estrany ({r.width}×{r.height}), el salto")
+                r.close(); continue
+            trossos.append(r)
     if not trossos:
         raise RuntimeError("cap tros amb dades")
     nd = trossos[0].nodata
@@ -242,6 +248,8 @@ def main():
     C = conques()
 
     if a.ordre == "lots":
+        if a.conques == "pendents":       # les que encara no tenen relleu desat
+            a.conques = ",".join(str(i) for i in sorted(C) if not (SORT / f"c{i:03d}" / "resum.json").exists()) or "totes"
         ids = sorted(C) if a.conques == "totes" else [int(x) for x in a.conques.split(",") if x.strip()]
         # repartiment per superfície (les grans tarden més): la més gran al lot amb menys feina
         lots = [[] for _ in range(min(a.lots, len(ids)))]

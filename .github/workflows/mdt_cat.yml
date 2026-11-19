@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       conques:
-        description: "Conques (ids separats per comes) o «totes»"
+        description: "Conques: ids separats per comes, «totes» o «pendents» (les que no tenen relleu)"
         default: "totes"
       lots:
         description: "Feines (lots de conques)"
@@ -28,7 +28,7 @@ permissions:
   contents: write
 
 env:
-  CONQUES: ${{ inputs.conques || 'totes' }}
+  CONQUES: ${{ inputs.conques || 'pendents' }}
   ETIQUETA: mdt5-cat
 
 jobs:
