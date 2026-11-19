@@ -19,7 +19,7 @@
    "corregit": true,
    "estacions": 243,
    "validacio": {
-    "hores_estacio": 15901,
+    "hores_estacio": 15902,
     "radar_sol": {
      "biaix_total": 0.74,
      "rmse_mm_h": 3.49,
