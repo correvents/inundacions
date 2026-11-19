@@ -1,0 +1,11 @@
+name: Prova radar OPERA en directe (temporal)
+on:
+  push:
+    branches: [claude/project-thread-1vl8ff]
+    paths: [scripts/proves/opera_directe.py]
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install requests && python3 -u scripts/proves/opera_directe.py
