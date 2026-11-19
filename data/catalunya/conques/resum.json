@@ -1,0 +1,17 @@
+{
+ "pas_m": 100,
+ "costa_km2": 2,
+ "font": "MDT IGN 25 m (servicios.idee.es)",
+ "25km2": {
+  "conques": 861,
+  "conques_>=5km2": 711,
+  "km2_mediana_>=5": 35.4,
+  "km2_max": 249.2
+ },
+ "100km2": {
+  "conques": 365,
+  "conques_>=5km2": 265,
+  "km2_mediana_>=5": 84.8,
+  "km2_max": 757.6
+ }
+}

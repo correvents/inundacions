@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Conques de Catalunya</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+*{box-sizing:border-box}body{margin:0}
+
+/* Layout: mapa a tota l'amplada, panell lateral (a sota en mòbil) amb la conca triada */
+:root{
+  --bg:#f3f5f6; --panel:#ffffff; --fg:#17232b; --muted:#5c6b75; --line:#c9d2d8;
+  --conca:#dfe6ea; --conca-b:#9aa9b3; --riu:#3d7fb8;
+  --sel:#0b6e66; --avall:#2459a8; --amunt:#e0a23a; --poble:#c0392b;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1519; --panel:#172026; --fg:#e4ebef; --muted:#93a3ad; --line:#2c3a43;
+  --conca:#1f2b33; --conca-b:#3d4f5a; --riu:#5b9bd5;
+  --sel:#2bb3a6; --avall:#6c9ef0; --amunt:#e6b04f; --poble:#ff6b5a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1519; --panel:#172026; --fg:#e4ebef; --muted:#93a3ad; --line:#2c3a43;
+  --conca:#1f2b33; --conca-b:#3d4f5a; --riu:#5b9bd5;
+  --sel:#2bb3a6; --avall:#6c9ef0; --amunt:#e6b04f; --poble:#ff6b5a; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;box-sizing:border-box}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 300px;grid-template-rows:auto minmax(0,1fr);gap:16px;height:100%;min-height:520px}
+header{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 20px}
+h1{font-size:20px;font-weight:600;margin:0;text-wrap:balance}
+.sub{color:var(--muted);font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-left:auto}
+.seg button{font:500 13px var(--sans);background:var(--panel);color:var(--fg);border:0;padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--sel);color:var(--panel)}
+.seg button:focus-visible{outline:2px solid var(--avall);outline-offset:-2px}
+.mapa{position:relative;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+svg{display:block;width:100%;height:100%;touch-action:none}
+.c{fill:var(--conca);stroke:var(--conca-b);stroke-width:.5;vector-effect:non-scaling-stroke;cursor:pointer}
+.c:hover{fill:color-mix(in srgb,var(--sel) 25%,var(--conca))}
+.c.amunt{fill:color-mix(in srgb,var(--amunt) 55%,var(--conca))}
+.c.avall{fill:color-mix(in srgb,var(--avall) 60%,var(--conca))}
+.c.sel{fill:var(--sel)}
+.riu{fill:none;stroke:var(--riu);stroke-width:.8;vector-effect:non-scaling-stroke;pointer-events:none;opacity:.8}
+.p circle{fill:var(--poble);stroke:var(--panel);stroke-width:1.5;vector-effect:non-scaling-stroke}
+.p text{font:600 11px var(--sans);fill:var(--fg);paint-order:stroke;stroke:var(--panel);stroke-width:3px}
+aside{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0;overflow:auto}
+.lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.big{font:500 22px var(--mono);font-variant-numeric:tabular-nums}
+dl{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:0}
+dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.ll{display:flex;flex-direction:column;gap:6px}
+.ll span{display:flex;align-items:center;gap:8px}
+.sw{width:14px;height:14px;border-radius:3px;flex:none}
+.cami{font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--muted);word-break:break-word}
+.hint{color:var(--muted);font-size:13px;line-height:1.5}
+.zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:4px}
+.zoom button{width:30px;height:30px;font:500 16px var(--sans);background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:6px;cursor:pointer}
+@media (max-width:760px){.app{grid-template-columns:1fr;grid-template-rows:auto 60vh auto;height:auto}.seg{margin-left:0}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>Conques de Catalunya</h1>
+    <span class="sub">Calculades amb el MDT de l'IGN (reixa de 100 m). Clica una conca per veure cap on drena.</span>
+    <div class="seg" role="group" aria-label="Mida de conca">
+      <button id="b25" aria-pressed="true">Tall a 25 km²</button>
+      <button id="b100" aria-pressed="false">Tall a 100 km²</button>
+    </div>
+  </header>
+  <div class="mapa" id="mapa">
+    <svg id="svg" aria-label="Mapa de conques"></svg>
+    <div class="zoom"><button id="zin" aria-label="Apropa">+</button><button id="zout" aria-label="Allunya">−</button><button id="zre" aria-label="Vista sencera">⟲</button></div>
+  </div>
+  <aside id="info">
+    <div class="ll">
+      <span><i class="sw" style="background:var(--sel)"></i>Conca triada</span>
+      <span><i class="sw" style="background:color-mix(in srgb,var(--avall) 60%,var(--conca))"></i>Aigües avall, fins al mar</span>
+      <span><i class="sw" style="background:color-mix(in srgb,var(--amunt) 55%,var(--conca))"></i>Aigües amunt (li porten aigua)</span>
+    </div>
+    <div id="det"><p class="hint">Carregant conques…</p></div>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+const POBLES=[["Platja d'Aro",3.067,41.817],["Granollers",2.288,41.608],["Cabrera de Mar",2.396,41.527]];
+const svg=d3.select("#svg"), g=svg.append("g"), gC=g.append("g"), gR=g.append("g"), gP=g.append("g");
+const fmt=n=>n.toLocaleString("ca-ES",{maximumFractionDigits:1});
+let dades={}, mida="25", sel=null, proj, path, rius;
+const zoom=d3.zoom().scaleExtent([1,40]).on("zoom",e=>g.attr("transform",e.transform));
+svg.call(zoom);
+d3.select("#zin").on("click",()=>svg.transition().call(zoom.scaleBy,1.6));
+d3.select("#zout").on("click",()=>svg.transition().call(zoom.scaleBy,1/1.6));
+d3.select("#zre").on("click",()=>svg.transition().call(zoom.transform,d3.zoomIdentity));
+
+function mides(){const r=document.getElementById("mapa").getBoundingClientRect();return [r.width,r.height]}
+function prepara(fc){
+  const byId=new Map(), fills=new Map();
+  // d3 vol l'anell exterior en sentit horari: si un polígon "ocupa mig planeta", es gira
+  const gira=p=>{p.forEach(r=>r.reverse())};
+  const cal=gm=>d3.geoArea({type:"Polygon",coordinates:gm})>2*Math.PI;
+  fc.features.forEach(f=>{const gm=f.geometry;
+    if(gm.type==="Polygon"){if(cal(gm.coordinates))gira(gm.coordinates)}
+    else if(gm.type==="MultiPolygon")gm.coordinates.forEach(pp=>{if(cal(pp))gira(pp)})});
+  fc.features.forEach(f=>{byId.set(f.properties.id,f);});
+  fc.features.forEach(f=>{const a=f.properties.avall;if(a!=null){if(!fills.has(a))fills.set(a,[]);fills.get(a).push(f.properties.id)}});
+  return {fc,byId,fills};
+}
+function dibuixa(){
+  const [w,h]=mides(); const d=dades[mida];
+  svg.attr("viewBox",[0,0,w,h]);
+  proj=d3.geoMercator().fitExtent([[10,10],[w-10,h-10]],d.fc); path=d3.geoPath(proj);
+  gC.selectAll("path").data(d.fc.features,f=>f.properties.id).join("path").attr("class","c").attr("d",path)
+    .on("click",(e,f)=>tria(f.properties.id)).append("title").text(f=>`${fmt(f.properties.km2)} km²`);
+  gR.selectAll("path").data(rius.features).join("path").attr("class","riu").attr("d",path);
+  const p=gP.selectAll("g").data(POBLES).join(enter=>{const s=enter.append("g").attr("class","p");s.append("circle").attr("r",4);s.append("text").attr("x",7).attr("y",4);return s});
+  p.attr("transform",d=>`translate(${proj([d[1],d[2]])})`).select("text").text(d=>d[0]);
+  pinta();
+}
+function tria(id){sel=id;pinta()}
+function pinta(){
+  const d=dades[mida]; const av=new Set(), am=new Set(); const cami=[];
+  if(sel!=null&&d.byId.has(sel)){
+    let a=d.byId.get(sel).properties.avall; const vist=new Set();
+    while(a!=null&&!vist.has(a)&&d.byId.has(a)){vist.add(a);av.add(a);cami.push(a);a=d.byId.get(a).properties.avall}
+    const pila=[sel]; while(pila.length){const x=pila.pop();(d.fills.get(x)||[]).forEach(c=>{if(!am.has(c)){am.add(c);pila.push(c)}})}
+  }
+  gC.selectAll("path").attr("class",f=>{const i=f.properties.id;return "c"+(i===sel?" sel":av.has(i)?" avall":am.has(i)?" amunt":"")});
+  const det=document.getElementById("det");
+  if(sel==null||!d.byId.has(sel)){det.innerHTML=`<p class="hint">Clica qualsevol conca del mapa. Es pinten les que hi porten aigua i el camí que fa l'aigua fins al mar.</p><dl><dt>Conques</dt><dd>${d.fc.features.length}</dd></dl>`;return}
+  const p=d.byId.get(sel).properties;
+  const fi=cami.length?d.byId.get(cami[cami.length-1]).properties:p;
+  const amKm=[...am].reduce((s,i)=>s+d.byId.get(i).properties.km2,0);
+  det.innerHTML=`<div><div class="lbl">Conca ${p.id}</div><div class="big">${fmt(p.km2)} km²</div></div>
+   <dl><dt>Superfície que drena a la sortida</dt><dd>${fmt(p.km2_amunt)} km²</dd>
+   <dt>Conques aigües amunt</dt><dd>${am.size} (${fmt(amKm)} km²)</dd>
+   <dt>Conques aigües avall</dt><dd>${cami.length}</dd>
+   <dt>Sortida</dt><dd>${p.sortida_lat.toFixed(4)}, ${p.sortida_lon.toFixed(4)}</dd>
+   <dt>Final del camí</dt><dd>${fi.sortida_lat.toFixed(3)}, ${fi.sortida_lon.toFixed(3)}</dd></dl>
+   <div><div class="lbl">Camí de l'aigua</div><div class="cami">${[p.id,...cami].join(" → ")} → ${cami.length||p.avall==null?"mar o límit":""}</div></div>
+   <p class="hint">Si el camí acaba lluny de la costa, és que el riu surt de Catalunya o la conca toca el límit del mapa.</p>`;
+}
+function canvia(m){mida=m;sel=null;
+  d3.select("#b25").attr("aria-pressed",m==="25");d3.select("#b100").attr("aria-pressed",m==="100");dibuixa()}
+d3.select("#b25").on("click",()=>canvia("25"));d3.select("#b100").on("click",()=>canvia("100"));
+Promise.all([d3.json("data/catalunya/conques/web/conques_25.json"),d3.json("data/catalunya/conques/web/conques_100.json"),d3.json("data/catalunya/conques/web/rius.json")]).then(([a,b,r])=>{
+  dades["25"]=prepara(a);dades["100"]=prepara(b);rius=r;
+  const pda=a.features.find(f=>d3.geoContains(f,[2.288,41.608]));
+  dibuixa(); if(pda) tria(pda.properties.id);
+}).catch(e=>{document.getElementById("det").innerHTML=`<p class="hint">No s'han pogut carregar les conques (${e.message}). Torna a carregar la pàgina.</p>`});
+let t;window.addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(()=>dades[mida]&&dibuixa(),150)});
+</script>
+<script src="nav.js"></script>
+</body>
+</html>
