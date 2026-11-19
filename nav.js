@@ -3,17 +3,17 @@
 // Les pàgines amb `opcional: true` s'amaguen si encara no existeixen (p. ex. abans de fusionar-ne la PR).
 (function () {
   const PAGINES = [
-    { grup: 'En directe', items: [
-      { href: 'previsio.html', text: 'Previsió Platja d\'Aro' },
+    { grup: 'Catalunya', items: [
+      { href: 'catalunya.html', text: 'Pluja' },
+      { href: 'conques.html', text: 'Conques' },
     ] },
-    { grup: 'Episodis', items: [
-      { href: 'evolucio.html', text: 'Evolució (4 mapes)' },
+    { grup: 'Casos d\'estudi', items: [
+      { href: 'evolucio.html', text: 'Episodis (4 mapes)' },
       { href: 'episodi.html', text: 'Reproducció 4/10' },
       { href: 'pluja.html', text: 'Pluja sobre el relleu' },
     ] },
-    { grup: 'Catalunya', items: [
-      { href: 'catalunya.html', text: 'Pluja', opcional: true },
-      { href: 'conques.html', text: 'Conques', opcional: true },
+    { grup: 'En directe', items: [
+      { href: 'previsio.html', text: 'Previsió Ridaura' },
     ] },
   ];
 
