@@ -1,0 +1,30 @@
+{
+ "mesos": {
+  "2026-10": {
+   "primera": "2026-10-01T01:00",
+   "hores": 744,
+   "falten": [
+    "2026-10-21T15:00",
+    "2026-10-21T16:00",
+    "2026-10-21T17:00",
+    "2026-10-21T18:00",
+    "2026-10-21T20:00",
+    "2026-10-21T21:00",
+    "2026-10-22T04:00",
+    "2026-10-22T07:00",
+    "2026-10-22T08:00",
+    "2026-10-22T09:00"
+   ],
+   "generat": "2026-11-19T13:36"
+  }
+ },
+ "oest": 0.15,
+ "est": 3.35,
+ "sud": 40.5,
+ "nord": 42.9,
+ "pas": 0.02,
+ "files": 120,
+ "columnes": 160,
+ "codificacio": "uint8 [hora][fila N→S][columna O→E]; mm = (v/20)^2; 255 = sense dada",
+ "font": "EUMETNET OPERA Open Radar Data (CC BY 4.0), acumulat d'1 h ACRR, sense correcció amb estacions"
+}
