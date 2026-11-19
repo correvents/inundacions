@@ -76,5 +76,14 @@
   "Caldes de Montbui",
   "Sant Feliu de Codines",
   "Santa Maria de Martorelles"
- ]
+ ],
+ "passos_inferiors": {
+  "caixa": [
+   2.262,
+   41.582,
+   2.318,
+   41.632
+  ],
+  "nota": "Terme de Granollers i vores de Canovelles i les Franqueses"
+ }
 }

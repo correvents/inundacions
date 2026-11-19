@@ -1,0 +1,42 @@
+name: Passos inferiors (punts baixos)
+
+on:
+  workflow_dispatch:
+    inputs:
+      conca:
+        description: "Conca (config/<conca>.json amb passos_inferiors.caixa)"
+        default: "granollers"
+  push:
+    branches: ["claude/**"]
+    paths: ["scripts/passos_inferiors.py", ".github/workflows/passos_inferiors.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  passos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy scipy scikit-image rasterio pyproj shapely
+      - name: Passos inferiors
+        env:
+          SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: python3 scripts/passos_inferiors.py --config config/${{ inputs.conca || 'granollers' }}.json --mdt /tmp/passos/mdt.tif --baixa-mdt --supabase
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/*/passos/passos_inferiors.*
+          git diff --cached --quiet && exit 0
+          git commit -m "Passos inferiors: ${{ inputs.conca || 'granollers' }}"
+          for i in 1 2 3 4 5 6; do git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME" && exit 0; sleep $((i*7)); done; exit 1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mdt
+          path: /tmp/passos/mdt.tif
