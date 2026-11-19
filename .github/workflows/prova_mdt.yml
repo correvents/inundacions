@@ -12,9 +12,12 @@ jobs:
           B=https://centrodedescargas.cnig.es/CentroDescargas
           c="-sS -m 60 -A Mozilla/5.0 -c /tmp/ck -b /tmp/ck"
           curl $c "$B/index.jsp" -o /dev/null
-          echo "== catalogo"; curl $c "$B/catalogo.do?Serie=MDT02" | grep -oiE '(codSerie|serie|secuencial|archivosSerie|codFamilia|[a-zA-Z]+\.do)[^"<]{0,80}' | sort -u | head -40
-          echo "== buscador"; curl $c "$B/buscadorCatalogo.do?codFamilia=02108" | grep -oiE '(MDT02|codSerie|secuencial|\.do)[^"<]{0,80}' | sort -u | head -40
-          for ep in archivosSerie resultadosArchivos; do
-            echo "== $ep"; curl $c -X POST "$B/$ep" --data "codSerie=MDT02&coordenadas=2.27,41.60&tipoBusqueda=coordenadas&numPagina=1&codSubSerie=" | head -c 3000; echo
-          done
+          curl $c "$B/catalogo.do?Serie=MDT02" -o /tmp/cat.html
+          python3 - <<'PY'
+          import re
+          s=open('/tmp/cat.html',encoding='utf-8',errors='ignore').read()
+          for pat in ['function cargarArchivosSerie', 'ArchivosSerie(){', 'descargaDirS3', 'function cargaArchivosSerieOk', 'url:', 'secuencial']:
+              for m in list(re.finditer(re.escape(pat), s))[:4]:
+                  print('==', pat); print(s[max(0,m.start()-300):m.start()+1200].replace('\t',' '))
+          PY
           true
