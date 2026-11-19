@@ -1,0 +1,30 @@
+name: Mapa de conques de Catalunya
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/project-thread-1nypmx]
+    paths: [scripts/mapa_conques.py, .github/workflows/mapa_conques.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  mapa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests geopandas pyogrio matplotlib
+      - run: python3 scripts/mapa_conques.py
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalunya/conques
+          git diff --cached --quiet && exit 0
+          git commit -m "Mapa de conques de Catalunya (HydroBASINS)"
+          git push
