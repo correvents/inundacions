@@ -28,6 +28,14 @@ def main():
     q = np.frombuffer(gzip.decompress((d / f"{a.mes}.bin.gz").read_bytes()), np.uint8).reshape(-1, F_, C_)
     H = q.shape[0]
     R = np.where(q < 255, (q / 20.0) ** 2, np.nan)
+    # ecos fixos (muntanya, parcs eòlics): píxels amb un total mensual > 3 vegades la mediana del voltant (±5 px) i > 100 mm
+    tot_r = np.nansum(R, 0); veins = np.zeros_like(tot_r)
+    for i in range(F_):
+        for j in range(C_):
+            veins[i, j] = np.median(tot_r[max(0, i - 5):i + 6, max(0, j - 5):j + 6])
+    eco = (tot_r > 3 * veins) & (tot_r > 100)
+    R[:, eco] = np.nan
+    print(f"Ecos fixos tapats: {eco.sum()} píxels de {eco.size}")
     est = json.loads((d / f"{a.mes}_estacions.json").read_text())
     lat0 = 41.7; kx = 111.32 * np.cos(np.radians(lat0)); ky = 110.57
     E = [e for e in est if idx["sud"] < e["lat"] < idx["nord"] and idx["oest"] < e["lon"] < idx["est"]]
@@ -57,7 +65,7 @@ def main():
     W = np.where(D < RADI, 1 / (np.maximum(D, ESC) ** 2), 0.0); np.fill_diagonal(W, 0)
     k0 = 1 / NUGGET ** 2
     out = np.full_like(R, np.nan); Fh = np.ones(H)
-    loo_raw, loo_mfb, loo_cor, obs = [], [], [], []
+    loo_raw, loo_mfb, loo_cor, obs, quin = [], [], [], [], []
     for h in range(H):
         g, r = G[:, h], Rg[:, h]
         ok = np.isfinite(g) & np.isfinite(r)
@@ -75,7 +83,7 @@ def main():
             Fi = float(np.clip(sg_i / sr_i, 0.2, 5)) if o.sum() >= 5 and sr_i >= 2 and sg_i >= 2 else 1.0
             wi = W[i] * o
             ci = (np.where(o, g - r * Fi, 0) * wi).sum() / (wi.sum() + k0)
-            loo_raw.append(r[i]); loo_mfb.append(r[i] * Fi); loo_cor.append(max(r[i] * Fi + ci, 0)); obs.append(g[i])
+            loo_raw.append(r[i]); loo_mfb.append(r[i] * Fi); loo_cor.append(max(r[i] * Fi + ci, 0)); obs.append(g[i]); quin.append((i, h // 24))
     obs, raw, mfb, cor = map(np.array, (obs, loo_raw, loo_mfb, loo_cor))
     plou = (obs > 0.1) | (raw > 0.1)
     def m(p):
@@ -83,6 +91,16 @@ def main():
         return {"biaix_total": round(float(x.sum() / y.sum()), 2), "rmse_mm_h": round(float(np.sqrt(((x - y) ** 2).mean())), 2),
                 "correlacio": round(float(np.corrcoef(x, y)[0, 1]), 2)}
     val = {"hores_estacio": int(plou.sum()), "radar_sol": m(raw), "biaix_mitja": m(mfb), "corregit": m(cor)}
+    # també per dies (pluja diària de cada estació), que és el que compta per a l'acumulat d'un episodi
+    from collections import defaultdict
+    dia = defaultdict(lambda: np.zeros(4))
+    for k, (i, dd) in enumerate(quin): dia[(i, dd)] += (obs[k], raw[k], mfb[k], cor[k])
+    D4 = np.array([v for v in dia.values() if v[0] >= 1 or v[1] >= 1])
+    def md(c):
+        x, y = D4[:, c], D4[:, 0]
+        return {"biaix_total": round(float(x.sum() / y.sum()), 2), "rmse_mm_dia": round(float(np.sqrt(((x - y) ** 2).mean())), 1),
+                "correlacio": round(float(np.corrcoef(x, y)[0, 1]), 2)}
+    val["diari"] = {"dies_estacio": len(D4), "radar_sol": md(1), "biaix_mitja": md(2), "corregit": md(3)}
     # acumulat mensual per estació (validació creuada)
     print("Validació deixant cada estació fora (hores amb pluja):", json.dumps(val))
     enc = np.where(np.isnan(out), 255, np.clip(np.round(np.sqrt(np.nan_to_num(out)) * 20), 0, 254)).astype(np.uint8)

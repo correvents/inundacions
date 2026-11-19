@@ -61,6 +61,8 @@
     </div>
 
     <div class="targeta">
+      <div class="botons" id="fonts"><button data-f="corr" class="actiu">Corregit amb pluviòmetres</button><button data-f="radar">Radar sol</button></div>
+      <label class="nota" style="display:block;margin:2px 0 6px"><input type="checkbox" id="veuest" checked> Mostrar els pluviòmetres (cercle = acumulat mesurat)</label>
       <div class="botons" id="modes"><button data-m="acum" class="actiu">Acumulat del període</button><button data-m="hora">Hora a hora</button></div>
       <div id="ctlhora" style="display:none">
         <div class="gran" id="instant">–</div>
@@ -91,8 +93,14 @@
       <div class="fila"><span>Hora més plujosa</span><span id="pmax">–</span></div>
     </div>
 
-    <div class="nota">Radar EUMETNET OPERA (CC BY 4.0), acumulat d'1 h a ~2 km, sense corregir amb pluviòmetres:
-      sol quedar curt en xàfecs forts i lluny dels radars, i pot marcar ecos falsos a la muntanya. Les zones grises no tenen dada.
+    <div class="targeta" id="tval" style="display:none">
+      <h2>Com encerta (cada estació, calculat sense ella)</h2>
+      <div id="val"></div>
+    </div>
+
+    <div class="nota">Radar EUMETNET OPERA (CC BY 4.0), acumulat d'1 h a ~2 km. «Corregit»: cada hora s'ajusta amb els pluviòmetres de la XEMA
+      (Meteocat) i de l'ACA: primer un factor per a tot Catalunya i després la diferència de cada estació, repartida fins a 30 km.
+      El radar sol queda curt en xàfecs forts i lluny dels radars, i pot marcar ecos falsos a la muntanya. Les zones grises no tenen dada.
       Les línies blaves són les conques pilot (Ridaura, Congost i Cabrera).</div>
   </div>
 </div>
@@ -132,14 +140,52 @@ function deLocal(s) {      // valor local de Madrid → ms UTC (prova els dos de
   return Date.parse(s + ':00Z') - 3600e3;
 }
 
+async function baixa(url) {
+  let buf = new Uint8Array(await (await fetch(url)).arrayBuffer());
+  if (buf[0] === 0x1f && buf[1] === 0x8b) buf = new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
+  return buf;
+}
+let CUBS = {}, EST = [], font = 'corr', capaEst = L.layerGroup().addTo(mapa);
+function posaFont(f, refa = true) {
+  font = f; document.querySelectorAll('#fonts button').forEach(b => b.classList.toggle('actiu', b.dataset.f === f));
+  if (refa && CUBS[f]) { CUB = CUBS[f]; recalcula(); }
+}
+document.querySelectorAll('#fonts button').forEach(b => b.onclick = () => posaFont(b.dataset.f));
+function estacions() {
+  capaEst.clearLayers();
+  if (!$('veuest').checked) return;
+  const N = F * C;
+  for (const e of EST) {
+    let s = 0, n = 0; for (let h = ini; h <= fi; h++) { const v = e.mm[h]; if (v != null) { s += v; n++; } }
+    if (n < (fi - ini + 1) * 0.8) continue;
+    const c = color(s, ESC_ACUM), fil = Math.floor((IDX.nord - e.lat) / IDX.pas), col = Math.floor((e.lon - IDX.oest) / IDX.pas);
+    const mapaV = ACUM[fil * C + col]; let r = 0;
+    for (let h = ini; h <= fi; h++) { const v = CUBS.radar[h * N + fil * C + col]; if (v !== 255) r += LUT[v]; }
+    L.circleMarker([e.lat, e.lon], { radius: 5, weight: e.descartada ? 2 : 1, color: e.descartada ? '#e3401f' : '#1b2733',
+      dashArray: e.descartada ? '2 2' : null, fillColor: c ? `rgb(${c})` : '#fff', fillOpacity: 1 })
+      .bindTooltip(`<b>${e.nom}</b> (${e.font})${e.descartada ? ' · descartat pel control de qualitat' : ''}<br>Pluviòmetre: <b>${s.toFixed(1)} mm</b><br>Radar sol: ${r.toFixed(1)} mm` +
+        (font === 'corr' ? `<br>Corregit: ${isNaN(mapaV) ? '–' : mapaV.toFixed(1)} mm` : ''))
+      .on('click', ev => { L.DomEvent.stopPropagation(ev); triaPunt(L.latLng(e.lat, e.lon)); })
+      .addTo(capaEst);
+  }
+}
+$('veuest').onchange = estacions;
+
 async function carregaMes(mes) {
   $('carrega').style.display = ''; $('carrega').textContent = 'Carregant la pluja de ' + mes + '…';
   aturar();
   MES = mes; META = IDX.mesos[mes]; H = META.hores; F = IDX.files; C = IDX.columnes;
-  const r = await fetch(`data/pluja_cat/${mes}.bin.gz`);
-  let buf = new Uint8Array(await r.arrayBuffer());
-  if (buf[0] === 0x1f && buf[1] === 0x8b) buf = new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
-  CUB = buf;
+  CUBS = { radar: await baixa(`data/pluja_cat/${mes}.bin.gz`) };
+  if (META.corregit) {
+    CUBS.corr = await baixa(`data/pluja_cat/${mes}_corr.bin.gz`);
+    EST = await fetch(`data/pluja_cat/${mes}_estacions.json`).then(r => r.json()).catch(() => []);
+    const v = META.validacio, f = x => `biaix ${Math.round((x.biaix_total - 1) * 100)}% · error ${x.rmse_mm_h} mm/h · correlació ${x.correlacio}`;
+    $('val').innerHTML = `<div class="fila"><span>Radar sol</span><span>${f(v.radar_sol)}</span></div><div class="fila"><span>Corregit</span><span>${f(v.corregit)}</span></div>
+      <div class="nota">${META.estacions} pluviòmetres · ${v.hores_estacio.toLocaleString('ca-ES')} hores amb pluja comparades</div>`;
+    $('tval').style.display = '';
+  } else { EST = []; $('tval').style.display = 'none'; if (font === 'corr') posaFont('radar', false); }
+  document.querySelectorAll('#fonts button')[0].disabled = !META.corregit;
+  CUB = CUBS[font] || CUBS.radar;
   ini = 0; fi = H - 1;
   $('carrega').style.display = 'none';
   posaDates(); recalcula();
@@ -176,7 +222,7 @@ function recalcula() {
   const km2 = (IDX.pas * 111) ** 2 * Math.cos(41.7 * Math.PI / 180);
   $('sup50').textContent = Math.round(s50 * km2).toLocaleString('ca-ES') + ' km²';
   $('maxhora').textContent = maxh.toFixed(0) + ' mm/h · ' + fmtH(tHora(maxhT));
-  dibuixa(); grafCat(); if (punt) infoPunt();
+  dibuixa(); grafCat(); estacions(); if (punt) infoPunt();
 }
 const centre = i => [IDX.nord - (Math.floor(i / C) + 0.5) * IDX.pas, IDX.oest + (i % C + 0.5) * IDX.pas];
 

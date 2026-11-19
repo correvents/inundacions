@@ -60,31 +60,25 @@ def xema(ini, H):
 
 
 def horaria(m, ini, H):
-    """{ms: valor} → mm per hora. Detecta si el sensor dona pluja acumulada (creixent amb reinicis) o per interval."""
+    """{ms: valor} → mm per hora. Els pluviòmetres de l'ACA donen intensitat en mm/h (com a previsio.py: mm = v·Δt/60):
+    la pluja de l'hora és la mitjana de les intensitats mesurades dins l'hora (× 1 h), si n'hi ha prou."""
     ts = sorted(m)
     v = []
     for t in ts:
         try: v.append(float(m[t]))
         except ValueError: v.append(np.nan)
     t = np.array(ts) / 1000.0; v = np.array(v)
-    ok = np.isfinite(v); t, v = t[ok], v[ok]
+    ok = np.isfinite(v) & (v >= 0) & (v < 300); t, v = t[ok], v[ok]
     if len(v) < 10: return None
-    d = np.diff(v)
-    acumulat = (d >= -1e-6).mean() > 0.97 and v.max() > 20 * max(np.median(v[v > 0]) if (v > 0).any() else 1, 0.1)
-    if acumulat:
-        inc = np.where(d >= 0, d, 0.0); t = t[1:]
-    else:
-        inc = v
-    out = np.full(H, np.nan); n = np.zeros(H)
     h = np.ceil((t - ini.timestamp()) / 3600).astype(int) - 1
-    s = np.zeros(H)
-    for hh, x in zip(h, inc):
-        if 0 <= hh < H: s[hh] += x; n[hh] += 1
-    # una hora val si té prou mesures (la majoria de sensors donen cada 5 o 10 min)
+    s = np.zeros(H); n = np.zeros(H)
+    dins = (h >= 0) & (h < H)
+    np.add.at(s, h[dins], v[dins]); np.add.at(n, h[dins], 1)
     tip = np.median(n[n > 0]) if (n > 0).any() else 0
-    out[n >= max(1, 0.75 * tip)] = s[n >= max(1, 0.75 * tip)]
-    out[(out < 0) | (out > 200)] = np.nan
-    return out, acumulat
+    out = np.full(H, np.nan)
+    bo = n >= max(1, 0.75 * tip)
+    out[bo] = s[bo] / n[bo]
+    return out
 
 
 def aca_pluvios(ini, H):
@@ -108,14 +102,14 @@ def aca_pluvios(ini, H):
         m = aca.llegeix(aca.sessio(), p, se["sensor"], ini - timedelta(hours=1), fi)
         r = horaria(m, ini, H) if m else None
         if r is None: return None
-        mm, acum = r
+        mm = r
         return {"id": f"ACA-{se['sensor']}", "font": "ACA", "nom": se.get("componentDesc") or se.get("description") or se["sensor"],
-                "lat": la, "lon": lo, "acumulat": bool(acum), "mm": [None if not np.isfinite(v) else round(float(v), 1) for v in mm]}
+                "lat": la, "lon": lo, "unitat": se.get("unit"), "mm": [None if not np.isfinite(v) else round(float(v), 1) for v in mm]}
     out = []
     with ThreadPoolExecutor(8) as ex:
         for k, r in enumerate(ex.map(baixa, sens)):
             if r and sum(v is not None for v in r["mm"]) > 24: out.append(r)
-    print(f"ACA: {len(out)} pluviòmetres amb dades ({sum(r['acumulat'] for r in out)} en format acumulat)")
+    print(f"ACA: {len(out)} pluviòmetres amb dades; unitats: {sorted({str(r['unitat']) for r in out})}")
     return out
 
 
