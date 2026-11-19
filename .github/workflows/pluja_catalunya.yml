@@ -8,7 +8,7 @@ on:
         default: "2026-10"
   push:
     branches: [claude/project-thread-f1uruf]
-    paths: [".github/workflows/pluja_catalunya.yml", "scripts/pluja_catalunya.py"]
+    paths: [".github/workflows/pluja_catalunya.yml", "scripts/pluja_catalunya.py", "scripts/pluviometres_cat.py", "scripts/correccio_cat.py"]
 
 permissions:
   contents: write
@@ -23,7 +23,18 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install requests numpy h5py pyproj
-      - run: python3 scripts/pluja_catalunya.py --mes "${{ inputs.mes || '2026-10' }}"
+      - name: Radar
+        run: |
+          M="${{ inputs.mes || '2026-10' }}"
+          [ -f "data/pluja_cat/$M.bin.gz" ] && echo "radar de $M ja fet" || python3 scripts/pluja_catalunya.py --mes "$M"
+      - name: Pluviòmetres (XEMA i ACA)
+        run: python3 scripts/pluviometres_cat.py --mes "${{ inputs.mes || '2026-10' }}"
+      - name: Correcció del radar amb els pluviòmetres
+        run: |
+          M="${{ inputs.mes || '2026-10' }}"
+          cp data/pluja_cat/index.json /tmp/index.json; cp data/pluja_cat/${M}_estacions.json /tmp/est.json
+          for s in -1 1; do echo "== desfase $s h"; python3 scripts/correccio_cat.py --mes "$M" --desfase $s | grep -E "Validació"; cp /tmp/index.json data/pluja_cat/index.json; cp /tmp/est.json data/pluja_cat/${M}_estacions.json; done
+          echo "== desfase 0 h (definitiu)"; python3 scripts/correccio_cat.py --mes "$M"
       - name: Desa
         run: |
           git config user.name "github-actions[bot]"
