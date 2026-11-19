@@ -1,0 +1,118 @@
+name: MDT 5 m de Catalunya i relleu per conca
+
+# Baixa l'MDT de 5 m de l'IGN conca per conca (tall de 100 km², 365 conques), el desa a la Release `mdt5-cat`
+# (un GeoTIFF per conca, alçada en cm) i calcula rieretes i zones baixes de cada conca per a conques.html.
+# Si l'MDT d'una conca ja és a la Release, no el torna a baixar. Les conques que fallen surten al resum i es
+# poden tornar a llançar soles amb l'entrada «conques».
+
+on:
+  workflow_dispatch:
+    inputs:
+      conques:
+        description: "Conques (ids separats per comes) o «totes»"
+        default: "totes"
+      lots:
+        description: "Feines (lots de conques)"
+        default: "30"
+      pas:
+        description: "Cel·la del càlcul de relleu (m)"
+        default: "10"
+      llindar:
+        description: "Conca mínima d'una rierata (km²)"
+        default: "0.05"
+  push:
+    branches: [claude/project-thread-jrfwlk]
+    paths: [scripts/mdt_cat.py, .github/workflows/mdt_cat.yml]
+
+permissions:
+  contents: write
+
+env:
+  CONQUES: ${{ inputs.conques || '125,124,199,188,25' }}
+  ETIQUETA: mdt5-cat
+
+jobs:
+  prepara:
+    runs-on: ubuntu-latest
+    outputs:
+      matriu: ${{ steps.m.outputs.matriu }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: m
+        run: |
+          pip install -q numpy shapely pyproj rasterio requests
+          echo "matriu=$(python3 scripts/mdt_cat.py lots --lots '${{ inputs.lots || '30' }}' --conques '${{ env.CONQUES }}')" >> "$GITHUB_OUTPUT"
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$ETIQUETA" -R "${{ github.repository }}" >/dev/null 2>&1 || \
+          gh release create "$ETIQUETA" -R "${{ github.repository }}" --target main --title "MDT 5 m de Catalunya per conques" \
+            --notes "MDT de 5 m de l'IGN (PNOA LiDAR, WCS Elevacion25830_5), un fitxer per conca del tall de 100 km² (data/catalunya/conques/conques_100km2.geojson). GeoTIFF int32 en centímetres, EPSG:25830, sense dades fora de la conca + 500 m. Fet amb scripts/mdt_cat.py."
+
+  calcula:
+    needs: prepara
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix: ${{ fromJson(needs.prepara.outputs.matriu) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy rasterio pyproj shapely pysheds numba pillow
+      - name: Conques ${{ matrix.lot }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/mdt_cat; fallades=""
+          for id in ${{ matrix.lot }}; do
+            nom=$(printf "c%03d" "$id"); f=/tmp/mdt_cat/mdt5_$nom.tif
+            gh release download "$ETIQUETA" -R "${{ github.repository }}" -p "mdt5_$nom.tif" -D /tmp/mdt_cat 2>/dev/null && echo "$nom: MDT de la Release" || true
+            nou=0; [ -f "$f" ] || nou=1
+            if timeout 3600 python3 scripts/mdt_cat.py conca --id "$id" --mdt "$f" --pas "${{ inputs.pas || '10' }}" --llindar-km2 "${{ inputs.llindar || '0.05' }}"; then
+              if [ "$nou" = 1 ]; then gh release upload "$ETIQUETA" "$f" -R "${{ github.repository }}" --clobber || fallades="$fallades $id"; fi
+            else
+              fallades="$fallades $id"
+            fi
+            rm -f /tmp/mdt_cat/*.tif
+          done
+          echo "Fallades:$fallades"
+          echo "$fallades" > data/catalunya/fallades_${{ strategy.job-index }}.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: relleu-${{ strategy.job-index }}
+          path: |
+            data/catalunya/relleu/
+            data/catalunya/fallades_*.txt
+          if-no-files-found: ignore
+
+  desa:
+    needs: calcula
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: relleu-*
+          merge-multiple: true
+          path: /tmp/art
+      - run: pip install numpy shapely pyproj rasterio requests
+      - name: Desa
+        run: |
+          mkdir -p data/catalunya/relleu
+          if [ -d /tmp/art/relleu ]; then cp -r /tmp/art/relleu/. data/catalunya/relleu/; fi
+          python3 scripts/mdt_cat.py index
+          f=$(cat /tmp/art/fallades_*.txt 2>/dev/null | tr -s ' \n' ' ')
+          echo "### MDT 5 m: conques fallades: ${f:-cap}" >> "$GITHUB_STEP_SUMMARY"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalunya/relleu
+          git diff --cached --quiet && exit 0
+          git commit -m "Relleu de Catalunya per conca: rieretes i zones baixes (MDT 5 m)"
+          for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1
