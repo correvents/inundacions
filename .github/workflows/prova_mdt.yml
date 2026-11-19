@@ -1,0 +1,21 @@
+name: Prova servidors MDT
+on:
+  push:
+    branches: ["claude/project-thread-22bcr1"]
+    paths: [".github/workflows/prova_mdt.yml"]
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for u in \
+            "https://datacloud.icgc.cat/datacloud/" \
+            "https://datacloud.icgc.cat/datacloud/met2_ETRS89/" \
+            "https://datacloud.icgc.cat/datacloud/met2_ETRS89/tif_unzip/" \
+            "https://datacloud.icgc.cat/datacloud/met5_ETRS89/" \
+            "https://geoserveis.icgc.cat/servei/catalunya/mdt/wms?REQUEST=GetCapabilities&SERVICE=WMS" \
+            "https://geoserveis.icgc.cat/icc_mdt/wcs/service?REQUEST=GetCapabilities&SERVICE=WCS" \
+            "https://geoserveis.icgc.cat/icgc_mdt2m/wcs/service?REQUEST=GetCapabilities&SERVICE=WCS" \
+            "https://www.icgc.cat/" ; do
+            echo "== $u"; curl -sS -m 90 -A "Mozilla/5.0" -o /tmp/r -w "%{http_code} %{size_download}\n" "$u"; head -c 1500 /tmp/r | tr -s '\n' ' '; echo; grep -oiE 'href="[^"]*(met|mdt)[^"]*"' /tmp/r | head -40
+          done
