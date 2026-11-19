@@ -65,7 +65,7 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
 <div class="app">
   <header>
     <h1>Conques de Catalunya</h1>
-    <span class="sub"><a href="previsio.html">← previsió</a> · Calculades amb el MDT de l'IGN (reixa de 100 m). Clica una conca per veure cap on drena.</span>
+    <span class="sub">Calculades amb el MDT de l'IGN (reixa de 100 m). Clica una conca per veure cap on drena.</span>
     <div class="seg" role="group" aria-label="Mida de conca">
       <button id="b25" aria-pressed="true">Tall a 25 km²</button>
       <button id="b100" aria-pressed="false">Tall a 100 km²</button>
@@ -154,5 +154,6 @@ Promise.all([d3.json("data/catalunya/conques/web/conques_25.json"),d3.json("data
 }).catch(e=>{document.getElementById("det").innerHTML=`<p class="hint">No s'han pogut carregar les conques (${e.message}). Torna a carregar la pàgina.</p>`});
 let t;window.addEventListener("resize",()=>{clearTimeout(t);t=setTimeout(()=>dades[mida]&&dibuixa(),150)});
 </script>
+<script src="nav.js"></script>
 </body>
 </html>
