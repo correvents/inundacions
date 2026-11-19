@@ -6,15 +6,18 @@ function fonsMapa(mapa, defecte = 'Topogràfic', atrib = '') {
   const A = (t) => t + (atrib ? ' · ' + atrib : '');
   const fons = {
     'Topogràfic': L.tileLayer(ICGC('topografic'), { maxZoom: 19, attribution: A('© ICGC') }),
-    'Gris': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: A('© OpenStreetMap · © CARTO') }),
-    'Satèl·lit': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: A('© Esri, Maxar, Earthstar Geographics') }),
+    'Gris': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 19, attribution: A('© Esri, HERE, Garmin, © OpenStreetMap') }),
+    'Ortofoto': L.tileLayer(ICGC('orto'), { maxZoom: 19, attribution: A('© ICGC') }),
+    'OpenStreetMap': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: A('© OpenStreetMap') }),
+    'Satèl·lit Esri': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: A('© Esri, Maxar, Earthstar Geographics') }),
     'Sense mapa': L.layerGroup(),
   };
   mapa.createPane('etiquetes');
   const pane = mapa.getPane('etiquetes');
   pane.style.zIndex = 650; pane.style.pointerEvents = 'none';
-  const noms = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',
-    { maxZoom: 19, subdomains: 'abcd', pane: 'etiquetes', attribution: '© OpenStreetMap · © CARTO' });
+  // noms de llocs sense clau d'API
+  const noms = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}',
+    { maxZoom: 19, pane: 'etiquetes', attribution: '© Esri' });
   (fons[defecte] || fons['Topogràfic']).addTo(mapa);
   noms.addTo(mapa);
   const ctl = L.control.layers(fons, { 'Noms de pobles i carrers (a sobre)': noms }, // desplegat en ordinador; en mòbil, plegat (ocupa molt)
