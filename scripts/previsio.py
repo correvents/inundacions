@@ -63,7 +63,9 @@ def main():
     rang = {"and": f"(temps.gt.{(ini - timedelta(minutes=1)).isoformat()},temps.lte.{ara.isoformat()})"}
     obs = {v: tot("observacions", {"select": "temps,valor", "conca": f"eq.{conca}", "var": f"eq.{v}", **rang})
            for v in ("pluja_mmh", "cabal_m3s")}
-    rad = tot("pluja_conca", {"select": "temps,mm", "conca": f"eq.{conca}", "subconca": "eq.aforador", "font": "eq.radar", **rang})
+    rad = tot("pluja_conca", {"select": "temps,mm,font", "conca": f"eq.{conca}", "subconca": "eq.aforador", "font": "in.(radar,radar_corregit)", **rang})
+    corr = {r["temps"] for r in rad if r["font"] == "radar_corregit"}       # el radar corregit amb pluviòmetres té preferència
+    rad = [r for r in rad if r["font"] == "radar_corregit" or r["temps"] not in corr]
     pluvio = serie(obs["pluja_mmh"], temps, "valor", lambda v: v * DT / 60)
     radar = serie(rad, temps, "mm")
     q_obs = serie(obs["cabal_m3s"], temps, "valor")

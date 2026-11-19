@@ -1,0 +1,68 @@
+{
+ "mesos": {
+  "2026-10": {
+   "primera": "2026-10-01T01:00",
+   "hores": 744,
+   "falten": [
+    "2026-10-21T15:00",
+    "2026-10-21T16:00",
+    "2026-10-21T17:00",
+    "2026-10-21T18:00",
+    "2026-10-21T20:00",
+    "2026-10-21T21:00",
+    "2026-10-22T04:00",
+    "2026-10-22T07:00",
+    "2026-10-22T08:00",
+    "2026-10-22T09:00"
+   ],
+   "generat": "2026-11-19T13:36",
+   "corregit": true,
+   "estacions": 243,
+   "validacio": {
+    "hores_estacio": 15902,
+    "radar_sol": {
+     "biaix_total": 0.74,
+     "rmse_mm_h": 3.49,
+     "correlacio": 0.66
+    },
+    "biaix_mitja": {
+     "biaix_total": 1.01,
+     "rmse_mm_h": 3.6,
+     "correlacio": 0.68
+    },
+    "corregit": {
+     "biaix_total": 1.01,
+     "rmse_mm_h": 3.0,
+     "correlacio": 0.77
+    },
+    "diari": {
+     "dies_estacio": 1929,
+     "radar_sol": {
+      "biaix_total": 0.74,
+      "rmse_mm_dia": 16.1,
+      "correlacio": 0.79
+     },
+     "biaix_mitja": {
+      "biaix_total": 1.01,
+      "rmse_mm_dia": 14.6,
+      "correlacio": 0.81
+     },
+     "corregit": {
+      "biaix_total": 1.03,
+      "rmse_mm_dia": 11.2,
+      "correlacio": 0.89
+     }
+    }
+   }
+  }
+ },
+ "oest": 0.15,
+ "est": 3.35,
+ "sud": 40.5,
+ "nord": 42.9,
+ "pas": 0.02,
+ "files": 120,
+ "columnes": 160,
+ "codificacio": "uint8 [hora][fila N→S][columna O→E]; mm = (v/20)^2; 255 = sense dada",
+ "font": "EUMETNET OPERA Open Radar Data (CC BY 4.0), acumulat d'1 h ACRR, sense correcció amb estacions"
+}

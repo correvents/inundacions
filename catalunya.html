@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="ca">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pluja a Catalunya</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root { --vora: #dde3ea; --suau: #5b6b7b; }
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #f4f6f8; color: #1b2733; }
+  #app { display: flex; height: 100%; }
+  #mapa { flex: 1; }
+  #panell { width: 390px; padding: 14px 16px; overflow-y: auto; background: #fff; border-left: 1px solid var(--vora); box-sizing: border-box; }
+  h1 { font-size: 18px; margin: 0 0 2px; }
+  h2 { font-size: 14px; margin: 0 0 6px; }
+  .sub { color: var(--suau); font-size: 13px; margin-bottom: 12px; }
+  .targeta { border: 1px solid var(--vora); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+  .fila { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; padding: 2px 0; }
+  .fila span:last-child { font-weight: 600; text-align: right; }
+  .gran { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; margin-bottom: 4px; }
+  .botons { display: flex; flex-wrap: wrap; gap: 4px; margin: 6px 0; }
+  .botons button { padding: 5px 10px; border: 1px solid var(--vora); background: #fff; border-radius: 6px; cursor: pointer; font-weight: 600; color: #1b2733; }
+  .botons button.actiu { background: #1b2733; color: #fff; border-color: #1b2733; }
+  label.ctl { display: block; font-size: 13px; margin-top: 8px; }
+  label.ctl b { float: right; }
+  input[type=range] { width: 100%; }
+  input[type=datetime-local], select { padding: 5px; border: 1px solid var(--vora); border-radius: 6px; width: 100%; box-sizing: border-box; font: inherit; font-size: 13px; }
+  .dates { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .dates > div { min-width: 0; }
+  .dates label { font-size: 12px; color: var(--suau); }
+  canvas.graf { width: 100%; height: 110px; display: block; cursor: crosshair; }
+  .nota { color: var(--suau); font-size: 12px; }
+  #val .fila { display: block; } #val .fila span:last-child { display: block; text-align: left; }
+  .escala { display: flex; height: 12px; border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .escala span { flex: 1; }
+  .etiq { display: flex; justify-content: space-between; font-size: 11px; color: var(--suau); }
+  a { color: #0b4f8a; }
+  .leaflet-image-layer { image-rendering: pixelated; }
+  .carrega { position: absolute; z-index: 1000; left: 50%; top: 40%; transform: translateX(-50%); background: #fff; padding: 10px 16px; border-radius: 8px; box-shadow: 0 2px 8px #0003; }
+  @media (max-width: 760px) { #app { flex-direction: column; } #panell { width: 100%; height: 55%; border-left: 0; border-top: 1px solid var(--vora); } }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="mapa"><div class="carrega" id="carrega">Carregant la pluja…</div></div>
+  <div id="panell">
+    <h1>Pluja a Catalunya</h1>
+    <div class="sub">Radar hora a hora a tot Catalunya: tria les dates, reprodueix-ho i mira l'acumulat</div>
+
+    <div class="targeta">
+      <select id="mes" style="font-weight:600;margin-bottom:8px"></select>
+      <div class="dates">
+        <div><label for="ini">Inici</label><input type="datetime-local" id="ini" step="3600"></div>
+        <div><label for="fi">Final</label><input type="datetime-local" id="fi" step="3600"></div>
+      </div>
+      <div class="botons" id="rapids">
+        <button data-d="1">1 dia</button><button data-d="3">3 dies</button><button data-d="7">7 dies</button><button data-d="0">tot el mes</button>
+      </div>
+      <div class="nota">Hores locals. Cada hora és la pluja caiguda l'hora anterior.</div>
+    </div>
+
+    <div class="targeta">
+      <div class="botons" id="fonts"><button data-f="corr" class="actiu">Corregit amb pluviòmetres</button><button data-f="radar">Radar sol</button></div>
+      <label class="nota" style="display:block;margin:2px 0 6px"><input type="checkbox" id="veuest" checked> Mostrar els pluviòmetres (cercle = acumulat mesurat)</label>
+      <div class="botons" id="modes"><button data-m="acum" class="actiu">Acumulat del període</button><button data-m="hora">Hora a hora</button></div>
+      <div id="ctlhora" style="display:none">
+        <div class="gran" id="instant">–</div>
+        <input type="range" id="pas" min="0" max="0" value="0">
+        <div class="botons"><button id="play">▶ Reprodueix</button>
+          <select id="vel" style="width:auto"><option value="600">lent</option><option value="250" selected>normal</option><option value="90">ràpid</option></select>
+          <label class="nota" style="align-self:center"><input type="checkbox" id="fins"> acumulat fins a aquesta hora</label></div>
+      </div>
+      <div class="escala" id="escala"></div>
+      <div class="etiq" id="etiq"></div>
+      <label class="ctl">Opacitat <b id="opv">75%</b><input type="range" id="op" min="20" max="100" value="75"></label>
+    </div>
+
+    <div class="targeta">
+      <h2>Mitjana de Catalunya per hora</h2>
+      <canvas class="graf" id="grafcat"></canvas>
+      <div class="nota">Clica la gràfica per anar a aquella hora.</div>
+      <div class="fila"><span>Màxim acumulat al període</span><span id="maxacum">–</span></div>
+      <div class="fila"><span>Lloc del màxim</span><span id="maxlloc">–</span></div>
+      <div class="fila"><span>Superfície amb ≥ 50 mm</span><span id="sup50">–</span></div>
+      <div class="fila"><span>Intensitat horària màxima</span><span id="maxhora">–</span></div>
+    </div>
+
+    <div class="targeta" id="tpunt" style="display:none">
+      <h2 id="ptitol">Punt triat</h2>
+      <canvas class="graf" id="grafpunt"></canvas>
+      <div class="fila"><span>Acumulat al període</span><span id="pacum">–</span></div>
+      <div class="fila"><span>Hora més plujosa</span><span id="pmax">–</span></div>
+    </div>
+
+    <div class="targeta" id="tval" style="display:none">
+      <h2>Com encerta (cada estació, calculat sense ella)</h2>
+      <div id="val"></div>
+    </div>
+
+    <div class="nota">Radar EUMETNET OPERA (CC BY 4.0), acumulat d'1 h a ~2 km. «Corregit»: cada hora s'ajusta amb els pluviòmetres de la XEMA
+      (Meteocat) i de l'ACA: primer un factor per a tot Catalunya i després la diferència de cada estació, repartida fins a 30 km.
+      El radar sol queda curt en xàfecs forts i lluny dels radars, i pot marcar ecos falsos a la muntanya. Les zones grises no tenen dada.
+      Les línies blaves són les conques pilot (Ridaura, Congost i Cabrera).</div>
+  </div>
+</div>
+<script>
+const mapa = L.map('mapa', { zoomSnap: 0.5 }).setView([41.7, 1.75], 8);
+const WMTS = capa => `https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/${capa}/MON3857NW/{z}/{x}/{y}.png`;
+const ATR = '© ICGC · © OpenStreetMap · Radar: EUMETNET OPERA (CC BY 4.0)';
+const fons = {
+  'Topogràfic': L.tileLayer(WMTS('topografic'), { maxZoom: 19, attribution: ATR }),
+  'Gris': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: ATR + ' · © CARTO' }),
+};
+fons['Gris'].addTo(mapa);
+L.control.layers(fons).addTo(mapa);
+['ridaura', 'granollers', 'cabrera'].forEach(c => fetch(`data/${c}/conca.geojson`).then(r => r.ok ? r.json() : null)
+  .then(g => g && L.geoJSON(g, { style: { color: '#0b4f8a', weight: 1.5, fill: false }, interactive: false }).addTo(mapa)).catch(() => {}));
+
+// Escales de color (mm a l'hora i mm acumulats)
+const COLORS = ['#c6e9fb', '#86cdf2', '#3fa3e0', '#1f6fc4', '#2a9d3a', '#a5d22c', '#f5d327', '#f39a1d', '#e3401f', '#a3155c', '#5b0a7a'];
+const ESC_HORA = [0.2, 1, 2, 4, 7, 10, 15, 20, 30, 50, 80];
+const ESC_ACUM = [1, 5, 10, 20, 35, 50, 75, 100, 150, 200, 300];
+const RGB = COLORS.map(h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)));
+
+let IDX, META, CUB, H, F, C, MES;   // H hores, F files, C columnes
+let ini = 0, fi = 0, pas = 0, mode = 'acum', punt = null, capa = null, play = null;
+const $ = id => document.getElementById(id);
+const LUT = new Float32Array(256).map((_, v) => v === 255 ? NaN : (v / 20) ** 2);
+
+const fmtH = ms => new Date(ms).toLocaleString('ca-ES', { timeZone: 'Europe/Madrid', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const t0 = () => Date.parse(META.primera + 'Z');           // fi de la primera hora (UTC)
+const tHora = i => t0() + i * 3600e3;
+function aLocal(ms) {      // ms UTC → valor per a <input type=datetime-local> en hora de Madrid
+  const p = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(ms));
+  return p.replace(' ', 'T');
+}
+function deLocal(s) {      // valor local de Madrid → ms UTC (prova els dos desplaçaments possibles)
+  for (const off of [1, 2]) { const ms = Date.parse(s + ':00Z') - off * 3600e3; if (aLocal(ms) === s) return ms; }
+  return Date.parse(s + ':00Z') - 3600e3;
+}
+
+async function baixa(url) {
+  let buf = new Uint8Array(await (await fetch(url)).arrayBuffer());
+  if (buf[0] === 0x1f && buf[1] === 0x8b) buf = new Uint8Array(await new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
+  return buf;
+}
+let CUBS = {}, EST = [], font = 'corr', capaEst = L.layerGroup().addTo(mapa);
+function posaFont(f, refa = true) {
+  font = f; document.querySelectorAll('#fonts button').forEach(b => b.classList.toggle('actiu', b.dataset.f === f));
+  if (refa && CUBS[f]) { CUB = CUBS[f]; recalcula(); }
+}
+document.querySelectorAll('#fonts button').forEach(b => b.onclick = () => posaFont(b.dataset.f));
+function estacions() {
+  capaEst.clearLayers();
+  if (!$('veuest').checked) return;
+  const N = F * C;
+  for (const e of EST) {
+    let s = 0, n = 0; for (let h = ini; h <= fi; h++) { const v = e.mm[h]; if (v != null) { s += v; n++; } }
+    if (n < (fi - ini + 1) * 0.8) continue;
+    const c = color(s, ESC_ACUM), fil = Math.floor((IDX.nord - e.lat) / IDX.pas), col = Math.floor((e.lon - IDX.oest) / IDX.pas);
+    const mapaV = ACUM[fil * C + col]; let r = 0;
+    for (let h = ini; h <= fi; h++) { const v = CUBS.radar[h * N + fil * C + col]; if (v !== 255) r += LUT[v]; }
+    L.circleMarker([e.lat, e.lon], { radius: 5, weight: e.descartada ? 2 : 1, color: e.descartada ? '#e3401f' : '#1b2733',
+      dashArray: e.descartada ? '2 2' : null, fillColor: c ? `rgb(${c})` : '#fff', fillOpacity: 1 })
+      .bindTooltip(`<b>${e.nom}</b> (${e.font})${e.descartada ? ' · descartat pel control de qualitat' : ''}<br>Pluviòmetre: <b>${s.toFixed(1)} mm</b><br>Radar sol: ${r.toFixed(1)} mm` +
+        (font === 'corr' ? `<br>Corregit: ${isNaN(mapaV) ? '–' : mapaV.toFixed(1)} mm` : ''))
+      .on('click', ev => { L.DomEvent.stopPropagation(ev); triaPunt(L.latLng(e.lat, e.lon)); })
+      .addTo(capaEst);
+  }
+}
+$('veuest').onchange = estacions;
+
+async function carregaMes(mes) {
+  $('carrega').style.display = ''; $('carrega').textContent = 'Carregant la pluja de ' + mes + '…';
+  aturar();
+  MES = mes; META = IDX.mesos[mes]; H = META.hores; F = IDX.files; C = IDX.columnes;
+  CUBS = { radar: await baixa(`data/pluja_cat/${mes}.bin.gz`) };
+  if (META.corregit) {
+    CUBS.corr = await baixa(`data/pluja_cat/${mes}_corr.bin.gz`);
+    EST = await fetch(`data/pluja_cat/${mes}_estacions.json`).then(r => r.json()).catch(() => []);
+    const v = META.validacio, f = (x, d) => `biaix ${Math.round((x.biaix_total - 1) * 100)}% · error diari ${d.rmse_mm_dia} mm · correlació ${d.correlacio}`;
+    $('val').innerHTML = `<div class="fila"><span>Radar sol</span><span>${f(v.radar_sol, v.diari.radar_sol)}</span></div><div class="fila"><span>Corregit</span><span>${f(v.corregit, v.diari.corregit)}</span></div>
+      <div class="nota">${META.estacions} pluviòmetres · ${v.hores_estacio.toLocaleString('ca-ES')} hores amb pluja comparades · error horari ${v.radar_sol.rmse_mm_h} → ${v.corregit.rmse_mm_h} mm/h</div>`;
+    $('tval').style.display = '';
+  } else { EST = []; $('tval').style.display = 'none'; if (font === 'corr') posaFont('radar', false); }
+  document.querySelectorAll('#fonts button')[0].disabled = !META.corregit;
+  CUB = CUBS[font] || CUBS.radar;
+  ini = 0; fi = H - 1;
+  $('carrega').style.display = 'none';
+  posaDates(); recalcula();
+}
+
+function posaDates() {
+  $('ini').min = $('fi').min = aLocal(tHora(0)); $('ini').max = $('fi').max = aLocal(tHora(H - 1));
+  $('ini').value = aLocal(tHora(ini)); $('fi').value = aLocal(tHora(fi));
+  $('pas').max = fi - ini; pas = Math.min(pas, fi - ini); $('pas').value = pas;
+}
+function llegeixDates() {
+  const a = Math.round((deLocal($('ini').value) - t0()) / 3600e3), b = Math.round((deLocal($('fi').value) - t0()) / 3600e3);
+  if (isNaN(a) || isNaN(b)) return;
+  ini = Math.max(0, Math.min(H - 1, Math.min(a, b))); fi = Math.max(0, Math.min(H - 1, Math.max(a, b)));
+  pas = 0; posaDates(); recalcula();
+}
+
+let ACUM, MITJA, COB;   // acumulat del període, mitjana horària de Catalunya, píxels amb dada
+function recalcula() {
+  const N = F * C; ACUM = new Float32Array(N); const n = new Uint16Array(N); MITJA = [];
+  let maxh = 0, maxhT = 0;
+  for (let h = ini; h <= fi; h++) {
+    const o = h * N; let s = 0, k = 0;
+    for (let i = 0; i < N; i++) { const v = CUB[o + i]; if (v !== 255) { const mm = LUT[v]; ACUM[i] += mm; n[i]++; s += mm; k++; if (mm > maxh) { maxh = mm; maxhT = h; } } }
+    MITJA.push(k ? s / k : NaN);
+  }
+  COB = n;
+  let mx = 0, imx = 0, s50 = 0;
+  for (let i = 0; i < N; i++) { if (!n[i]) ACUM[i] = NaN; else { if (ACUM[i] > mx) { mx = ACUM[i]; imx = i; } if (ACUM[i] >= 50) s50++; } }
+  const [la, lo] = centre(imx);
+  $('maxacum').textContent = mx.toFixed(0) + ' mm';
+  $('maxlloc').innerHTML = `<a href="#" id="anamax">${la.toFixed(2)}, ${lo.toFixed(2)}</a>`;
+  $('anamax').onclick = e => { e.preventDefault(); triaPunt(L.latLng(la, lo)); mapa.setView([la, lo], 10); };
+  const km2 = (IDX.pas * 111) ** 2 * Math.cos(41.7 * Math.PI / 180);
+  $('sup50').textContent = Math.round(s50 * km2).toLocaleString('ca-ES') + ' km²';
+  $('maxhora').textContent = maxh.toFixed(0) + ' mm/h · ' + fmtH(tHora(maxhT));
+  dibuixa(); grafCat(); estacions(); if (punt) infoPunt();
+}
+const centre = i => [IDX.nord - (Math.floor(i / C) + 0.5) * IDX.pas, IDX.oest + (i % C + 0.5) * IDX.pas];
+
+function color(mm, esc) {
+  if (!(mm >= esc[0])) return null;
+  let k = 0; while (k + 1 < esc.length && mm >= esc[k + 1]) k++;
+  return RGB[k];
+}
+const cv = document.createElement('canvas');
+function dibuixa() {
+  cv.width = C; cv.height = F;
+  const ctx = cv.getContext('2d'), img = ctx.createImageData(C, F), N = F * C;
+  let vals, esc;
+  if (mode === 'acum') { vals = ACUM; esc = ESC_ACUM; }
+  else if ($('fins').checked) {
+    vals = new Float32Array(N); esc = ESC_ACUM;
+    for (let h = ini; h <= ini + pas; h++) { const o = h * N; for (let i = 0; i < N; i++) { const v = CUB[o + i]; if (v !== 255) vals[i] += LUT[v]; } }
+    for (let i = 0; i < N; i++) if (!COB[i]) vals[i] = NaN;
+  } else {
+    const o = (ini + pas) * N; vals = new Float32Array(N); esc = ESC_HORA;
+    for (let i = 0; i < N; i++) vals[i] = LUT[CUB[o + i]];
+  }
+  for (let i = 0; i < N; i++) {
+    const p = i * 4, v = vals[i];
+    if (isNaN(v)) { img.data[p] = img.data[p + 1] = img.data[p + 2] = 150; img.data[p + 3] = 110; continue; }
+    const c = color(v, esc); if (!c) continue;
+    img.data[p] = c[0]; img.data[p + 1] = c[1]; img.data[p + 2] = c[2]; img.data[p + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  const b = [[IDX.sud, IDX.oest], [IDX.nord, IDX.est]];
+  if (!capa) capa = L.imageOverlay(cv.toDataURL(), b, { opacity: $('op').value / 100 }).addTo(mapa);
+  else capa.setUrl(cv.toDataURL());
+  llegenda(esc, esc === ESC_HORA ? 'mm en 1 h' : 'mm acumulats');
+  if (mode === 'hora') $('instant').textContent = fmtH(tHora(ini + pas));
+  grafCat(); if (punt) grafPunt();
+}
+function llegenda(esc, u) {
+  $('escala').innerHTML = COLORS.map(c => `<span style="background:${c}"></span>`).join('');
+  $('etiq').innerHTML = esc.filter((_, i) => i % 2 === 0).map(v => `<span>${v}</span>`).join('') + `<span>${u}</span>`;
+}
+
+function barres(id, serie, marca) {
+  const c = $(id), r = devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+  c.width = w * r; c.height = h * r; const g = c.getContext('2d'); g.scale(r, r); g.clearRect(0, 0, w, h);
+  const mx = Math.max(1, ...serie.filter(v => !isNaN(v))), bw = w / serie.length;
+  g.fillStyle = '#1f6fc4';
+  serie.forEach((v, i) => { if (v > 0) { const bh = (h - 14) * v / mx; g.fillRect(i * bw, h - 12 - bh, Math.max(bw - 0.3, 0.6), bh); } });
+  g.fillStyle = '#5b6b7b'; g.font = '10px system-ui'; g.fillText(mx.toFixed(1) + ' mm/h', 2, 10);
+  g.fillText(fmtH(tHora(ini)), 2, h - 1); const ff = fmtH(tHora(fi)); g.fillText(ff, w - g.measureText(ff).width - 2, h - 1);
+  if (marca != null) { g.fillStyle = '#e3401f'; g.fillRect(marca * bw, 0, Math.max(bw, 1.5), h - 12); }
+}
+const grafCat = () => barres('grafcat', MITJA, mode === 'hora' ? pas : null);
+function seriePunt() { const N = F * C, s = []; for (let h = ini; h <= fi; h++) s.push(LUT[CUB[h * N + punt]]); return s; }
+const grafPunt = () => barres('grafpunt', seriePunt(), mode === 'hora' ? pas : null);
+['grafcat', 'grafpunt'].forEach(id => $(id).addEventListener('click', e => {
+  const r = e.target.getBoundingClientRect();
+  pas = Math.max(0, Math.min(fi - ini, Math.floor((e.clientX - r.left) / r.width * (fi - ini + 1))));
+  posaMode('hora'); $('pas').value = pas; dibuixa();
+}));
+
+let marcador = null;
+function triaPunt(ll) {
+  const f = Math.floor((IDX.nord - ll.lat) / IDX.pas), c = Math.floor((ll.lng - IDX.oest) / IDX.pas);
+  if (f < 0 || f >= F || c < 0 || c >= C) return;
+  punt = f * C + c;
+  if (marcador) marcador.setLatLng(ll); else marcador = L.circleMarker(ll, { radius: 6, color: '#e3401f', weight: 2, fill: false }).addTo(mapa);
+  infoPunt();
+}
+function infoPunt() {
+  $('tpunt').style.display = '';
+  const [la, lo] = centre(punt), s = seriePunt();
+  $('ptitol').textContent = `Punt ${la.toFixed(2)}, ${lo.toFixed(2)}`;
+  $('pacum').textContent = isNaN(ACUM[punt]) ? 'sense dada' : ACUM[punt].toFixed(1) + ' mm';
+  let im = 0; s.forEach((v, i) => { if (v > (s[im] || 0)) im = i; });
+  $('pmax').textContent = s[im] > 0 ? `${s[im].toFixed(1)} mm · ${fmtH(tHora(ini + im))}` : '–';
+  grafPunt();
+}
+mapa.on('click', e => triaPunt(e.latlng));
+
+function posaMode(m) {
+  mode = m; document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('actiu', b.dataset.m === m));
+  $('ctlhora').style.display = m === 'hora' ? '' : 'none';
+}
+document.querySelectorAll('#modes button').forEach(b => b.onclick = () => { aturar(); posaMode(b.dataset.m); dibuixa(); });
+document.querySelectorAll('#rapids button').forEach(b => b.onclick = () => {
+  const d = +b.dataset.d; if (d) { fi = Math.min(H - 1, ini + d * 24 - 1); } else { ini = 0; fi = H - 1; }
+  pas = 0; posaDates(); recalcula();
+});
+$('ini').onchange = $('fi').onchange = llegeixDates;
+$('pas').oninput = () => { pas = +$('pas').value; dibuixa(); };
+$('fins').onchange = dibuixa;
+$('op').oninput = () => { $('opv').textContent = $('op').value + '%'; if (capa) capa.setOpacity($('op').value / 100); };
+function aturar() { if (play) { clearInterval(play); play = null; $('play').textContent = '▶ Reprodueix'; } }
+$('play').onclick = () => {
+  if (play) return aturar();
+  if (pas >= fi - ini) pas = 0;
+  $('play').textContent = '❚❚ Atura';
+  play = setInterval(() => { if (pas >= fi - ini) return aturar(); pas++; $('pas').value = pas; dibuixa(); }, +$('vel').value);
+};
+$('vel').onchange = () => { if (play) { aturar(); $('play').click(); } };
+$('mes').onchange = () => carregaMes($('mes').value);
+
+fetch('data/pluja_cat/index.json').then(r => r.json()).then(idx => {
+  IDX = idx;
+  const mesos = Object.keys(idx.mesos).sort().reverse();
+  const NOMS = ['gener', 'febrer', 'març', 'abril', 'maig', 'juny', 'juliol', 'agost', 'setembre', 'octubre', 'novembre', 'desembre'];
+  $('mes').innerHTML = mesos.map(m => `<option value="${m}">${NOMS[+m.slice(5) - 1]} de ${m.slice(0, 4)}</option>`).join('');
+  carregaMes(mesos[0]);
+}).catch(() => { $('carrega').textContent = 'Encara no hi ha dades de pluja de Catalunya.'; });
+</script>
+<script src="nav.js"></script>
+</body>
+</html>
