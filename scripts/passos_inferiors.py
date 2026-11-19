@@ -261,6 +261,7 @@ def _distancia_sortida(zf):
 
 WCS = [  # (url, descripció); el primer que respon amb una cobertura de 2 m o, si no, de 5 m
     ("https://geoserveis.icgc.cat/servei/catalunya/mdt2m/wcs", "ICGC"),
+    ("https://geoserveis.icgc.cat/servei/catalunya/mdt/wcs", "ICGC"),
     ("https://geoserveis.icgc.cat/icgc_mdt2m/wcs/service", "ICGC"),
     ("https://servicios.idee.es/wcs-inspire/mdt", "IGN"),
 ]
@@ -269,7 +270,7 @@ WCS = [  # (url, descripció); el primer que respon amb una cobertura de 2 m o, 
 def cobertures(url):
     import re, requests
     try:
-        r = requests.get(url, params={"SERVICE": "WCS", "REQUEST": "GetCapabilities", "VERSION": "2.0.1"}, timeout=60)
+        r = requests.get(url, params={"SERVICE": "WCS", "REQUEST": "GetCapabilities"}, timeout=(15, 120))
         ids = re.findall(r"<(?:wcs:)?CoverageId>([^<]+)<", r.text)
         print(f"{url}: HTTP {r.status_code}, {len(ids)} cobertures {ids[:40]}")
         return ids
@@ -319,6 +320,8 @@ def baixa_mdt(caixa, sortida, marge=1500):
                 sys.exit(f"WCS {xa:.0f},{ya:.0f}: HTTP {r.status_code} {r.text[:300]}")
             f = tmp / f"tros_{len(trossos)}.tif"; f.write_bytes(r.content); trossos.append(rasterio.open(f))
     mos, tr = merge(trossos)
+    v = mos[0][np.isfinite(mos[0]) & (mos[0] > -100)]
+    print(f"Trossos: tipus {trossos[0].dtypes[0]}, {np.mean(np.abs(v - np.round(v)) < 1e-3):.0%} de cotes enteres")
     W, S, E, N = transform_bounds("EPSG:4326", "EPSG:25831", *caixa)
     W, S, E, N = W - marge, S - marge, E + marge, N + marge
     nc, nf = int((E - W) // pas), int((N - S) // pas)
