@@ -1,0 +1,50 @@
+ordre,id,nom,vial,classe,sota,tipus,lat,lon,cota_fons_m,profunditat_m,clotada_m,volum_m3,conca_local_ha,conca_total_ha,pluja_omplir_mm,cota_sobreeix_m,osm
+1,pi016,Ronda Nord sota residential,Ronda Nord,carrer o carretera,residential,sota pont,41.619929,2.302461,200.28,0,9.74,40076,1.92,1.92,2091.2,200.69,24407099 24407109
+2,pi017,Ronda Nord sota Camí de Can Carreró,Ronda Nord,carrer o carretera,Camí de Can Carreró,sota pont,41.621837,2.302089,193.89,0,9.74,40076,1.92,1.92,2091.2,200.69,24407099 24407109 165665480 165665483
+3,pi012,Ronda Nord sota tren (FFCC Cerbère - Barcelona),Ronda Nord,carrer o carretera,tren (FFCC Cerbère - Barcelona),túnel,41.622818,2.296676,164.64,0,9.63,23227,1.66,1.66,1396.2,166.9,24407104 24407105
+4,pi021,service sota Avinguda del Parc,service,accés,Avinguda del Parc,túnel,41.607778,2.290594,143.33,4.26,3.82,373,0.13,0.13,289.6,146.95,129070231
+5,pi024,service sota Avinguda de Sant Esteve,service,accés,Avinguda de Sant Esteve,túnel,41.605524,2.290557,140.27,3.04,3.78,517,0.1,0.1,497.1,142.6,463508347
+6,pi039,unclassified sota B-40z,unclassified,carrer o carretera,B-40z,sota pont,41.59516,2.316293,137.42,2.58,3.62,1401,0.37,0.37,382.4,139.95,112889196
+7,pi013,Ronda Nord sota tren (FFCC Cerbère - Barcelona),Ronda Nord,carrer o carretera,tren (FFCC Cerbère - Barcelona),túnel,41.596152,2.291019,131.43,0.14,1.6,2950,0.55,0.55,532.1,132.83,68866190 68866194
+8,pi000,Avinguda de l'Estació del Nord sota Carrer de Diego Rodrigo Velázquez,Avinguda de l'Estació del Nord,carrer o carretera,Carrer de Diego Rodrigo Velázquez,túnel,41.612535,2.276752,144.72,0.02,1.46,1845,0.45,0.45,410.4,145.94,72902102 1322102501
+9,pi003,Camí de Can Ramón Coix sota tren (FFCC Cerbère - Barcelona),Camí de Can Ramón Coix,camí,tren (FFCC Cerbère - Barcelona),túnel,41.63006,2.308479,192.46,0,0.47,2,0.01,0.01,17.9,192.34,877331364
+10,pi041,footway sota tren (FFCC Cerbère - Barcelona),footway,vianants,tren (FFCC Cerbère - Barcelona),túnel,41.627509,2.302144,178.9,1.07,0.33,1,0.0,0.0,125.0,178.78,972390594
+11,pi001,Passeig de la Conca del Besòs sota N-152z,Passeig de la Conca del Besòs,carrer o carretera,N-152z,sota pont,41.601697,2.278607,129.98,0.17,0.31,1,0.0,0.0,83.3,130.21,72894276 73214512
+12,pi045,footway sota Carrer Corró,footway,vianants,Carrer Corró,sota pont,41.621693,2.292145,159.21,2.59,0.3,1,0.22,0.22,0.4,158.77,972386261
+13,pi042,path sota tren (Línia d'alta velocitat Madrid - Zaragoza - Barcelona - Frontera francesa),path,vianants,tren (Línia d'alta velocitat Madrid - Zaragoza - Barcelona - Frontera francesa),túnel,41.584174,2.303134,135.68,2.89,0.0,0,,,,,979663716
+14,pi036,track sota tren (Línia d'alta velocitat Madrid - Zaragoza - Barcelona - Frontera francesa),track,camí,tren (Línia d'alta velocitat Madrid - Zaragoza - Barcelona - Frontera francesa),sota pont,41.581663,2.301206,123.26,2.05,0.0,0,,,,,1215100107
+15,pi019,track sota C-352,track,camí,C-352,túnel,41.601104,2.310265,179.62,1.97,0.0,0,,,,,53382518
+16,pi004,Camí de Can Ramón Coix sota Camí de Can Ramón Coix,Camí de Can Ramón Coix,carrer o carretera,Camí de Can Ramón Coix,sota pont,41.630095,2.307412,186.03,1.23,0.0,0,,,,,150497289 503399915
+17,pi026,tertiary sota C-352,tertiary,carrer o carretera,C-352,sota pont,41.599509,2.275174,130.34,0.28,0.0,0,,,,,291413200 291415814
+18,pi038,tertiary sota C-352,tertiary,carrer o carretera,C-352,sota pont,41.593622,2.299624,140.16,0.12,0.0,0,,,,,110149640
+19,pi011,Passeig Fluvial sota N-152z,Passeig Fluvial,carrer o carretera,N-152z,sota pont,41.601907,2.279796,130.46,0.09,0.0,0,,,,,71127509 131885425 899021827
+20,pi047,path sota Carrer Mollet,path,vianants,Carrer Mollet,sota pont,41.591733,2.275704,119.83,0.05,0.0,0,,,,,718506249
+21,pi002,Camí de Can Colet (la Roca) sota tren (Línia d'alta velocitat Madrid - Zaragoza - Barcelona - Frontera francesa),Camí de Can Colet (la Roca),camí,tren (Línia d'alta velocitat Madrid - Zaragoza - Barcelona - Frontera francesa),túnel,41.590758,2.311174,145.37,0,0.0,0,,,,,181882492
+22,pi005,Passeig de la Ribera sota C-352,Passeig de la Ribera,carrer o carretera,C-352,sota pont,41.623207,2.286115,156.43,0,0.0,0,,,,,154156040 157324484 722798942 1274001417
+23,pi006,Avinguda Sant Julià sota C-352,Avinguda Sant Julià,carrer o carretera,C-352,sota pont,41.598845,2.276998,127.57,0,0.0,0,,,,,28407547 718506249
+24,pi007,Camí de Can Bassa sota tren (FFCC Cerbère - Barcelona),Camí de Can Bassa,camí,tren (FFCC Cerbère - Barcelona),túnel,41.590628,2.290161,129.82,0,0.0,0,,,,,763306421
+25,pi008,Camí Can Belitre sota tren (FFCC Cerbère - Barcelona),Camí Can Belitre,camí,tren (FFCC Cerbère - Barcelona),túnel,41.584492,2.287527,120.82,0,0.0,0,,,,,763306420
+26,pi009,Camí de Can Jep sota tren (FFCC Cerbère - Barcelona),Camí de Can Jep,carrer o carretera,tren (FFCC Cerbère - Barcelona),túnel,41.624461,2.298038,169.4,0,0.0,0,,,,,150499639 1297342129
+27,pi010,Passeig Fluvial sota C-352,Passeig Fluvial,carrer o carretera,C-352,sota pont,41.598123,2.277996,127.51,0,0.0,0,,,,,131885425 1278399840
+28,pi014,Ronda Nord sota Camí de Bellavista,Ronda Nord,carrer o carretera,Camí de Bellavista,sota pont,41.623253,2.298686,171.13,0,0.0,0,,,,,24407106 24407110
+29,pi015,Ronda Nord sota track,Ronda Nord,carrer o carretera,track,sota pont,41.595672,2.293285,140.65,0,0.0,0,,,,,68866189 427460146
+30,pi018,Ronda Nord sota residential,Ronda Nord,carrer o carretera,residential,sota pont,41.595713,2.307044,172.35,0,0.0,0,,,,,28822292 28822296 43170003 162920803
+31,pi020,unclassified sota C-352,unclassified,carrer o carretera,C-352,túnel,41.608811,2.309389,195.8,0,0.0,0,,,,,53382523
+32,pi022,track sota tren (Línia d'alta velocitat Madrid - Zaragoza - Barcelona - Frontera francesa),track,carrer o carretera,tren (Línia d'alta velocitat Madrid - Zaragoza - Barcelona - Frontera francesa),túnel,41.593221,2.316165,135.8,0,0.0,0,,,,,43170002 283815564
+33,pi023,track sota C-352,track,camí,C-352,túnel,41.598591,2.273854,136.74,0,0.0,0,,,,,439235926
+34,pi025,track sota tren,track,camí,tren,túnel,41.593643,2.290709,133.2,0,0.0,0,,,,,763306424
+35,pi027,primary sota C-352,primary,carrer o carretera,C-352,sota pont,41.596989,2.308633,163.5,0,0.0,0,,,,,566413690
+36,pi028,primary sota C-352,primary,carrer o carretera,C-352,sota pont,41.597454,2.309016,164.29,0,0.0,0,,,,,28822290
+37,pi029,primary_link sota AP-7,primary_link,carrer o carretera,AP-7,sota pont,41.594117,2.313013,145.5,0,0.0,0,,,,,34565569 193911679 286298481
+38,pi030,tertiary sota C-17,tertiary,carrer o carretera,C-17,sota pont,41.611273,2.266619,200.37,0,0.0,0,,,,,353812735
+39,pi031,secondary sota C-17,secondary,carrer o carretera,C-17,sota pont,41.623686,2.267578,206.81,0,0.0,0,,,,,45265832
+40,pi032,secondary sota C-17,secondary,carrer o carretera,C-17,sota pont,41.624832,2.267217,205.54,0,0.0,0,,,,,45265832
+41,pi033,secondary sota C-352,secondary,carrer o carretera,C-352,sota pont,41.614483,2.30787,175.44,0,0.0,0,,,,,24019580
+42,pi034,service sota track,service,accés,track,sota pont,41.591579,2.309168,153.29,0,0.0,0,,,,,94013818 358410768
+43,pi035,track sota tren (Línia d'alta velocitat Madrid - Zaragoza - Barcelona - Frontera francesa),track,camí,tren (Línia d'alta velocitat Madrid - Zaragoza - Barcelona - Frontera francesa),sota pont,41.593918,2.317913,138.31,0,0.0,0,,,,,283815534
+44,pi037,track sota tren (Línia d'alta velocitat Madrid - Zaragoza - Barcelona - Frontera francesa),track,camí,tren (Línia d'alta velocitat Madrid - Zaragoza - Barcelona - Frontera francesa),sota pont,41.58258,2.301861,128.32,0,0.0,0,,,,,1214094179
+45,pi040,trunk sota Camí Cal Ros dels Ocells,trunk,carrer o carretera,Camí Cal Ros dels Ocells,sota pont,41.595474,2.268132,157.18,0,0.0,0,,,,,217450856 909440399
+46,pi043,footway sota tren (FFCC Cerbère - Barcelona),footway,vianants,tren (FFCC Cerbère - Barcelona),túnel,41.622089,2.2962,170.64,0,0.0,0,,,,,1170470863
+47,pi044,path sota C-352,path,vianants,C-352,sota pont,41.623213,2.287586,155.39,0,0.0,0,,,,,128944379 707949961
+48,pi046,path sota Carrer Rafael Casanova,path,vianants,Carrer Rafael Casanova,sota pont,41.622075,2.288736,156.44,0,0.0,0,,,,,171151032
+49,pi048,path sota Carrer Mollet,path,vianants,Carrer Mollet,sota pont,41.591836,2.276611,119.89,0,0.0,0,,,,,714944197
