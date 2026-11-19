@@ -110,7 +110,8 @@ def main():
     from pysheds.grid import Grid
     g = Grid.from_raster(str(TMP / "mdt.tif")); dem = g.read_raster(str(TMP / "mdt.tif"))
     fd_r = g.flowdir(g.resolve_flats(g.fill_depressions(g.fill_pits(dem))))
-    fd = np.asarray(fd_r); acc = np.asarray(g.accumulation(fd_r), dtype="float64")
+    acc_r = g.accumulation(fd_r)
+    fd = np.asarray(fd_r); acc = np.asarray(acc_r, dtype="float64")
     print("drenatge fet", flush=True)
     nf, nc = z.shape; terra = np.isfinite(z)
     cel = a.pas ** 2 / 1e6
@@ -134,7 +135,7 @@ def main():
     t_ll = Transformer.from_crs(25831, 4326, always_xy=True)
 
     # rius > 50 km² per al mapa
-    rius = g.extract_river_network(fd_r, acc > 50 / cel)
+    rius = g.extract_river_network(fd_r, acc_r > 50 / cel)
     rg = gpd.GeoDataFrame.from_features(rius["features"], crs=25831)
     rg = rg[rg.intersects(cat_geom)]
     rg.to_crs(4326).to_file(SORT / "rius.geojson", driver="GeoJSON", COORDINATE_PRECISION=5)
