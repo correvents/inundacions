@@ -1,0 +1,35 @@
+name: Pluja de Catalunya per a la web (mensual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mes:
+        description: "Mes AAAA-MM"
+        default: "2026-10"
+  push:
+    branches: [claude/project-thread-f1uruf]
+    paths: [".github/workflows/pluja_catalunya.yml", "scripts/pluja_catalunya.py"]
+
+permissions:
+  contents: write
+
+jobs:
+  pluja:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy h5py pyproj
+      - run: python3 scripts/pluja_catalunya.py --mes "${{ inputs.mes || '2026-10' }}"
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/pluja_cat/
+          git diff --cached --quiet && exit 0
+          git commit -m "Pluja de Catalunya ${{ inputs.mes || '2026-10' }} per a la web"
+          B="${GITHUB_REF_NAME}"
+          for i in 1 2 3 4; do git pull --rebase origin "$B" && git push origin "HEAD:$B" && exit 0; sleep $((i*5)); done; exit 1
