@@ -20,6 +20,7 @@ from pyproj import CRS, Transformer
 from shapely.geometry import shape, Point
 from shapely.prepared import prep
 from sb import insereix, llegeix
+import pluvios_propers
 
 S3_24H = "https://s3.waw3-1.cloudferro.com/openradar-24h"
 S3_ARXIU = "https://s3.waw3-1.cloudferro.com/openradar-archive"
@@ -134,6 +135,13 @@ def main():
     else:
         s3 = S3_24H
         fi = datetime.now(timezone.utc); ini = fi - timedelta(hours=a.hores)
+    # radar al punt de cada pluviòmetre proper (font radar_punt), per a la correcció en directe (radar_corregit.py)
+    pluvios = []
+    if not a.des:
+        try:
+            pluvios = pluvios_propers.propers(cfg)
+        except Exception as e:
+            print("Pluviòmetres propers: no disponibles", type(e).__name__)
     disponibles = claus(s3, ini, fi)
     fets = {r["temps"][:16] for r in llegeix("pluja_conca", {"select": "temps", "conca": f"eq.{cfg['conca']}", "font": "eq.radar",
                                                                "temps": f"gt.{ini.isoformat()}",
@@ -155,6 +163,15 @@ def main():
                                   "mm": round(float(i[ok].mean()) * minuts[t] / 60, 3) if ok.any() else None,
                                   "mmh_max": round(float(i[ok].max()), 2) if ok.any() else None,
                                   "cobertura": round(float(ok.mean()), 3)})
+                if pluvios:
+                    try:
+                        zr = mmh(mostreja(f, np.array([p["lon"] for p in pluvios]), np.array([p["lat"] for p in pluvios])), ZR)
+                        for p, v in zip(pluvios, zr):
+                            if np.isfinite(v):
+                                files.append({"conca": cfg["conca"], "subconca": "p:" + p["id"], "font": "radar_punt", "temps": t.isoformat(),
+                                              "minuts": minuts[t], "mm": round(float(v) * minuts[t] / 60, 3), "mmh_max": round(float(v), 2), "cobertura": 1.0})
+                    except Exception as e:
+                        print(f"OPERA {t:%H:%M} punts: {type(e).__name__}")
             except Exception as e:
                 print(f"OPERA {t:%Y-%m-%d %H:%M}: {type(e).__name__} {e}")
             if len(files) >= 24:                 # desa a mesura que avança (la finestra de 24 h és llarga)
