@@ -15,7 +15,27 @@
     "2026-10-22T08:00",
     "2026-10-22T09:00"
    ],
-   "generat": "2026-11-19T13:36"
+   "generat": "2026-11-19T13:36",
+   "corregit": true,
+   "estacions": 223,
+   "validacio": {
+    "hores_estacio": 14835,
+    "radar_sol": {
+     "biaix_total": 0.49,
+     "rmse_mm_h": 7.6,
+     "correlacio": 0.51
+    },
+    "biaix_mitja": {
+     "biaix_total": 0.98,
+     "rmse_mm_h": 8.18,
+     "correlacio": 0.47
+    },
+    "corregit": {
+     "biaix_total": 1.05,
+     "rmse_mm_h": 8.32,
+     "correlacio": 0.49
+    }
+   }
   }
  },
  "oest": 0.15,
