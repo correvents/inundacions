@@ -8,14 +8,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
+          set +e
           for u in \
-            "https://datacloud.icgc.cat/datacloud/" \
+            "http://datacloud.icgc.cat/datacloud/" \
             "https://datacloud.icgc.cat/datacloud/met2_ETRS89/" \
-            "https://datacloud.icgc.cat/datacloud/met2_ETRS89/tif_unzip/" \
-            "https://datacloud.icgc.cat/datacloud/met5_ETRS89/" \
             "https://geoserveis.icgc.cat/servei/catalunya/mdt/wms?REQUEST=GetCapabilities&SERVICE=WMS" \
-            "https://geoserveis.icgc.cat/icc_mdt/wcs/service?REQUEST=GetCapabilities&SERVICE=WCS" \
-            "https://geoserveis.icgc.cat/icgc_mdt2m/wcs/service?REQUEST=GetCapabilities&SERVICE=WCS" \
-            "https://www.icgc.cat/" ; do
-            echo "== $u"; curl -sS -m 90 -A "Mozilla/5.0" -o /tmp/r -w "%{http_code} %{size_download}\n" "$u"; head -c 1500 /tmp/r | tr -s '\n' ' '; echo; grep -oiE 'href="[^"]*(met|mdt)[^"]*"' /tmp/r | head -40
+            "https://www.icgc.cat/" \
+            "https://centrodedescargas.cnig.es/CentroDescargas/index.jsp" \
+            "https://servicios.idee.es/wcs-inspire/mdt?SERVICE=WCS&VERSION=2.0.1&REQUEST=DescribeCoverage&COVERAGEID=Elevacion25830_5" \
+            "https://servicios.idee.es/wcs-inspire/mdt?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=Elevacion25830_5&SUBSET=x(440000,440050)&SUBSET=y(4607000,4607050)&FORMAT=application/x-netcdf" \
+            "https://servicios.idee.es/wcs-inspire/mdt?SERVICE=WCS&VERSION=2.0.1&REQUEST=GetCoverage&COVERAGEID=Elevacion25830_5&SUBSET=x(440000,440050)&SUBSET=y(4607000,4607050)&FORMAT=text/plain" \
+            "https://servicios.idee.es/wcs-inspire/mdt?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCapabilities" \
+            ; do
+            echo "== $u"; curl -sS -m 40 -A "Mozilla/5.0" -o /tmp/r -w "%{http_code} %{size_download} %{content_type}\n" "$u"; head -c 2500 /tmp/r | tr -s '\n\r' '  ' | tr -cd '[:print:] '; echo
           done
+          true
