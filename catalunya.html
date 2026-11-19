@@ -46,8 +46,7 @@
   <div id="mapa"><div class="carrega" id="carrega">Carregant la pluja…</div></div>
   <div id="panell">
     <h1>Pluja a Catalunya</h1>
-    <div class="sub">Radar hora a hora a tot Catalunya: tria les dates, reprodueix-ho i mira l'acumulat ·
-      <a href="./">inici</a> · <a href="pluja.html">pluja sobre el relleu</a> · <a href="previsio.html">previsió en directe</a></div>
+    <div class="sub">Radar hora a hora a tot Catalunya: tria les dates, reprodueix-ho i mira l'acumulat</div>
 
     <div class="targeta">
       <select id="mes" style="font-weight:600;margin-bottom:8px"></select>
@@ -334,5 +333,6 @@ fetch('data/pluja_cat/index.json').then(r => r.json()).then(idx => {
   carregaMes(mesos[0]);
 }).catch(() => { $('carrega').textContent = 'Encara no hi ha dades de pluja de Catalunya.'; });
 </script>
+<script src="nav.js"></script>
 </body>
 </html>
