@@ -16,7 +16,7 @@ jobs:
           grep -oE 'id="(codSerie|series|codAgr|todaEspania|todoMundo|contieneArc|totalArchivos)"[^>]*' /tmp/cat.html | head
           for co in "2.27 41.60" "2.27,41.60" "POINT(2.27 41.60)" "2.26 41.59,2.30 41.59,2.30 41.62,2.26 41.62,2.26 41.59"; do
             echo "== coords: $co"
-            curl $c -G "$B/archivosSerie" --data-urlencode "numPagina=1" --data-urlencode "codSerie=MDT02" --data-urlencode "series=MDT02" --data-urlencode "coordenadas=$co" -o /tmp/a.html
+            curl $c -X POST -H "X-Requested-With: XMLHttpRequest" -H "Referer: $B/catalogo.do?Serie=MDT02" -H "Origin: https://centrodedescargas.cnig.es" "$B/archivosSerie" --data-urlencode "numPagina=1" --data-urlencode "codAgr=MOMDT" --data-urlencode "codSerie=MDT02" --data-urlencode "series=MDT02" --data-urlencode "totalArchivos=8308" --data-urlencode "coordenadas=$co" -o /tmp/a.html
             wc -c /tmp/a.html; grep -oE '(linkDescDir[A-Za-z0-9]*_[0-9]+|secuencial[^,]{0,40}|MDT02[^<"]{0,80}|totalArchivos[^>]{0,60})' /tmp/a.html | sort -u | head -20
             sed 's/<[^>]*>/ /g' /tmp/a.html | tr -s ' \n\t' ' ' | head -c 800; echo
           done
