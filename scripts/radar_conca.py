@@ -22,7 +22,8 @@ from shapely.prepared import prep
 from sb import insereix, llegeix
 import pluvios_propers
 
-S3_24H = "https://s3.waw3-1.cloudferro.com/openradar-24h"
+# Des de l'11/11/2026 OPERA publica el directe al bucket de reserva d'ECMWF (problema del proveïdor cloudferro).
+S3_24H = "https://object-store.os-api.cci1.ecmwf.int/openradar-24h-backup"
 S3_ARXIU = "https://s3.waw3-1.cloudferro.com/openradar-archive"
 PAS = 0.0025   # graus (~250 m): prou per tenir diversos punts per píxel de radar
 
@@ -143,6 +144,8 @@ def main():
         except Exception as e:
             print("Pluviòmetres propers: no disponibles", type(e).__name__)
     disponibles = claus(s3, ini, fi)
+    if a.des and not disponibles:                         # l'arxiu s'atura l'11/11/2026: el que falta és a la reserva
+        s3 = S3_24H; disponibles = claus(s3, ini, fi)
     fets = {r["temps"][:16] for r in llegeix("pluja_conca", {"select": "temps", "conca": f"eq.{cfg['conca']}", "font": "eq.radar",
                                                                "temps": f"gt.{ini.isoformat()}",
                                                                "and": f"(temps.lte.{fi.isoformat()})"})}
