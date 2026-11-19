@@ -9,18 +9,28 @@ jobs:
     steps:
       - run: |
           set +e
+          pip -q install rasterio numpy
           B=https://centrodedescargas.cnig.es/CentroDescargas
-          c="-sS -m 90 -A Mozilla/5.0 -c /tmp/ck -b /tmp/ck"
+          c="-sS -m 120 -A Mozilla/5.0 -c /tmp/ck -b /tmp/ck"
+          H='-H X-Requested-With:XMLHttpRequest'
           curl $c "$B/index.jsp" -o /dev/null
           curl $c "$B/catalogo.do?Serie=MDT02" -o /tmp/cat.html
-          python3 - <<'PY'
-          import re
-          s=open('/tmp/cat.html',encoding='utf-8',errors='ignore').read()
-          for m in list(re.finditer(r'searchCoords|coordenadas\'\)\.val\(', s))[:6]:
-              print('=='); print(s[max(0,m.start()-700):m.start()+300])
-          PY
-          for co in "41.60 2.27" "41.60,2.27" "252690 5101000" "POINT(252690 5101000)" "POLYGON((2.26 41.59,2.30 41.59,2.30 41.62,2.26 41.62,2.26 41.59))" "2.26,41.59,2.30,41.62"; do
-            curl $c -X POST -H "X-Requested-With: XMLHttpRequest" -H "Referer: $B/catalogo.do?Serie=MDT02" "$B/archivosSerie" --data-urlencode "numPagina=1" --data-urlencode "codAgr=MOMDT" --data-urlencode "codSerie=MDT02" --data-urlencode "series=MDT02" --data-urlencode "coordenadas=$co" -o /tmp/a.html
-            echo "== $co: $(grep -oE 'id="totalArchivos"[^>]*' /tmp/a.html) $(grep -oE 'linkDescDir[A-Za-z0-9]*_[0-9]+' /tmp/a.html | sort -u | head -5 | tr '\n' ' ') $(grep -oE '[A-Za-z0-9_-]+\.(tif|zip|asc|laz)' /tmp/a.html | sort -u | head -5 | tr '\n' ' ')"
+          for ine in 08096 8096; do
+            curl $c -X POST $H -H "Referer: $B/catalogo.do?Serie=MDT02" "$B/archivosSerie" --data-urlencode "numPagina=1" --data-urlencode "codAgr=MOMDT" --data-urlencode "codSerie=MDT02" --data-urlencode "series=MDT02" --data-urlencode "codIne=$ine" -o /tmp/a_$ine.html
+            echo "== ine $ine: $(grep -oE 'id="totalArchivos"[^>]*' /tmp/a_$ine.html)"
+            sed 's/<[^>]*>/ /g' /tmp/a_$ine.html | tr -s ' \n\t' ' ' | grep -oE '[^ ]*MDT02[^ ]*( [^ ]*){0,12}' | head -10
+            grep -oE '(id="[a-zA-Z]*_[0-9]{5,}"|secuencial[^>]{0,60})' /tmp/a_$ine.html | sort -u | head -15
           done
+          sec=$(grep -oE 'linkDescDir_[0-9]+' /tmp/a_08096.html | head -1 | cut -d_ -f2)
+          [ -z "$sec" ] && sec=$(grep -oE '_[0-9]{6,}"' /tmp/a_08096.html | head -1 | tr -dc 0-9)
+          echo "== sec $sec"
+          curl $c -X POST "$B/descargaDir" --data "secDescDirLA=$sec" -o /tmp/f -w "%{http_code} %{size_download} %{content_type}\n"; file /tmp/f; head -c 300 /tmp/f | tr -cd '[:print:]'; echo
+          mkdir -p /tmp/u && cd /tmp/u && unzip -o -q /tmp/f 2>/dev/null; ls -la /tmp/u
+          python3 -c "
+          import rasterio,glob,numpy as np
+          for f in glob.glob('/tmp/u/**/*.*',recursive=True)+['/tmp/f']:
+              try:
+                  r=rasterio.open(f); z=r.read(1); print(f,r.crs,r.res,z.dtype,z.shape,r.bounds); v=z[z>-100]; print('enters',np.mean(np.abs(v-np.round(v))<1e-3)); break
+              except Exception as e: print(f,e)
+          "
           true
