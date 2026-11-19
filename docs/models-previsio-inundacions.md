@@ -1,6 +1,6 @@
 # Models de previsió d'inundacions: què es fa al món
 
-*Recerca inicial, 19/10/2026. Objectiu: triar l'enfocament per a un visor nou (tipus ONOFRE) que previngui crescudes per conca a Catalunya.*
+*Recerca inicial, 19/10/2026. Objectiu: triar l'enfocament per a un visor nou que previngui crescudes per conca a Catalunya.*
 
 ## 1. Sistemes operatius de referència
 
@@ -27,7 +27,7 @@
 
 Fer-ho en tres capes, de més simple a més complexa:
 
-1. **Capa 1, perill de crescuda sobtada (com ERICHA/AIGA).** Xarxa de drenatge i conques a partir del MDT de l'ICGC (pysheds o WhiteboxTools). A cada tram es calcula la pluja acumulada aigües amunt amb el radar (OPERA, que ONOFRE ja baixa), el nowcast i els models (AROME/WRF/ICON). Es compara amb llindars de període de retorn. Cobreix totes les rieres i es pot fer amb el que ja té ONOFRE.
+1. **Capa 1, perill de crescuda sobtada (com ERICHA/AIGA).** Xarxa de drenatge i conques a partir del MDT de l'ICGC (pysheds o WhiteboxTools). A cada tram es calcula la pluja acumulada aigües amunt amb el radar (OPERA), el nowcast i els models (AROME/WRF/ICON). Es compara amb llindars de període de retorn. Cobreix totes les rieres.
 2. **Capa 2, previsió de cabal a les conques amb aforador** (Llobregat, Ter, Besòs, Tordera, Francolí...). Es fa amb un model GR4J/GR5H (paquet airGR, de codi obert) per subconca, amb propagació Muskingum, i es corregeix amb el nivell actual dels aforadors de l'ACA i del SAIH. Dona hidrogrames previstos i hora estimada d'arribada del pic a cada estació, comparats amb els llindars de cabal que ja existeixen.
 3. **Capa 3, més endavant.** Afegir un LSTM entrenat amb l'històric (quan n'hi hagi prou) i creuar el cabal previst amb les zones inundables de l'ACA per mostrar quines zones es mullarien.
 

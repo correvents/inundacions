@@ -2,8 +2,6 @@
 
 Sistema de previsió de crescudes a les rieres i rius de Catalunya. Combina la pluja observada (radar), la pluja prevista (models) i el nivell actual dels aforadors per estimar on serà l'aigua a cada moment.
 
-Inspirat en el visor ONOFRE del GRAF (pauguarquec/echotops-viewer), que mostra les dades però no fa modelització hidrològica.
-
 ## Conca pilot: Ridaura (Platja d'Aro)
 
 | | A l'aforador (Santa Cristina d'Aro, ACA 171812-001) | A la desembocadura (Platja d'Aro) |
@@ -34,7 +32,9 @@ Secret del repo (Settings → Secrets and variables → Actions): `SUPABASE_SECR
 
 ## Estructura
 
-- `index.html`: visor
+- `index.html`: portada amb la cadena del sistema (radar → pluja per conca → cabal → període de retorn → zones inundables → punts afectats)
+- `nav.js`: barra de navegació comuna. Per afegir una pestanya, posa-la a la llista `PAGINES` de `nav.js` i afegeix `<script src="nav.js"></script>` al final del `<body>`
+- `previsio.html` (en directe), `evolucio.html`, `episodi.html`, `pluja.html` (episodis)
 - `config/ridaura.json`: aforador, sensors, llindars i cabals de càlcul de l'ACA (Q10–Q500) de la conca
 - `config/ridaura_model_*.json`, `data/ridaura/calibratge_*.png`, `data/ridaura/episodi_*.csv`: calibratge del model
 - `scripts/radar_conca.py`: pluja del radar OPERA sobre la conca (temps real o, amb `--des/--fins`, de l'arxiu des de 2011)

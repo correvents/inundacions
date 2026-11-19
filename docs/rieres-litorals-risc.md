@@ -7,7 +7,7 @@
 
 ## Punts calents a la costa
 
-| Zona | Curs | Per què | Aforador ACA (ja el llegeix ONOFRE) |
+| Zona | Curs | Per què | Aforador ACA |
 |---|---|---|---|
 | **Costa Brava centre** | **Ridaura** (Santa Cristina d'Aro, Castell-Platja d'Aro) | El 3-4/10/2026 va passar de **30 a 300 m³/s en 2 h** i es va desbordar a la desembocadura, amb plantes baixes inundades i un pont afectat. El 2018 la mota ja s'havia hagut de reparar per una crescuda de novembre. Platja d'Aro també va ser un dels municipis més afectats pel Glòria (2020) | 171812-001 *Santa Cristina d'Aro*. Llindars alts a 251 i 419 m³/s |
 | Costa Brava centre | Daró, rieres de les Gavarres (Calonge, Sant Feliu de Guíxols) | Afectades el 10/2026. El Daró és ARPSI | 170221-002, 171910-001 (Daró) |
@@ -33,4 +33,4 @@
 - [ACA, avaluació preliminar del risc, 3r cicle (2025)](https://govern.cat/govern/docs/2025/11/12/18/19/20251105%20INFO%20ACA.pdf)
 - [Llasat, inundacions al Montsià / Alcanar (AEMET)](https://repositorio.aemet.es/bitstream/20.500.11765/16870/1/XXXVI_JAME_Carmen_Llasat.pdf)
 - [3Cat, Alcanar i la Ràpita](https://www.3cat.cat/3catinfo/inundacions-i-riuades-a-alcanar-i-sant-carles-de-la-rapita-per-les-pluges-torrencials/noticia/3116033/)
-- Llindars i codis d'aforador: `data/aca/llindars.json` del repo pauguarquec/echotops-viewer
+- Llindars i codis d'aforador: ACA

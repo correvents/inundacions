@@ -36,7 +36,7 @@
   <div id="mapa"></div>
   <div id="panell">
     <h1>Ridaura · Platja d'Aro</h1>
-    <div class="sub">Conca pilot del sistema de previsió de crescudes · <a href="episodi.html">reproducció del 4 d'octubre</a> · <a href="pluja.html">juga amb la pluja</a> · <a href="evolucio.html">evolució en 4 mapes</a></div>
+    <div class="sub">Conca pilot del sistema de previsió de crescudes</div>
 
     <div class="targeta" id="previsio"><h2>Previsió 3 h</h2><div class="nota">Carregant la previsió...</div></div>
     <div class="targeta" id="ara"><h2>Ara</h2><div class="nota">Carregant dades...</div></div>
@@ -224,5 +224,6 @@ async function previsio() {
 const previsioSegur = () => previsio().catch(() => { document.getElementById('previsio').innerHTML = '<h2>Previsió 3 h</h2><div class="nota">No s\'ha pogut carregar la previsió.</div>'; });
 previsioSegur(); setInterval(previsioSegur, 5 * 60 * 1000);
 </script>
+<script src="nav.js"></script>
 </body>
 </html>
