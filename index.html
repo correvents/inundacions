@@ -43,7 +43,9 @@
     .pas:not(:last-child)::after { content: '⬇'; right: 50%; top: auto; bottom: -21px; } .pas:nth-child(3)::after { content: '⬇'; } }
 
   /* vies */
-  .vies { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .vies { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .via.destaca { border-color: var(--c5); box-shadow: inset 0 3px 0 var(--c5); }
+  @media (max-width: 980px) { .vies { grid-template-columns: repeat(2, 1fr); } }
   .via { background: var(--card); border: 1px solid var(--vora); border-radius: 10px; padding: 12px 14px; font-size: 14px; }
   .via h3 { margin: 0 0 4px; font-size: 15px; }
   .via p { margin: 0; color: var(--suau); font-size: 13.5px; }
@@ -126,11 +128,13 @@
     </a>
   </div>
 
-  <h2>Tres maneres d'inundar-se</h2>
+  <h2>On s'inunda</h2>
+  <p class="intro2">Els rius grans ja tenen aforadors i zones inundables oficials. El valor d'aquest sistema és vigilar també <b>el que no controla ningú</b>: torrents, valls i clots sense aforador ni zona de l'ACA.</p>
   <div class="vies">
-    <div class="via"><h3>Desbordament de riu</h3><p>El riu o la riera supera la llera. Ho diu el cabal i el període de retorn (passos 3 a 5).</p></div>
-    <div class="via"><h3>Xàfec i clavegueram</h3><p>Pluja molt intensa en poca estona: el clavegueram no ho empassa i l'aigua s'acumula als punts baixos.</p></div>
-    <div class="via"><h3>Rieres i temporal de mar</h3><p>Rieres curtes que pugen en minuts, i el mar de llevant que impedeix que l'aigua surti.</p></div>
+    <div class="via"><h3>Rius i rieres amb aforador</h3><p>El riu supera la llera. Ho diuen el cabal mesurat, el període de retorn i les zones inundables de l'ACA (passos 3 a 5).</p></div>
+    <div class="via destaca"><h3>Torrents i valls sense control</h3><p>Torrents petits i fons de vall sense aforador ni zona oficial. Es calcula el cabal amb la pluja del radar i el relleu, i es veu si desborden.</p></div>
+    <div class="via destaca"><h3>Depressions i punts baixos</h3><p>Clots, passos inferiors i carrers on l'aigua no té sortida o el clavegueram no ho empassa amb un xàfec intens.</p></div>
+    <div class="via"><h3>Temporal de mar</h3><p>Amb llevant i onatge fort, el mar frena la sortida de rieres i clavegueram a la costa.</p></div>
   </div>
 
   <h2>En directe</h2>

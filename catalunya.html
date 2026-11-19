@@ -6,6 +6,7 @@
 <title>Pluja a Catalunya</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="fons.js"></script>
 <style>
   :root { --vora: #dde3ea; --suau: #5b6b7b; }
   html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #f4f6f8; color: #1b2733; }
@@ -106,14 +107,8 @@
 </div>
 <script>
 const mapa = L.map('mapa', { zoomSnap: 0.5 }).setView([41.7, 1.75], 8);
-const WMTS = capa => `https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/${capa}/MON3857NW/{z}/{x}/{y}.png`;
-const ATR = '© ICGC · © OpenStreetMap · Radar: EUMETNET OPERA (CC BY 4.0)';
-const fons = {
-  'Topogràfic': L.tileLayer(WMTS('topografic'), { maxZoom: 19, attribution: ATR }),
-  'Gris': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd', attribution: ATR + ' · © CARTO' }),
-};
-fons['Gris'].addTo(mapa);
-L.control.layers(fons).addTo(mapa);
+// mapa de fons (topogràfic, gris, satèl·lit o cap) i noms de llocs per sobre del radar
+fonsMapa(mapa, 'Gris', 'Radar: EUMETNET OPERA (CC BY 4.0)');
 ['ridaura', 'granollers', 'cabrera'].forEach(c => fetch(`data/${c}/conca.geojson`).then(r => r.ok ? r.json() : null)
   .then(g => g && L.geoJSON(g, { style: { color: '#0b4f8a', weight: 1.5, fill: false }, interactive: false }).addTo(mapa)).catch(() => {}));
 
