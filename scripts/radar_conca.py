@@ -144,8 +144,11 @@ def main():
         except Exception as e:
             print("Pluviòmetres propers: no disponibles", type(e).__name__)
     disponibles = claus(s3, ini, fi)
-    if a.des and not disponibles:                         # l'arxiu s'atura l'11/11/2026: el que falta és a la reserva
-        s3 = S3_24H; disponibles = claus(s3, ini, fi)
+    origen = dict.fromkeys(disponibles, s3)
+    if a.des and fi > datetime(2026, 11, 11, 20, 0, tzinfo=timezone.utc):   # l'arxiu s'atura l'11/11/2026: la resta és a la reserva
+        for t, k in claus(S3_24H, ini, fi).items():
+            if t not in disponibles:
+                disponibles[t] = k; origen[t] = S3_24H
     fets = {r["temps"][:16] for r in llegeix("pluja_conca", {"select": "temps", "conca": f"eq.{cfg['conca']}", "font": "eq.radar",
                                                                "temps": f"gt.{ini.isoformat()}",
                                                                "and": f"(temps.lte.{fi.isoformat()})"})}
@@ -157,7 +160,7 @@ def main():
         for t, k in sorted(pendents.items()):
             f = Path(tmp) / "c.h5"
             try:
-                r = requests.get(s3 + "/" + urllib.parse.quote(k, safe="/@"), timeout=120)
+                r = requests.get(origen[t] + "/" + urllib.parse.quote(k, safe="/@"), timeout=120)
                 r.raise_for_status(); f.write_bytes(r.content)
                 for nom, (lon, lat) in subs.items():
                     i = mmh(mostreja(f, lon, lat), ZR)
