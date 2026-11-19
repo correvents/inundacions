@@ -10,14 +10,14 @@ jobs:
       - run: |
           set +e
           B=https://centrodedescargas.cnig.es/CentroDescargas
-          c="-sS -m 60 -A Mozilla/5.0 -c /tmp/ck -b /tmp/ck"
+          c="-sS -m 90 -A Mozilla/5.0 -c /tmp/ck -b /tmp/ck"
           curl $c "$B/index.jsp" -o /dev/null
           curl $c "$B/catalogo.do?Serie=MDT02" -o /tmp/cat.html
-          python3 - <<'PY'
-          import re
-          s=open('/tmp/cat.html',encoding='utf-8',errors='ignore').read()
-          for pat in ['function cargarArchivosSerie', 'ArchivosSerie(){', 'descargaDirS3', 'function cargaArchivosSerieOk', 'url:', 'secuencial']:
-              for m in list(re.finditer(re.escape(pat), s))[:4]:
-                  print('==', pat); print(s[max(0,m.start()-300):m.start()+1200].replace('\t',' '))
-          PY
+          grep -oE 'id="(codSerie|series|codAgr|todaEspania|todoMundo|contieneArc|totalArchivos)"[^>]*' /tmp/cat.html | head
+          for co in "2.27 41.60" "2.27,41.60" "POINT(2.27 41.60)" "2.26 41.59,2.30 41.59,2.30 41.62,2.26 41.62,2.26 41.59"; do
+            echo "== coords: $co"
+            curl $c -G "$B/archivosSerie" --data-urlencode "numPagina=1" --data-urlencode "codSerie=MDT02" --data-urlencode "series=MDT02" --data-urlencode "coordenadas=$co" -o /tmp/a.html
+            wc -c /tmp/a.html; grep -oE '(linkDescDir[A-Za-z0-9]*_[0-9]+|secuencial[^,]{0,40}|MDT02[^<"]{0,80}|totalArchivos[^>]{0,60})' /tmp/a.html | sort -u | head -20
+            sed 's/<[^>]*>/ /g' /tmp/a.html | tr -s ' \n\t' ' ' | head -c 800; echo
+          done
           true
