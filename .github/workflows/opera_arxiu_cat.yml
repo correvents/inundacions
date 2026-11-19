@@ -1,0 +1,69 @@
+name: Arxiu OPERA retallat a Catalunya
+
+# Desa a GitHub Releases (etiqueta opera-cat-YYYY) un HDF5 per mes amb el radar OPERA de Catalunya.
+# Salta els mesos que ja hi són, llevat que es forci.
+on:
+  workflow_dispatch:
+    inputs:
+      mesos:
+        description: "Mesos YYYY-MM separats per espais (buit = config/opera_arxiu_mesos.txt)"
+        default: ""
+      forca:
+        description: "Tornar a fer els mesos que ja hi són"
+        type: boolean
+        default: false
+  push:
+    branches: [claude/project-thread-1vl8ff]
+    paths: [config/opera_arxiu_mesos.txt]
+
+permissions:
+  contents: write
+
+jobs:
+  mesos:
+    runs-on: ubuntu-latest
+    outputs:
+      llista: ${{ steps.m.outputs.llista }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: m
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MESOS: ${{ inputs.mesos }}
+          FORCA: ${{ inputs.forca }}
+        run: |
+          if [ -n "$MESOS" ]; then m="$MESOS"; else m=$(grep -v '^#' config/opera_arxiu_mesos.txt | tr '\n' ' '); fi
+          fets=$(gh release list --limit 100 --json tagName --jq '.[].tagName' | grep '^opera-cat-' | while read t; do gh release view "$t" --json assets --jq '.assets[].name'; done)
+          sortida=()
+          for x in $m; do
+            if [ "$FORCA" != "true" ] && echo "$fets" | grep -qx "opera_cat_$x.h5"; then echo "$x ja hi és"; else sortida+=("\"$x\""); fi
+          done
+          echo "llista=[$(IFS=,; echo "${sortida[*]}")]" >> "$GITHUB_OUTPUT"
+          echo "A fer: ${sortida[*]}"
+
+  mes:
+    needs: mesos
+    if: needs.mesos.outputs.llista != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        mes: ${{ fromJSON(needs.mesos.outputs.llista) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install requests numpy h5py pyproj
+      - run: python3 -u scripts/opera_arxiu_cat.py --mes ${{ matrix.mes }} --sortida sortida
+      - name: Puja a GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          m=${{ matrix.mes }}; tag="opera-cat-${m%%-*}"
+          f="sortida/opera_cat_$m.h5"
+          [ -f "$f" ] || { echo "Sense fitxer (mes buit a l'arxiu)"; exit 0; }
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --target main --title "Radar OPERA Catalunya ${m%%-*}" \
+            --notes "Radar OPERA (EUMETNET, CC BY 4.0) retallat a Catalunya, un HDF5 per mes. Format: vegeu scripts/opera_arxiu_cat.py." || true
+          for i in 1 2 3 4; do gh release upload "$tag" "$f" --clobber && exit 0; sleep $((i*15)); done; exit 1

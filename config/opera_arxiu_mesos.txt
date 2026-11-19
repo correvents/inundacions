@@ -1,0 +1,2 @@
+# Mesos que el workflow opera_arxiu_cat.yml processa en fer push (un per línia, YYYY-MM).
+2026-10
