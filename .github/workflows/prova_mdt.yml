@@ -1,0 +1,20 @@
+name: Prova CNIG MDT02
+on:
+  push:
+    branches: ["claude/project-thread-22bcr1"]
+    paths: [".github/workflows/prova_mdt.yml"]
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          set +e
+          B=https://centrodedescargas.cnig.es/CentroDescargas
+          c="-sS -m 60 -A Mozilla/5.0 -c /tmp/ck -b /tmp/ck"
+          curl $c "$B/index.jsp" -o /dev/null
+          echo "== catalogo"; curl $c "$B/catalogo.do?Serie=MDT02" | grep -oiE '(codSerie|serie|secuencial|archivosSerie|codFamilia|[a-zA-Z]+\.do)[^"<]{0,80}' | sort -u | head -40
+          echo "== buscador"; curl $c "$B/buscadorCatalogo.do?codFamilia=02108" | grep -oiE '(MDT02|codSerie|secuencial|\.do)[^"<]{0,80}' | sort -u | head -40
+          for ep in archivosSerie resultadosArchivos; do
+            echo "== $ep"; curl $c -X POST "$B/$ep" --data "codSerie=MDT02&coordenadas=2.27,41.60&tipoBusqueda=coordenadas&numPagina=1&codSubSerie=" | head -c 3000; echo
+          done
+          true
