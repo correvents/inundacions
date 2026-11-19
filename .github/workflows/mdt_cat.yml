@@ -28,7 +28,7 @@ permissions:
   contents: write
 
 env:
-  CONQUES: ${{ inputs.conques || '125,124,199,188,25' }}
+  CONQUES: ${{ inputs.conques || 'totes' }}
   ETIQUETA: mdt5-cat
 
 jobs:
