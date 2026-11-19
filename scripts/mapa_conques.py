@@ -153,7 +153,7 @@ def main():
         lab[~dins_cat] = -1
         ids, inv = np.unique(lab, return_inverse=True); lab2 = inv.reshape(z.shape).astype("int32")
         fora = ids == -1
-        polis = [(shape(gm), int(ids[v])) for gm, v in features.shapes(lab2, mask=~fora[lab2], transform=tr)]
+        polis = [(shape(gm), int(ids[int(v)])) for gm, v in features.shapes(lab2, mask=~fora[lab2], transform=tr)]
         gdf = gpd.GeoDataFrame({"sortida": [s for _, s in polis]}, geometry=[p for p, _ in polis], crs=25831).dissolve("sortida").reset_index()
         gdf["km2"] = (gdf.area / 1e6).round(1)
         gdf = gdf[gdf.km2 >= 0.5].copy()
