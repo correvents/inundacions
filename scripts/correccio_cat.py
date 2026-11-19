@@ -70,20 +70,21 @@ def main():
         g, r = G[:, h], Rg[:, h]
         ok = np.isfinite(g) & np.isfinite(r)
         sg, sr = g[ok].sum(), r[ok].sum()
-        F = float(np.clip(sg / sr, 0.2, 5)) if ok.sum() >= 5 and sr >= 2 and sg >= 2 else (1.0 if sr < 2 else float(np.clip(sg / max(sr, 0.5), 0.2, 5)))
+        F = float(np.clip(sg / sr, 0.25, 4)) if ok.sum() >= 5 and sr >= 2 and sg >= 2 else (1.0 if sr < 2 else float(np.clip(sg / max(sr, 0.5), 0.25, 4)))
         Fh[h] = F
         e = np.where(ok, g - r * F, 0.0)
+        sostre = 1.5 * g[ok].max() if ok.sum() >= 5 else np.inf     # cap píxel corregit per sobre d'1,5 × el pluviòmetre més plujós de l'hora (si no ho deia ja el radar)
         w = Wg * ok[:, None]
         corr = (e[:, None] * w).sum(0) / (w.sum(0) + k0)
-        out[h] = np.where(np.isnan(R[h]), np.nan, np.maximum(R[h] * F + corr.reshape(F_, C_), 0))
+        out[h] = np.where(np.isnan(R[h]), np.nan, np.minimum(np.maximum(R[h] * F + corr.reshape(F_, C_), 0), np.maximum(R[h], sostre)))
         # deixant cada estació fora
         for i in np.where(ok)[0]:
             o = ok.copy(); o[i] = False
             sg_i, sr_i = g[o].sum(), r[o].sum()
-            Fi = float(np.clip(sg_i / sr_i, 0.2, 5)) if o.sum() >= 5 and sr_i >= 2 and sg_i >= 2 else 1.0
+            Fi = float(np.clip(sg_i / sr_i, 0.25, 4)) if o.sum() >= 5 and sr_i >= 2 and sg_i >= 2 else 1.0
             wi = W[i] * o
             ci = (np.where(o, g - r * Fi, 0) * wi).sum() / (wi.sum() + k0)
-            loo_raw.append(r[i]); loo_mfb.append(r[i] * Fi); loo_cor.append(max(r[i] * Fi + ci, 0)); obs.append(g[i]); quin.append((i, h // 24))
+            loo_raw.append(r[i]); loo_mfb.append(r[i] * Fi); loo_cor.append(min(max(r[i] * Fi + ci, 0), max(r[i], 1.5 * g[o].max() if o.sum() >= 5 else np.inf))); obs.append(g[i]); quin.append((i, h // 24))
     obs, raw, mfb, cor = map(np.array, (obs, loo_raw, loo_mfb, loo_cor))
     plou = (obs > 0.1) | (raw > 0.1)
     def m(p):

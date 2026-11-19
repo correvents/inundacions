@@ -19,7 +19,7 @@
    "corregit": true,
    "estacions": 243,
    "validacio": {
-    "hores_estacio": 15902,
+    "hores_estacio": 15901,
     "radar_sol": {
      "biaix_total": 0.74,
      "rmse_mm_h": 3.49,
@@ -27,13 +27,13 @@
     },
     "biaix_mitja": {
      "biaix_total": 1.01,
-     "rmse_mm_h": 3.64,
-     "correlacio": 0.67
+     "rmse_mm_h": 3.6,
+     "correlacio": 0.68
     },
     "corregit": {
-     "biaix_total": 1.02,
-     "rmse_mm_h": 3.33,
-     "correlacio": 0.74
+     "biaix_total": 1.01,
+     "rmse_mm_h": 3.0,
+     "correlacio": 0.77
     },
     "diari": {
      "dies_estacio": 1929,
@@ -44,13 +44,13 @@
      },
      "biaix_mitja": {
       "biaix_total": 1.01,
-      "rmse_mm_dia": 14.7,
+      "rmse_mm_dia": 14.6,
       "correlacio": 0.81
      },
      "corregit": {
-      "biaix_total": 1.04,
-      "rmse_mm_dia": 11.9,
-      "correlacio": 0.88
+      "biaix_total": 1.03,
+      "rmse_mm_dia": 11.2,
+      "correlacio": 0.89
      }
     }
    }

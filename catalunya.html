@@ -31,6 +31,7 @@
   .dates label { font-size: 12px; color: var(--suau); }
   canvas.graf { width: 100%; height: 110px; display: block; cursor: crosshair; }
   .nota { color: var(--suau); font-size: 12px; }
+  #val .fila { display: block; } #val .fila span:last-child { display: block; text-align: left; }
   .escala { display: flex; height: 12px; border-radius: 3px; overflow: hidden; margin-top: 4px; }
   .escala span { flex: 1; }
   .etiq { display: flex; justify-content: space-between; font-size: 11px; color: var(--suau); }
@@ -179,9 +180,9 @@ async function carregaMes(mes) {
   if (META.corregit) {
     CUBS.corr = await baixa(`data/pluja_cat/${mes}_corr.bin.gz`);
     EST = await fetch(`data/pluja_cat/${mes}_estacions.json`).then(r => r.json()).catch(() => []);
-    const v = META.validacio, f = x => `biaix ${Math.round((x.biaix_total - 1) * 100)}% · error ${x.rmse_mm_h} mm/h · correlació ${x.correlacio}`;
-    $('val').innerHTML = `<div class="fila"><span>Radar sol</span><span>${f(v.radar_sol)}</span></div><div class="fila"><span>Corregit</span><span>${f(v.corregit)}</span></div>
-      <div class="nota">${META.estacions} pluviòmetres · ${v.hores_estacio.toLocaleString('ca-ES')} hores amb pluja comparades</div>`;
+    const v = META.validacio, f = (x, d) => `biaix ${Math.round((x.biaix_total - 1) * 100)}% · error diari ${d.rmse_mm_dia} mm · correlació ${d.correlacio}`;
+    $('val').innerHTML = `<div class="fila"><span>Radar sol</span><span>${f(v.radar_sol, v.diari.radar_sol)}</span></div><div class="fila"><span>Corregit</span><span>${f(v.corregit, v.diari.corregit)}</span></div>
+      <div class="nota">${META.estacions} pluviòmetres · ${v.hores_estacio.toLocaleString('ca-ES')} hores amb pluja comparades · error horari ${v.radar_sol.rmse_mm_h} → ${v.corregit.rmse_mm_h} mm/h</div>`;
     $('tval').style.display = '';
   } else { EST = []; $('tval').style.display = 'none'; if (font === 'corr') posaFont('radar', false); }
   document.querySelectorAll('#fonts button')[0].disabled = !META.corregit;
