@@ -27,7 +27,11 @@ jobs:
         env:
           SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-        run: python3 scripts/passos_inferiors.py --config config/${{ inputs.conca || 'granollers' }}.json --mdt /tmp/passos/mdt.tif --baixa-mdt --supabase
+        run: |
+          C=${{ inputs.conca || 'granollers' }}
+          # MET 2 m de l'ICGC desat al repo (l'ICGC no respon des de GitHub); si no n'hi ha, el de 5 m de l'IGN (metres enters)
+          if [ -f data/$C/relleu/mdt2m.tif ]; then M="--mdt data/$C/relleu/mdt2m.tif"; else M="--mdt /tmp/passos/mdt.tif --baixa-mdt"; fi
+          python3 scripts/passos_inferiors.py --config config/$C.json $M --supabase
       - name: Desa
         run: |
           git config user.name "github-actions[bot]"
@@ -36,7 +40,3 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "Passos inferiors: ${{ inputs.conca || 'granollers' }}"
           for i in 1 2 3 4 5 6; do git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME" && exit 0; sleep $((i*7)); done; exit 1
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mdt
-          path: /tmp/passos/mdt.tif

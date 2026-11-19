@@ -84,6 +84,7 @@
    2.318,
    41.632
   ],
-  "nota": "Terme de Granollers i vores de Canovelles i les Franqueses"
+  "nota": "Terme de Granollers i vores de Canovelles i les Franqueses",
+  "mdt": "data/granollers/relleu/mdt2m.tif: MET 2 m de l'ICGC (LiDAR 2008-2011), retall de datacloud.icgc.cat/datacloud/model-elevacions-terreny/tif_unzip/model-elevacions-terreny-lidar-catalunya-2m-2008-2011.tif (COG; l'ICGC no respon des de GitHub Actions)"
  }
 }

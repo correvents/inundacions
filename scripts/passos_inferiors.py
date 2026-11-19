@@ -8,12 +8,13 @@ Són els punts baixos on l'aigua de la pluja s'acumula primer (el clavegueram no
    - vial a nivell creuat per un pont (bridge=*) de tren o de carretera.
    Es descarten els vials que només passen sota un edifici (building_passage) i els que no existeixen encara.
    Els trams que són a menys de --agrupa m l'un de l'altre sota la mateixa via són un sol pas (dues calçades, vorera...).
-2. Relleu (MDT del LiDAR, 2 m de l'ICGC si s'hi pot arribar, si no 5 m de l'IGN), amb --mdt: a cada pas
+2. Relleu (MDT del LiDAR, MET 2 m de l'ICGC; el de 5 m de l'IGN per WCS ve en metres enters i no serveix per a clotades), amb --mdt: a cada pas
    - perfil del vial: cota mínima sota la via i cota de cada rampa a --rampa m; profunditat = rampa més baixa − mínim
      (el que s'ha d'omplir abans que l'aigua surti carrer avall);
    - clotada: relleu omplert − terreny (on l'aigua queda sense sortida per superfície), volum que hi cap i cota del sobreeixidor;
    - conca local: àrea que hi drena (D8 sobre el relleu omplert, fins a la primera clotada ≥ 0,3 m que troba l'aigua);
-   - pluja per omplir-lo (mm) = volum / conca local (tota la pluja escolant, sense clavegueram): com més baixa, abans s'inunda.
+   - conca total: el mateix, però comptant que les clotades petites d'aigües amunt es desborden i hi acaben arribant;
+   - pluja per omplir-lo (mm) = volum / conca total (tota la pluja escolant, sense clavegueram): com més baixa, abans s'inunda.
    Si el pas és un túnel tapat al MDT (el LiDAR veu el terraplè, no el vial), el fons es fa anar en línia recta entre les boques.
 
 Sortides: data/<conca>/passos/passos_inferiors.geojson i .csv, i la taula inundacions.punts_baixos de Supabase (si hi ha clau).
@@ -195,6 +196,20 @@ def analitza(passos, vies, mdt, a_ll, rampa, clot_min):
     # xarxa de vials per al perfil: unió de tots els vials (per seguir el carrer més enllà del tram de l'OSM)
     vials = [v for v in vies if "highway" in v["t"]]
     arbre = STRtree([v["g"] for v in vials])
+    # clotada de cada pas (la més fonda a menys de 15 m del creuament)
+    k = max(1, int(15 / mdt.pas)); clot_pas = {}
+    for i, p in enumerate(passos):
+        rc = mdt.rc(p["pt"].x, p["pt"].y)
+        if not rc:
+            continue
+        win = (slice(max(rc[0] - k, 0), rc[0] + k + 1), slice(max(rc[1] - k, 0), rc[1] + k + 1))
+        e, pr = etiq[win], prof[win]
+        if (e >= 0).any():
+            clot_pas[i] = int(e.ravel()[np.argmax(np.where(e >= 0, pr, -1))])
+    # conca total: tot el que hi acaba arribant si les clotades petites d'aigües amunt es desborden (només compten les dels passos)
+    nomes = np.where(np.isin(etiq, list(set(clot_pas.values()))), etiq, -1)
+    dren_t = primera_clotada(best, nomes)
+    area_tot = np.bincount(dren_t[dren_t >= 0], minlength=nclot) * mdt.pas ** 2
     out = []
     for i, p in enumerate(passos):
         pt = p["pt"]
@@ -225,17 +240,15 @@ def analitza(passos, vies, mdt, a_ll, rampa, clot_min):
         if not fons:
             continue
         zmin = float(min(fons))
-        # clotada a menys de 15 m del punt més baix del pas
-        rc = mdt.rc(pt.x, pt.y); k = max(1, int(15 / mdt.pas))
-        win = (slice(max(rc[0] - k, 0), rc[0] + k + 1), slice(max(rc[1] - k, 0), rc[1] + k + 1)) if rc else None
-        e = etiq[win]; pr = prof[win]
-        if win is not None and (e >= 0).any():
-            j = int(e.ravel()[np.argmax(np.where(e >= 0, pr, -1))])
+        if i in clot_pas:
+            j = clot_pas[i]
             clot = {"clotada_m": round(float(prof_clot[j]), 2), "volum_m3": round(float(vol_clot[j])),
-                    "conca_local_ha": round(float(area_clot[j]) / 1e4, 2), "cota_sobreeix_m": round(float(vora_clot[j]), 2)}
-            clot["pluja_omplir_mm"] = round(1000 * clot["volum_m3"] / max(area_clot[j], 1), 1)
+                    "conca_local_ha": round(float(area_clot[j]) / 1e4, 2), "conca_total_ha": round(float(area_tot[j]) / 1e4, 2),
+                    "cota_sobreeix_m": round(float(vora_clot[j]), 2)}
+            clot["pluja_omplir_mm"] = round(1000 * clot["volum_m3"] / max(area_tot[j], 1), 1)
         else:
-            clot = {"clotada_m": 0.0, "volum_m3": 0, "conca_local_ha": None, "cota_sobreeix_m": None, "pluja_omplir_mm": None}
+            clot = {"clotada_m": 0.0, "volum_m3": 0, "conca_local_ha": None, "conca_total_ha": None, "cota_sobreeix_m": None,
+                    "pluja_omplir_mm": None}
         m0 = p["membres"][0]; t = m0["v"]["t"]
         lon, lat = a_ll(pt.x, pt.y)
         noms = sorted({c["v"]["t"].get("name") for c in p["membres"] if c["v"]["t"].get("name")})
@@ -363,11 +376,12 @@ def main():
     font = baixa_mdt(caixa, a.mdt) if a.baixa_mdt else "?"
     mdt = Mdt(a.mdt)
     rs = analitza(passos, vies, mdt, a_ll, a.rampa, a.clotada_min)
-    rs.sort(key=lambda r: (r["pluja_omplir_mm"] is None, r["pluja_omplir_mm"] or 0))
+    # ordre: primer els que fan clot de veritat (≥ 10 m³), del més fondo al menys
+    rs.sort(key=lambda r: (r["volum_m3"] < 10, -r["clotada_m"], -(r["profunditat_m"] or 0)))
     for k, r in enumerate(rs):
         r["ordre"] = k + 1
     camps = ["ordre", "id", "nom", "vial", "classe", "sota", "tipus", "lat", "lon", "cota_fons_m", "profunditat_m", "clotada_m",
-             "volum_m3", "conca_local_ha", "pluja_omplir_mm", "cota_sobreeix_m", "osm"]
+             "volum_m3", "conca_local_ha", "conca_total_ha", "pluja_omplir_mm", "cota_sobreeix_m", "osm"]
     with open(d / "passos_inferiors.csv", "w", newline="") as f:
         w = csv.DictWriter(f, camps); w.writeheader()
         for r in rs:
@@ -378,7 +392,7 @@ def main():
     print(f"MDT {mdt.pas:g} m. {len(rs)} passos; ordenats per la pluja que cal per omplir-los:")
     for r in rs:
         print(f"  {r['ordre']:3d} {r['nom'][:60]:60s} prof {r['profunditat_m']} m clotada {r['clotada_m']} m "
-              f"vol {r['volum_m3']} m³ conca {r['conca_local_ha']} ha → {r['pluja_omplir_mm']} mm")
+              f"vol {r['volum_m3']} m³ conca {r['conca_local_ha']}/{r['conca_total_ha']} ha → {r['pluja_omplir_mm']} mm")
     if a.supabase and os.environ.get("SUPABASE_SECRET_KEY"):
         sys.path.insert(0, str(Path(__file__).parent))
         import sb

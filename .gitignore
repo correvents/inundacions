@@ -1,3 +1,4 @@
 dem/
 __pycache__/
 *.tif
+!data/*/relleu/mdt2m.tif
