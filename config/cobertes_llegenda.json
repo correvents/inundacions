@@ -1,0 +1,207 @@
+{
+ "255,255,0": {
+  "codi": 1,
+  "nom": "111. (1) Conreus herbacis",
+  "vots": "6/6"
+ },
+ "204,255,51": {
+  "codi": 2,
+  "nom": "112. (2) Horta, vivers i conreus forçats",
+  "vots": "6/6"
+ },
+ "175,91,21": {
+  "codi": 3,
+  "nom": "113. (3) Vinyes",
+  "vots": "6/6"
+ },
+ "128,128,0": {
+  "codi": 4,
+  "nom": "114. (4) Oliverars",
+  "vots": "6/6"
+ },
+ "205,205,0": {
+  "codi": 5,
+  "nom": "115. (5) Altres conreus llenyosos",
+  "vots": "6/6"
+ },
+ "255,255,204": {
+  "codi": 6,
+  "nom": "116. (6) Conreus en transformació",
+  "vots": "6/6"
+ },
+ "51,204,51": {
+  "codi": 7,
+  "nom": "221. (7) Boscos densos d'aciculifolis",
+  "vots": "6/6"
+ },
+ "102,255,51": {
+  "codi": 8,
+  "nom": "222. (8) Boscos densos de caducifolis, planifolis",
+  "vots": "6/6"
+ },
+ "104,144,24": {
+  "codi": 9,
+  "nom": "223. (9) Boscos densos d'esclerofil·les i laurifolis",
+  "vots": "6/6"
+ },
+ "150,125,95": {
+  "codi": 10,
+  "nom": "224. (10) Matollar",
+  "vots": "6/6"
+ },
+ "25,230,30": {
+  "codi": 11,
+  "nom": "225. (11) Boscos clars d'aciculifolis",
+  "vots": "7/7"
+ },
+ "180,255,155": {
+  "codi": 12,
+  "nom": "226. (12) Boscos clars de caducifolis, planifolis",
+  "vots": "7/7"
+ },
+ "170,165,0": {
+  "codi": 13,
+  "nom": "227. (13) Boscos clars d'esclerofil·les i laurifolis",
+  "vots": "6/6"
+ },
+ "195,195,160": {
+  "codi": 14,
+  "nom": "228. (14) Prats i herbassars",
+  "vots": "6/6"
+ },
+ "0,255,155": {
+  "codi": 15,
+  "nom": "229. (15) Bosc de ribera",
+  "vots": "6/6"
+ },
+ "255,150,50": {
+  "codi": 16,
+  "nom": "230. (16) Sòl nu forestal",
+  "vots": "6/6"
+ },
+ "40,40,40": {
+  "codi": 17,
+  "nom": "231. (17) Zones cremades",
+  "vots": "6/6"
+ },
+ "121,121,122": {
+  "codi": 18,
+  "nom": "232. (18) Roquissars i congestes",
+  "vots": "6/6"
+ },
+ "245,223,120": {
+  "codi": 19,
+  "nom": "233. (19) Platges",
+  "vots": "6/6"
+ },
+ "50,150,255": {
+  "codi": 20,
+  "nom": "234. (20) Zones humides",
+  "vots": "6/6"
+ },
+ "255,0,125": {
+  "codi": 21,
+  "nom": "341. (21) Casc urbà",
+  "vots": "6/6"
+ },
+ "255,83,205": {
+  "codi": 22,
+  "nom": "342. (22) Eixample",
+  "vots": "6/6"
+ },
+ "255,164,226": {
+  "codi": 23,
+  "nom": "343. (23) Zones Urbanes laxes",
+  "vots": "6/6"
+ },
+ "255,200,226": {
+  "codi": 24,
+  "nom": "344. (24) Edificacions aïllades en l'espai rural",
+  "vots": "7/7"
+ },
+ "255,180,180": {
+  "codi": 25,
+  "nom": "345. (25) Àrees residencials aïllades",
+  "vots": "7/7"
+ },
+ "15,55,0": {
+  "codi": 26,
+  "nom": "346. (26) Zones verdes",
+  "vots": "6/6"
+ },
+ "115,0,85": {
+  "codi": 27,
+  "nom": "347. (27) Zones industrials, comercials i/o de serveis",
+  "vots": "6/6"
+ },
+ "98,0,196": {
+  "codi": 28,
+  "nom": "348. (28) Zones esportives i de lleure",
+  "vots": "6/6"
+ },
+ "74,149,149": {
+  "codi": 29,
+  "nom": "349. (29) Zones d'extracció minera i/o abocadors",
+  "vots": "6/6"
+ },
+ "255,0,240": {
+  "codi": 30,
+  "nom": "350. (30) Zones en transformació",
+  "vots": "6/6"
+ },
+ "173,170,202": {
+  "codi": 31,
+  "nom": "351. (31) Xarxa viària",
+  "vots": "6/6"
+ },
+ "255,230,230": {
+  "codi": 32,
+  "nom": "352. (32) Sòl nu urbà",
+  "vots": "6/6"
+ },
+ "103,98,154": {
+  "codi": 33,
+  "nom": "353. (33) Zones aeroportuàries",
+  "vots": "6/6"
+ },
+ "74,70,110": {
+  "codi": 34,
+  "nom": "354. (34) Xarxa ferroviària",
+  "vots": "6/6"
+ },
+ "47,45,70": {
+  "codi": 35,
+  "nom": "355. (35) Zones portuàries",
+  "vots": "7/7"
+ },
+ "111,111,255": {
+  "codi": 36,
+  "nom": "461. (36) Embassaments",
+  "vots": "6/6"
+ },
+ "0,0,220": {
+  "codi": 37,
+  "nom": "462. (37) Llacs i llacunes",
+  "vots": "6/6"
+ },
+ "0,0,100": {
+  "codi": 38,
+  "nom": "463. (38) Cursos d'aigua",
+  "vots": "6/6"
+ },
+ "24,95,148": {
+  "codi": 39,
+  "nom": "464. (39) Basses",
+  "vots": "8/8"
+ },
+ "18,70,109": {
+  "codi": 40,
+  "nom": "465. (40) Canals artificials",
+  "vots": "1/1"
+ },
+ "0,0,128": {
+  "codi": 41,
+  "nom": "466. (41) Mar",
+  "vots": "3/3"
+ }
+}
