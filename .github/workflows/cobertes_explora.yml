@@ -10,19 +10,33 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Llistes
+      - name: WCS i WMS
         run: |
-          B=https://datacloud.icgc.cat/datacloud/cobertes-sol
-          for d in "" tif_unzip/ gpkg/; do echo "== $d"; curl -sL -m 60 "$B/$d" | sed 's/<[^>]*>/ /g' | tr -s ' ' | grep -v '^ *$' | head -60 || true; done
-      - name: Capçaleres
+          S=https://geoserveis.icgc.cat/servei/catalunya/cobertes-sol
+          echo "== WCS"; curl -s -m 60 "$S/wcs?SERVICE=WCS&REQUEST=GetCapabilities" | head -c 3000; echo
+          echo "== WMS formats"; curl -s -m 60 "$S/wms?REQUEST=GetCapabilities&SERVICE=WMS" | grep -o '<Format>[^<]*</Format>' | sort | uniq -c
+          echo "== GetFeatureInfo formats/exemple"
+          for fmt in text/plain application/json text/xml; do
+            curl -s -m 60 "$S/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=cobertes_2024&QUERY_LAYERS=cobertes_2024&CRS=EPSG:25831&BBOX=500000,4630000,501000,4631000&WIDTH=100&HEIGHT=100&I=50&J=50&INFO_FORMAT=$fmt&STYLES=" | head -c 1500; echo; done
+      - name: GetMap
         run: |
-          B=https://datacloud.icgc.cat/datacloud/cobertes-sol
-          for f in $(curl -sL -m 60 "$B/tif_unzip/" | grep -o 'href="[^"]*"' | cut -d'"' -f2 | grep -i 'tif\|zip\|xml\|qml\|txt\|csv' | head -20); do
-            echo "== $f"; curl -sI -m 30 "$B/tif_unzip/$f" | grep -i 'length\|type' || true
-          done
-          for f in $(curl -sL -m 60 "$B/gpkg/" | grep -o 'href="[^"]*"' | cut -d'"' -f2 | grep -iv '^\?\|^/' | head -20); do
-            echo "== gpkg $f"; curl -sI -m 30 "$B/gpkg/$f" | grep -i 'length' || true
-          done
-      - name: WMS
+          pip -q install pillow numpy
+          S=https://geoserveis.icgc.cat/servei/catalunya/cobertes-sol
+          # Platja d'Aro, 5 m
+          curl -s -m 120 -o m.png "$S/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=cobertes_2024&STYLES=&CRS=EPSG:25831&BBOX=500000,4627000,510000,4637000&WIDTH=2000&HEIGHT=2000&FORMAT=image/png"
+          curl -s -m 120 -o t.tif "$S/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=cobertes_2024&STYLES=&CRS=EPSG:25831&BBOX=500000,4627000,510000,4637000&WIDTH=2000&HEIGHT=2000&FORMAT=image/tiff"
+          file m.png t.tif; ls -l m.png t.tif
+          python3 - <<'P'
+          from PIL import Image; import numpy as np
+          for f in ("m.png","t.tif"):
+              try:
+                  im=Image.open(f); print(f, im.mode, im.size, im.info.keys())
+                  a=np.array(im.convert("RGBA")).reshape(-1,4); u,c=np.unique(a,axis=0,return_counts=True)
+                  o=np.argsort(-c); print(len(u),"colors"); [print(tuple(u[k]),c[k]) for k in o[:70]]
+              except Exception as e: print(f,e)
+          P
+      - name: Llegenda
         run: |
-          curl -s -m 60 "https://geoserveis.icgc.cat/servei/catalunya/cobertes-sol/wms?REQUEST=GetCapabilities&SERVICE=WMS" | grep -i -A3 'cobertes_2024\|LegendURL' | head -40 || true
+          S=https://geoserveis.icgc.cat/servei/catalunya/cobertes-sol
+          curl -s -m 60 "$S/wms?version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=cobertes_2024&format=application/json&STYLE=default" | head -c 6000; echo
+          curl -s -m 60 "$S/wms?service=WMS&version=1.1.1&request=GetStyles&layers=cobertes_2024" | head -c 8000; echo
