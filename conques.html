@@ -79,8 +79,8 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
     </div>
     <fieldset class="relleu" id="relleu">
       <legend class="lbl">Relleu de la conca triada (MDT 5 m)</legend>
-      <label><input type="checkbox" id="kRier"> Rieretes (conca &gt; 0,05 km²)</label>
-      <label><input type="checkbox" id="kZb"> Zones baixes i depressions</label>
+      <label><input type="checkbox" id="kRier" checked> Rieretes (conca &gt; 0,05 km²)</label>
+      <label><input type="checkbox" id="kZb" checked> Zones baixes i depressions</label>
       <div class="ll" id="llZb" hidden>
         <span><i class="sw" style="background:rgb(198,219,239)"></i>A menys de 2 m del llit</span>
         <span><i class="sw" style="background:rgb(107,174,214)"></i>A menys d'1 m del llit</span>
@@ -126,11 +126,19 @@ function dibuixa(){
   capaR.bringToFront();
   pinta();
 }
-function tria(id){sel=id;pinta();relleu()}
+function tria(id){sel=id;encaixa=false;pinta();relleu()}
 // Capes de relleu calculades al servidor (scripts/mdt_cat.py), una carpeta per conca del tall de 100 km²
 let relIdx=null, capaRier=null, capaZb=null, relConca=null;
 const kRier=document.getElementById("kRier"), kZb=document.getElementById("kZb"), relInfo=document.getElementById("relInfo");
-kRier.onchange=kZb.onchange=()=>relleu();
+// també al selector de capes del mapa (a dalt a la dreta), sincronitzat amb les caselles
+{const pr=mapa.createPane("relleu");pr.style.zIndex=450;pr.style.pointerEvents="none"} // no tapa els clics a les conques
+const gR=L.layerGroup().addTo(mapa), gZ=L.layerGroup().addTo(mapa);
+F.ctl.addOverlay(gZ,"Zones baixes i depressions (conca triada)");
+F.ctl.addOverlay(gR,"Rieretes > 0,05 km² (conca triada)");
+let encaixa=false;
+kRier.onchange=()=>{kRier.checked?gR.addTo(mapa):mapa.removeLayer(gR);encaixa=kRier.checked;relleu()};
+kZb.onchange=()=>{kZb.checked?gZ.addTo(mapa):mapa.removeLayer(gZ);encaixa=kZb.checked;relleu()};
+mapa.on("overlayadd overlayremove",e=>{if(e.layer===gR||e.layer===gZ){kRier.checked=mapa.hasLayer(gR);kZb.checked=mapa.hasLayer(gZ);encaixa=e.type==="overlayadd";relleu()}});
 d3.json("data/catalunya/relleu/index.json").then(j=>{relIdx=j;relleu()}).catch(()=>{relIdx={conques:{}};relleu()});
 function conca100(){ // conca del tall de 100 km² on cau la triada (en el tall de 25, la que conté la seva sortida)
   if(sel==null||!dades["100"]) return null;
@@ -149,24 +157,24 @@ function conca100(){ // conca del tall de 100 km² on cau la triada (en el tall 
 function rierCapa(j){
   const e=j.escala, lin=[];
   j.trams.forEach(t=>{const o=t[0],a=t[1]/100;let x=0,y=0;const ll=[];for(let k=2;k<t.length;k+=2){x+=t[k];y+=t[k+1];ll.push([y/e,x/e])}
-    lin.push(L.polyline(ll,{renderer:rend,color:css("--riu"),weight:Math.max(.6,o*.7),opacity:.85}).bindTooltip(`Conca: ${fmt(a)} km² · ordre ${o}`,{sticky:true}))});
+    lin.push(L.polyline(ll,{renderer:rend,interactive:false,color:css("--riu"),weight:Math.max(.6,o*.7),opacity:.85}))});
   return L.featureGroup(lin);
 }
-const rend=L.canvas({padding:.3});
+const rend=L.canvas({padding:.3,pane:"relleu"});
 function relleu(){
   if(!relIdx) return;
   const id=conca100(), nom=id==null?null:"c"+String(id).padStart(3,"0"), r=nom&&relIdx.conques[nom];
   document.getElementById("llZb").hidden=!kZb.checked;
-  if(nom!==relConca){[capaRier,capaZb].forEach(c=>c&&mapa.removeLayer(c));capaRier=capaZb=null;relConca=nom}
-  if(!kRier.checked&&capaRier){mapa.removeLayer(capaRier);capaRier=null}
-  if(!kZb.checked&&capaZb){mapa.removeLayer(capaZb);capaZb=null}
+  if(nom!==relConca){gR.clearLayers();gZ.clearLayers();capaRier=capaZb=null;relConca=nom}
+  if(!kRier.checked&&capaRier){gR.clearLayers();capaRier=null}
+  if(!kZb.checked&&capaZb){gZ.clearLayers();capaZb=null}
   if(!kRier.checked&&!kZb.checked){relInfo.textContent="";return}
   if(id==null){relInfo.textContent="Tria una conca al mapa.";return}
   if(!r){relInfo.textContent=`La conca ${id} encara no té el relleu calculat.`;return}
   relInfo.textContent=`Conca ${id} (tall de 100 km²): ${r.trams.toLocaleString("ca-ES")} trams de rierata; zones a menys d'1 m del llit: ${fmt(r.km2["2"]+r.km2["3"])} km²; depressions: ${fmt(r.km2["4"])} km².`;
-  if(kZb.checked&&!capaZb){capaZb=L.imageOverlay(`data/catalunya/relleu/${nom}/zones_baixes.png`,r.limits,{opacity:.8,interactive:false}).addTo(mapa)}
-  if(kRier.checked&&!capaRier){const n=nom;d3.json(`data/catalunya/relleu/${nom}/rieretes.json`).then(j=>{if(relConca!==n||!kRier.checked||capaRier)return;capaRier=rierCapa(j).addTo(mapa)})}
-  if(mapa.getZoom()<11) mapa.fitBounds(r.limits);
+  if(kZb.checked&&!capaZb){capaZb=L.imageOverlay(`data/catalunya/relleu/${nom}/zones_baixes.png`,r.limits,{opacity:.8,interactive:false,pane:"relleu"}).addTo(gZ)}
+  if(kRier.checked&&!capaRier){const n=nom;d3.json(`data/catalunya/relleu/${nom}/rieretes.json`).then(j=>{if(relConca!==n||!kRier.checked||capaRier)return;capaRier=rierCapa(j).addTo(gR)})}
+  if(encaixa){encaixa=false;mapa.fitBounds(r.limits)}
 }
 let av=new Set(), am=new Set(), cami=[];
 function estil(f){
