@@ -12,18 +12,18 @@
 /* Layout: mapa a tota l'amplada, panell lateral (a sota en mòbil) amb la conca triada */
 :root{
   --bg:#f3f5f6; --panel:#ffffff; --fg:#17232b; --muted:#5c6b75; --line:#c9d2d8;
-  --conca:#dfe6ea; --conca-b:#9aa9b3; --riu:#3d7fb8;
+  --conca:#dfe6ea; --conca-b:#9aa9b3; --riu:#3d7fb8; --rier:#08306b;
   --sel:#0b6e66; --avall:#2459a8; --amunt:#e0a23a; --poble:#c0392b;
   --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f1519; --panel:#172026; --fg:#e4ebef; --muted:#93a3ad; --line:#2c3a43;
-  --conca:#1f2b33; --conca-b:#3d4f5a; --riu:#5b9bd5;
+  --conca:#1f2b33; --conca-b:#3d4f5a; --riu:#5b9bd5; --rier:#8ec5ff;
   --sel:#2bb3a6; --avall:#6c9ef0; --amunt:#e6b04f; --poble:#ff6b5a; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f1519; --panel:#172026; --fg:#e4ebef; --muted:#93a3ad; --line:#2c3a43;
-  --conca:#1f2b33; --conca-b:#3d4f5a; --riu:#5b9bd5;
+  --conca:#1f2b33; --conca-b:#3d4f5a; --riu:#5b9bd5; --rier:#8ec5ff;
   --sel:#2bb3a6; --avall:#6c9ef0; --amunt:#e6b04f; --poble:#ff6b5a; color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;
@@ -52,6 +52,7 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
 .sw{width:14px;height:14px;border-radius:3px;flex:none}
 .cami{font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--muted);word-break:break-word}
 .hint{color:var(--muted);font-size:13px;line-height:1.5}
+.leaflet-relleu-pane img{image-rendering:pixelated}
 .relleu{border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:0;display:flex;flex-direction:column;gap:8px}
 .relleu legend{padding:0 4px}.relleu label{display:flex;align-items:center;gap:8px;cursor:pointer}
 @media (max-width:760px){.app{grid-template-columns:1fr;grid-template-rows:auto 60vh auto;height:auto}.seg{margin-left:0}}
@@ -157,7 +158,7 @@ function conca100(){ // conca del tall de 100 km² on cau la triada (en el tall 
 function rierCapa(j){
   const e=j.escala, lin=[];
   j.trams.forEach(t=>{const o=t[0],a=t[1]/100;let x=0,y=0;const ll=[];for(let k=2;k<t.length;k+=2){x+=t[k];y+=t[k+1];ll.push([y/e,x/e])}
-    lin.push(L.polyline(ll,{renderer:rend,interactive:false,color:css("--riu"),weight:Math.max(.6,o*.7),opacity:.85}))});
+    lin.push(L.polyline(ll,{renderer:rend,interactive:false,color:css("--rier"),weight:Math.max(.8,o*.8),opacity:.95}))});
   return L.featureGroup(lin);
 }
 const rend=L.canvas({padding:.3,pane:"relleu"});
@@ -168,6 +169,7 @@ function relleu(){
   if(nom!==relConca){gR.clearLayers();gZ.clearLayers();capaRier=capaZb=null;relConca=nom}
   if(!kRier.checked&&capaRier){gR.clearLayers();capaRier=null}
   if(!kZb.checked&&capaZb){gZ.clearLayers();capaZb=null}
+  if(capaC) capaC.setStyle(estil);
   if(!kRier.checked&&!kZb.checked){relInfo.textContent="";return}
   if(id==null){relInfo.textContent="Tria una conca al mapa.";return}
   if(!r){relInfo.textContent=`La conca ${id} encara no té el relleu calculat.`;return}
@@ -180,8 +182,13 @@ let av=new Set(), am=new Set(), cami=[];
 function estil(f){
   const i=f.properties.id, o=op.value/100, buit=F.senseMapa();
   const [c,fo]= i===sel?[css("--sel"),Math.max(o,.15)*2]: av.has(i)?[css("--avall"),Math.max(o,.15)*1.6]: am.has(i)?[css("--amunt"),Math.max(o,.15)*1.6]:[css("--conca"),buit?.9:o*.5];
-  return {color:css("--conca-b"),weight:i===sel?2:.6,fillColor:c,fillOpacity:Math.min(fo,1)};
+  // amb les capes de relleu a la vista, la conca triada només es dibuixa amb el contorn (la carena) i les altres
+  // s'aclareixen en apropar-se, perquè no tapin les rieretes ni les zones baixes
+  const rel=relConca!=null&&(kRier.checked||kZb.checked), z=mapa.getZoom(), f2=rel&&z>=11?.35:1;
+  if(rel&&i===sel) return {color:css("--sel"),weight:3,fillOpacity:0};
+  return {color:css("--conca-b"),weight:i===sel?2:.6,fillColor:c,fillOpacity:Math.min(fo,1)*f2};
 }
+mapa.on("zoomend",()=>pinta());
 function pinta(){
   const d=dades[mida]; if(!d||!capaC) return;
   av=new Set(); am=new Set(); cami=[];
