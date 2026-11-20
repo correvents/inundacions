@@ -97,6 +97,11 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
         <span><i class="sw" style="background:rgb(33,113,181)"></i>A menys de 0,5 m del llit</span>
         <span><i class="sw" style="background:rgb(128,0,128)"></i>Depressió sense sortida (&gt; 0,3 m)</span>
       </div>
+      <label><input type="checkbox" id="kSot" checked> Edificis amb soterrani (Cadastre)</label>
+      <div class="ll" id="llSot" hidden>
+        <span><i class="sw" style="background:rgb(253,174,97)"></i>Amb plantes sota rasant</span>
+        <span><i class="sw" style="background:rgb(215,25,28)"></i>Amb soterrani i tocant (≤ 10 m) una zona a menys d'1 m del llit o una depressió</span>
+      </div>
       <p class="hint" id="relInfo" style="margin:0"></p>
     </fieldset>
     <label class="op">Opacitat de les conques <input type="range" id="op" min="0" max="100" value="35"></label>
@@ -111,6 +116,7 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
 <script>
 const POBLES=[["Platja d'Aro",3.067,41.817],["Granollers",2.288,41.608],["Cabrera de Mar",2.396,41.527]];
 const fmt=n=>n.toLocaleString("ca-ES",{maximumFractionDigits:1});
+const f2=n=>n.toLocaleString("ca-ES",{maximumFractionDigits:2});
 const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 let dades={}, mida="25", sel=null, rius, capaC=null, capaR=null;
 
@@ -138,17 +144,20 @@ function dibuixa(){
 }
 function tria(id){sel=id;encaixa=false;pinta();relleu()}
 // Capes de relleu calculades al servidor (scripts/mdt_cat.py), una carpeta per conca del tall de 100 km²
-let relIdx=null, capaRier=null, capaZb=null, relConca=null;
+let relIdx=null, capaRier=null, capaZb=null, capaSot=null, relConca=null;
+const kSot=document.getElementById("kSot");
 const kRier=document.getElementById("kRier"), kZb=document.getElementById("kZb"), relInfo=document.getElementById("relInfo");
 // també al selector de capes del mapa (a dalt a la dreta), sincronitzat amb les caselles
 {const pr=mapa.createPane("relleu");pr.style.zIndex=450;pr.style.pointerEvents="none"} // no tapa els clics a les conques
-const gR=L.layerGroup().addTo(mapa), gZ=L.layerGroup().addTo(mapa);
+const gR=L.layerGroup().addTo(mapa), gZ=L.layerGroup().addTo(mapa), gS=L.layerGroup().addTo(mapa);
 F.ctl.addOverlay(gZ,"Zones baixes i depressions (conca triada)");
 F.ctl.addOverlay(gR,"Rieretes > 0,05 km² (conca triada)");
+F.ctl.addOverlay(gS,"Edificis amb soterrani (conca triada)");
+kSot.onchange=()=>{kSot.checked?gS.addTo(mapa):mapa.removeLayer(gS);encaixa=kSot.checked;relleu()};
 let encaixa=false;
 kRier.onchange=()=>{kRier.checked?gR.addTo(mapa):mapa.removeLayer(gR);encaixa=kRier.checked;relleu()};
 kZb.onchange=()=>{kZb.checked?gZ.addTo(mapa):mapa.removeLayer(gZ);encaixa=kZb.checked;relleu()};
-mapa.on("overlayadd overlayremove",e=>{if(e.layer===gR||e.layer===gZ){kRier.checked=mapa.hasLayer(gR);kZb.checked=mapa.hasLayer(gZ);encaixa=e.type==="overlayadd";relleu()}});
+mapa.on("overlayadd overlayremove",e=>{if(e.layer===gR||e.layer===gZ||e.layer===gS){kRier.checked=mapa.hasLayer(gR);kZb.checked=mapa.hasLayer(gZ);kSot.checked=mapa.hasLayer(gS);encaixa=e.type==="overlayadd";relleu()}});
 d3.json("data/catalunya/relleu/index.json").then(j=>{relIdx=j;relleu()}).catch(()=>{relIdx={conques:{}};relleu()});
 function conca100(){ // conca del tall de 100 km² on cau la triada (en el tall de 25, la que conté la seva sortida)
   if(sel==null||!dades["100"]) return null;
@@ -175,14 +184,17 @@ function relleu(){
   if(!relIdx) return;
   const id=conca100(), nom=id==null?null:"c"+String(id).padStart(3,"0"), r=nom&&relIdx.conques[nom];
   document.getElementById("llZb").hidden=!kZb.checked;
-  if(nom!==relConca){gR.clearLayers();gZ.clearLayers();capaRier=capaZb=null;relConca=nom}
+  document.getElementById("llSot").hidden=!kSot.checked;
+  if(nom!==relConca){gR.clearLayers();gZ.clearLayers();gS.clearLayers();capaRier=capaZb=capaSot=null;relConca=nom}
   if(!kRier.checked&&capaRier){gR.clearLayers();capaRier=null}
   if(!kZb.checked&&capaZb){gZ.clearLayers();capaZb=null}
+  if(!kSot.checked&&capaSot){gS.clearLayers();capaSot=null}
   if(capaC) capaC.setStyle(estil);
-  if(!kRier.checked&&!kZb.checked){relInfo.textContent="";return}
+  if(!kRier.checked&&!kZb.checked&&!kSot.checked){relInfo.textContent="";return}
   if(id==null){relInfo.textContent="Tria una conca al mapa.";return}
   if(!r){relInfo.textContent=`La conca ${id} encara no té el relleu calculat.`;return}
-  relInfo.textContent=`Conca ${id} (tall de 100 km²): ${r.trams.toLocaleString("ca-ES")} trams de rierata; zones a menys d'1 m del llit: ${fmt(r.km2["2"]+r.km2["3"])} km²; depressions: ${fmt(r.km2["4"])} km².`;
+  relInfo.textContent=`Conca ${id} (tall de 100 km²): ${r.trams.toLocaleString("ca-ES")} trams de rierata; zones a menys d'1 m del llit: ${fmt(r.km2["2"]+r.km2["3"])} km²; depressions: ${fmt(r.km2["4"])} km².`+(r.soterranis&&r.soterranis.km2?` Soterranis: ${f2(r.soterranis.km2)} km², ${f2(r.soterranis.km2_tocant_zona_baixa)} km² tocant zones baixes.`:"");
+  if(kSot.checked&&!capaSot&&r.soterranis&&r.soterranis.km2){capaSot=L.imageOverlay(`data/catalunya/relleu/${nom}/soterranis.png`,r.limits,{opacity:.9,interactive:false,pane:"relleu"}).addTo(gS)}
   if(kZb.checked&&!capaZb){capaZb=L.imageOverlay(`data/catalunya/relleu/${nom}/zones_baixes.png`,r.limits,{opacity:.8,interactive:false,pane:"relleu"}).addTo(gZ)}
   if(kRier.checked&&!capaRier){const n=nom;d3.json(`data/catalunya/relleu/${nom}/rieretes.json`).then(j=>{if(relConca!==n||!kRier.checked||capaRier)return;capaRier=rierCapa(j).addTo(gR)})}
   if(encaixa){encaixa=false;mapa.fitBounds(r.limits)}
@@ -199,7 +211,7 @@ function estil(f){
     const cc=i===sel?css("--sel"):av.has(i)?css("--avall"):am.has(i)?css("--amunt"):css("--conca-b");
     return {color:cc,weight:i===sel?3:(av.has(i)||am.has(i))?2:.6,fillOpacity:0};
   }
-  const rel=vista==="relleu"&&relConca!=null&&(kRier.checked||kZb.checked), f2=rel&&mapa.getZoom()>=11?.35:1;
+  const rel=vista==="relleu"&&relConca!=null&&(kRier.checked||kZb.checked||kSot.checked), f2=rel&&mapa.getZoom()>=11?.35:1;
   if(rel&&i===sel) return {color:css("--sel"),weight:3,fillOpacity:0};
   return {color:css("--conca-b"),weight:i===sel?2:.6,fillColor:c,fillOpacity:Math.min(fo,1)*f2};
 }
