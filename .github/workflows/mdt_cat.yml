@@ -16,7 +16,7 @@ on:
         default: "30"
       pas:
         description: "Cel·la del càlcul de relleu (m)"
-        default: "10"
+        default: "5"
       llindar:
         description: "Conca mínima d'una rierata (km²)"
         default: "0.05"
@@ -28,7 +28,7 @@ permissions:
   contents: write
 
 env:
-  CONQUES: ${{ inputs.conques || 'pendents' }}
+  CONQUES: ${{ inputs.conques || '125,124,188,199,227,25' }}
   ETIQUETA: mdt5-cat
 
 jobs:
@@ -73,7 +73,7 @@ jobs:
             nom=$(printf "c%03d" "$id"); f=/tmp/mdt_cat/mdt5_$nom.tif
             gh release download "$ETIQUETA" -R "${{ github.repository }}" -p "mdt5_$nom.tif" -D /tmp/mdt_cat 2>/dev/null && echo "$nom: MDT de la Release" || true
             nou=0; [ -f "$f" ] || nou=1
-            if timeout 3600 python3 scripts/mdt_cat.py conca --id "$id" --mdt "$f" --pas "${{ inputs.pas || '10' }}" --llindar-km2 "${{ inputs.llindar || '0.05' }}"; then
+            if timeout 3600 python3 scripts/mdt_cat.py conca --id "$id" --mdt "$f" --pas "${{ inputs.pas || '5' }}" --llindar-km2 "${{ inputs.llindar || '0.05' }}"; then
               if [ "$nou" = 1 ]; then gh release upload "$ETIQUETA" "$f" -R "${{ github.repository }}" --clobber || fallades="$fallades $id"; fi
             else
               fallades="$fallades $id"
