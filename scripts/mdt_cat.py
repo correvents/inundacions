@@ -250,7 +250,14 @@ def relleu(cami_mdt, geom, nom, pas, llindar):
     classe[(hand < 2)] = 1
     classe[(hand < 1)] = 2
     classe[(hand < 0.5)] = 3
-    classe[prof > 0.3] = 4                      # depressió: l'aigua s'hi queda
+    dep = (prof > 0.3) & ~edif                   # depressió: l'aigua s'hi queda
+    # fora els forats de menys de 100 m² (celoberts i buits entre parts d'edifici del Cadastre): no són places ni patis
+    from scipy import ndimage
+    et, n = ndimage.label(dep)
+    if n:
+        mida = ndimage.sum(dep, et, index=np.arange(1, n + 1))
+        dep &= (mida >= max(1, round(100 / pas ** 2)))[np.maximum(et - 1, 0)] & (et > 0)
+    classe[dep] = 4
     classe[mar] = 0
     classe[edif] = 0                            # dins dels edificis no es pinta
     classe[features.geometry_mask([mapping(g31)], z.shape, tr, invert=False)] = 0
