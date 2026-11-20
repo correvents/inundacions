@@ -8,11 +8,21 @@ on:
 jobs:
   explora:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - run: |
-          for d in tif_unzip/ gpkg/ ""; do echo "== $d"; curl -sL -m 60 "https://datacloud.icgc.cat/datacloud/cobertes-sol/$d" | sed 's/<[^>]*>/ /g' | tr -s ' ' | grep -v '^ *$' | head -80; done
-          sudo apt-get -qq install -y gdal-bin >/dev/null 2>&1 || true
-          for f in $(curl -sL "https://datacloud.icgc.cat/datacloud/cobertes-sol/tif_unzip/" | grep -o 'href="[^"]*\.tif"' | cut -d'"' -f2 | tail -3); do
-            echo "== gdalinfo $f"; gdalinfo "/vsicurl/https://datacloud.icgc.cat/datacloud/cobertes-sol/tif_unzip/$f" | head -60
+      - name: Llistes
+        run: |
+          B=https://datacloud.icgc.cat/datacloud/cobertes-sol
+          for d in "" tif_unzip/ gpkg/; do echo "== $d"; curl -sL -m 60 "$B/$d" | sed 's/<[^>]*>/ /g' | tr -s ' ' | grep -v '^ *$' | head -60 || true; done
+      - name: Capçaleres
+        run: |
+          B=https://datacloud.icgc.cat/datacloud/cobertes-sol
+          for f in $(curl -sL -m 60 "$B/tif_unzip/" | grep -o 'href="[^"]*"' | cut -d'"' -f2 | grep -i 'tif\|zip\|xml\|qml\|txt\|csv' | head -20); do
+            echo "== $f"; curl -sI -m 30 "$B/tif_unzip/$f" | grep -i 'length\|type' || true
           done
-          curl -sL -m 60 "https://geoserveis.icgc.cat/servei/catalunya/cobertes-sol/wms?REQUEST=GetCapabilities&SERVICE=WMS" | head -c 4000
+          for f in $(curl -sL -m 60 "$B/gpkg/" | grep -o 'href="[^"]*"' | cut -d'"' -f2 | grep -iv '^\?\|^/' | head -20); do
+            echo "== gpkg $f"; curl -sI -m 30 "$B/gpkg/$f" | grep -i 'length' || true
+          done
+      - name: WMS
+        run: |
+          curl -s -m 60 "https://geoserveis.icgc.cat/servei/catalunya/cobertes-sol/wms?REQUEST=GetCapabilities&SERVICE=WMS" | grep -i -A3 'cobertes_2024\|LegendURL' | head -40 || true
