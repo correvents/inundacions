@@ -1,9 +1,10 @@
 name: Cobertes del sòl - llegenda
 
+# Colors del WMS de cobertes de l'ICGC → codi i nom de coberta (config/cobertes_llegenda.json). Només cal tornar-lo a
+# llançar si l'ICGC canvia els colors o es passa a una altra edició del mapa.
+
 on:
-  push:
-    branches: [claude/project-thread-rgykfu]
-    paths: [.github/workflows/cobertes_explora.yml, scripts/cobertes.py]
+  workflow_dispatch:
 
 permissions:
   contents: write
