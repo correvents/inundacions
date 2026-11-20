@@ -1,42 +1,26 @@
-name: Cobertes del sòl - explora
+name: Cobertes del sòl - llegenda
 
 on:
   push:
     branches: [claude/project-thread-rgykfu]
-    paths: [.github/workflows/cobertes_explora.yml]
+    paths: [.github/workflows/cobertes_explora.yml, scripts/cobertes.py]
+
+permissions:
+  contents: write
 
 jobs:
-  explora:
+  llegenda:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 60
     steps:
-      - name: WCS i WMS
+      - uses: actions/checkout@v4
+      - run: pip -q install numpy pillow requests
+      - run: python3 scripts/cobertes.py llegenda
+      - name: Desa
         run: |
-          S=https://geoserveis.icgc.cat/servei/catalunya/cobertes-sol
-          echo "== WCS"; curl -s -m 60 "$S/wcs?SERVICE=WCS&REQUEST=GetCapabilities" | head -c 3000; echo
-          echo "== WMS formats"; curl -s -m 60 "$S/wms?REQUEST=GetCapabilities&SERVICE=WMS" | grep -o '<Format>[^<]*</Format>' | sort | uniq -c
-          echo "== GetFeatureInfo formats/exemple"
-          for fmt in text/plain application/json text/xml; do
-            curl -s -m 60 "$S/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo&LAYERS=cobertes_2024&QUERY_LAYERS=cobertes_2024&CRS=EPSG:25831&BBOX=500000,4630000,501000,4631000&WIDTH=100&HEIGHT=100&I=50&J=50&INFO_FORMAT=$fmt&STYLES=" | head -c 1500; echo; done
-      - name: GetMap
-        run: |
-          pip -q install pillow numpy
-          S=https://geoserveis.icgc.cat/servei/catalunya/cobertes-sol
-          # Platja d'Aro, 5 m
-          curl -s -m 120 -o m.png "$S/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=cobertes_2024&STYLES=&CRS=EPSG:25831&BBOX=500000,4627000,510000,4637000&WIDTH=2000&HEIGHT=2000&FORMAT=image/png"
-          curl -s -m 120 -o t.tif "$S/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&LAYERS=cobertes_2024&STYLES=&CRS=EPSG:25831&BBOX=500000,4627000,510000,4637000&WIDTH=2000&HEIGHT=2000&FORMAT=image/tiff"
-          file m.png t.tif; ls -l m.png t.tif
-          python3 - <<'P'
-          from PIL import Image; import numpy as np
-          for f in ("m.png","t.tif"):
-              try:
-                  im=Image.open(f); print(f, im.mode, im.size, im.info.keys())
-                  a=np.array(im.convert("RGBA")).reshape(-1,4); u,c=np.unique(a,axis=0,return_counts=True)
-                  o=np.argsort(-c); print(len(u),"colors"); [print(tuple(u[k]),c[k]) for k in o[:70]]
-              except Exception as e: print(f,e)
-          P
-      - name: Llegenda
-        run: |
-          S=https://geoserveis.icgc.cat/servei/catalunya/cobertes-sol
-          curl -s -m 60 "$S/wms?version=1.3.0&service=WMS&request=GetLegendGraphic&sld_version=1.1.0&layer=cobertes_2024&format=application/json&STYLE=default" | head -c 6000; echo
-          curl -s -m 60 "$S/wms?service=WMS&version=1.1.1&request=GetStyles&layers=cobertes_2024" | head -c 8000; echo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/cobertes_llegenda.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Llegenda de les cobertes del sòl (WMS ICGC)"
+          for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1
