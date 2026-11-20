@@ -15,6 +15,7 @@ petites de costa, perquè no quedin forats). Per a cada conca:
    terreny: les rieretes els volten i dins dels edificis no es marquen zones baixes.
    Diferència: la superfície drenada és només la de dins la conca (no suma el que entra d'aigües amunt).
 3. Retalla els resultats a la conca i els escriu lleugers per a la web:
+   (amb edificis a data/catalunya/relleu_edificis/; amb --sense-edificis, terreny sol a data/catalunya/relleu/)
      data/catalunya/relleu/cNNN/rieretes.json     trams amb coordenades enteres (1e-5 °) i en diferències
      data/catalunya/relleu/cNNN/zones_baixes.png  PNG de paleta (5 colors), en lat/lon
      data/catalunya/relleu/cNNN/soterranis.png    edificis amb plantes sota rasant (taronja; vermell si toquen zona baixa)
@@ -39,7 +40,8 @@ from shapely.prepared import prep
 
 WCS = "https://servicios.idee.es/wcs-inspire/mdt"
 CONQUES = Path("data/catalunya/conques/conques_100km2.geojson")
-SORT = Path("data/catalunya/relleu")
+SORT = Path("data/catalunya/relleu")          # terreny sol; amb --edificis va a relleu_edificis
+SORT_ED = Path("data/catalunya/relleu_edificis")
 TMP = Path("/tmp/mdt_cat")
 MARGE = 500          # m al voltant de la conca
 TROS = 5000          # m de costat de cada petició al WCS
@@ -197,7 +199,7 @@ def codifica(coords):
     return d.ravel().tolist()
 
 
-def relleu(cami_mdt, geom, nom, pas, llindar):
+def relleu(cami_mdt, geom, nom, pas, llindar, amb_edificis=True):
     z5, tr5, crs5 = llegeix_mdt(cami_mdt)
     h, w = z5.shape
     caixa = (tr5.c, tr5.f + h * tr5.e, tr5.c + w * tr5.a, tr5.f)
@@ -205,7 +207,7 @@ def relleu(cami_mdt, geom, nom, pas, llindar):
     del z5
     mar = np.isnan(z) | (z <= 0.2)
     # edificis del Cadastre com a obstacles: l'aigua (i les rieretes) els ha de voltar
-    h_ed, n_ed, sot = edificis(tr, z.shape, crs)
+    h_ed, n_ed, sot = edificis(tr, z.shape, crs) if amb_edificis else (None, 0, None)
     edif = np.zeros(z.shape, bool) if h_ed is None else (h_ed > 0) & ~mar
     if h_ed is not None:
         z = np.where(edif, z + h_ed, z)
@@ -279,7 +281,7 @@ def relleu(cami_mdt, geom, nom, pas, llindar):
     reproject(classe, cl, src_transform=tr, src_crs=crs, dst_transform=rasterio.Affine(pas_x, 0, w, 0, -pas_y, n),
               dst_crs="EPSG:4326", resampling=Resampling.nearest)
     from PIL import Image
-    d = SORT / nom
+    d = (SORT_ED if amb_edificis else SORT) / nom
     d.mkdir(parents=True, exist_ok=True)
     im = Image.fromarray(cl, "P")
     pal = [0, 0, 0] * 256
@@ -326,13 +328,14 @@ def main():
     a2 = sub.add_parser("conca"); a2.add_argument("--id", type=int, required=True); a2.add_argument("--mdt")
     a2.add_argument("--pas", type=float, default=5); a2.add_argument("--llindar-km2", type=float, default=0.05)
     a2.add_argument("--nomes-mdt", action="store_true")
+    a2.add_argument("--sense-edificis", action="store_true", help="terreny sol (data/catalunya/relleu)")
     sub.add_parser("index")
     a = ap.parse_args()
     C = conques()
 
     if a.ordre == "lots":
         if a.conques == "pendents":       # les que encara no tenen relleu desat
-            a.conques = ",".join(str(i) for i in sorted(C) if not (SORT / f"c{i:03d}" / "resum.json").exists()) or "totes"
+            a.conques = ",".join(str(i) for i in sorted(C) if not (SORT_ED / f"c{i:03d}" / "resum.json").exists()) or "totes"
         ids = sorted(C) if a.conques == "totes" else [int(x) for x in a.conques.split(",") if x.strip()]
         # repartiment per superfície (les grans tarden més): la més gran al lot amb menys feina
         lots = [[] for _ in range(min(a.lots, len(ids)))]
@@ -343,12 +346,14 @@ def main():
         return 0
 
     if a.ordre == "index":
-        idx = {}
-        for r in sorted(SORT.glob("c*/resum.json")):
-            j = json.loads(r.read_text())
-            idx[j["conca"]] = {"limits": j["limits"], "trams": j["trams"], "km2": j["km2"], "soterranis": j.get("soterranis")}
-        (SORT / "index.json").write_text(json.dumps({"conques": idx, "classes": CLASSES}, ensure_ascii=False, separators=(",", ":")))
-        print(f"index: {len(idx)} conques de {len(C)}")
+        for sort in (SORT, SORT_ED):
+            idx = {}
+            for r in sorted(sort.glob("c*/resum.json")):
+                j = json.loads(r.read_text())
+                idx[j["conca"]] = {"limits": j["limits"], "trams": j["trams"], "km2": j["km2"], "soterranis": j.get("soterranis")}
+            if idx:
+                (sort / "index.json").write_text(json.dumps({"conques": idx, "classes": CLASSES}, ensure_ascii=False, separators=(",", ":")))
+            print(f"{sort}: {len(idx)} conques de {len(C)}")
         return 0
 
     TMP.mkdir(parents=True, exist_ok=True)
@@ -357,7 +362,7 @@ def main():
     print(f"== Conca {a.id}: {C[a.id]['properties']['km2']} km²")
     cami = Path(a.mdt) if a.mdt and Path(a.mdt).exists() else baixa_mdt(geom, nom)
     if not a.nomes_mdt:
-        relleu(cami, geom, nom, a.pas, a.llindar_km2)
+        relleu(cami, geom, nom, a.pas, a.llindar_km2, not a.sense_edificis)
     return 0
 
 

@@ -20,6 +20,9 @@ on:
       llindar:
         description: "Conca mínima d'una rierata (km²)"
         default: "0.05"
+      edificis:
+        description: "Amb els edificis del Cadastre (si → relleu_edificis) o terreny sol (no → relleu)"
+        default: "si"
   push:
     branches: [claude/project-thread-jrfwlk]
     paths: [scripts/mdt_cat.py, .github/workflows/mdt_cat.yml]
@@ -28,7 +31,7 @@ permissions:
   contents: write
 
 env:
-  CONQUES: ${{ inputs.conques || 'totes' }}
+  CONQUES: ${{ inputs.conques || 'pendents' }}
   ETIQUETA: mdt5-cat
 
 jobs:
@@ -73,7 +76,7 @@ jobs:
             nom=$(printf "c%03d" "$id"); f=/tmp/mdt_cat/mdt5_$nom.tif
             gh release download "$ETIQUETA" -R "${{ github.repository }}" -p "mdt5_$nom.tif" -D /tmp/mdt_cat 2>/dev/null && echo "$nom: MDT de la Release" || true
             nou=0; [ -f "$f" ] || nou=1
-            if timeout 3600 python3 scripts/mdt_cat.py conca --id "$id" --mdt "$f" --pas "${{ inputs.pas || '5' }}" --llindar-km2 "${{ inputs.llindar || '0.05' }}"; then
+            if timeout 3600 python3 scripts/mdt_cat.py conca --id "$id" --mdt "$f" --pas "${{ inputs.pas || '5' }}" --llindar-km2 "${{ inputs.llindar || '0.05' }}" $([ "${{ inputs.edificis || 'si' }}" = "no" ] && echo --sense-edificis); then
               if [ "$nou" = 1 ]; then gh release upload "$ETIQUETA" "$f" -R "${{ github.repository }}" --clobber || fallades="$fallades $id"; fi
             else
               fallades="$fallades $id"
@@ -88,6 +91,7 @@ jobs:
           name: relleu-${{ strategy.job-index }}
           path: |
             data/catalunya/relleu/
+            data/catalunya/relleu_edificis/
             data/catalunya/fallades_*.txt
           if-no-files-found: ignore
 
@@ -105,14 +109,15 @@ jobs:
       - run: pip install numpy shapely pyproj rasterio requests
       - name: Desa
         run: |
-          mkdir -p data/catalunya/relleu
-          if [ -d /tmp/art/relleu ]; then cp -r /tmp/art/relleu/. data/catalunya/relleu/; fi
+          for d in relleu relleu_edificis; do
+            if [ -d /tmp/art/$d ]; then mkdir -p data/catalunya/$d && cp -r /tmp/art/$d/. data/catalunya/$d/; fi
+          done
           python3 scripts/mdt_cat.py index
           f=$(cat /tmp/art/fallades_*.txt 2>/dev/null | tr -s ' \n' ' ')
           echo "### MDT 5 m: conques fallades: ${f:-cap}" >> "$GITHUB_STEP_SUMMARY"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/catalunya/relleu
+          git add data/catalunya/relleu data/catalunya/relleu_edificis
           git diff --cached --quiet && exit 0
           git commit -m "Relleu de Catalunya per conca: rieretes i zones baixes (MDT 5 m)"
           for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1
