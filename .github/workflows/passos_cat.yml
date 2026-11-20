@@ -34,7 +34,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -q numpy shapely pyproj rasterio requests osmium
+      - run: pip install -q numpy scipy shapely pyproj rasterio requests osmium
       - id: m
         run: echo "matriu=$(python3 scripts/mdt_cat.py lots --lots '${{ inputs.lots || '20' }}' --conques '${{ env.CONQUES }}')" >> "$GITHUB_OUTPUT"
       - name: Vies d'OSM (Geofabrik, Catalunya)
