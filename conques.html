@@ -146,7 +146,7 @@ function dibuixa(){
   capaR.bringToFront();
   pinta();
 }
-function tria(id){sel=id;encaixa=false;pinta();relleu()}
+function tria(id){sel=id;pinta();relleu()}
 // Capes de relleu calculades al servidor (scripts/mdt_cat.py), una carpeta per conca del tall de 100 km²
 let relIdx=null, capaRier=null, capaZb=null, capaSot=null, relConca=null;
 const kSot=document.getElementById("kSot");
@@ -157,11 +157,10 @@ const gR=L.layerGroup().addTo(mapa), gZ=L.layerGroup().addTo(mapa), gS=L.layerGr
 F.ctl.addOverlay(gZ,"Zones baixes i depressions (conca triada)");
 F.ctl.addOverlay(gR,"Rieretes > 0,05 km² (conca triada)");
 F.ctl.addOverlay(gS,"Edificis amb soterrani (conca triada)");
-kSot.onchange=()=>{kSot.checked?gS.addTo(mapa):mapa.removeLayer(gS);encaixa=kSot.checked;relleu()};
-let encaixa=false;
-kRier.onchange=()=>{kRier.checked?gR.addTo(mapa):mapa.removeLayer(gR);encaixa=kRier.checked;relleu()};
-kZb.onchange=()=>{kZb.checked?gZ.addTo(mapa):mapa.removeLayer(gZ);encaixa=kZb.checked;relleu()};
-mapa.on("overlayadd overlayremove",e=>{if(e.layer===gR||e.layer===gZ||e.layer===gS){kRier.checked=mapa.hasLayer(gR);kZb.checked=mapa.hasLayer(gZ);kSot.checked=mapa.hasLayer(gS);encaixa=e.type==="overlayadd";relleu()}});
+kSot.onchange=()=>{kSot.checked?gS.addTo(mapa):mapa.removeLayer(gS);relleu()};
+kRier.onchange=()=>{kRier.checked?gR.addTo(mapa):mapa.removeLayer(gR);relleu()};
+kZb.onchange=()=>{kZb.checked?gZ.addTo(mapa):mapa.removeLayer(gZ);relleu()};
+mapa.on("overlayadd overlayremove",e=>{if(e.layer===gR||e.layer===gZ||e.layer===gS){kRier.checked=mapa.hasLayer(gR);kZb.checked=mapa.hasLayer(gZ);kSot.checked=mapa.hasLayer(gS);relleu()}});
 // dos càlculs: terreny sol (data/catalunya/relleu) i amb els edificis del Cadastre (data/catalunya/relleu_edificis)
 let relMode="edificis"; try{relMode=localStorage.getItem("conques_relleu")||relMode}catch(e){}
 const relDir=()=>relMode==="edificis"?"data/catalunya/relleu_edificis":"data/catalunya/relleu";
@@ -213,7 +212,6 @@ function relleu(){
   if(relMode==="edificis"&&kSot.checked&&!capaSot&&r.soterranis&&r.soterranis.km2){capaSot=L.imageOverlay(`${relDir()}/${nom}/soterranis.png`,r.limits,{opacity:.9,interactive:false,pane:"relleu"}).addTo(gS)}
   if(kZb.checked&&!capaZb){capaZb=L.imageOverlay(`${relDir()}/${nom}/zones_baixes.png`,r.limits,{opacity:.8,interactive:false,pane:"relleu"}).addTo(gZ)}
   if(kRier.checked&&!capaRier){const n=nom;d3.json(`${relDir()}/${nom}/rieretes.json`).then(j=>{if(relConca!==n||!kRier.checked||capaRier)return;capaRier=rierCapa(j).addTo(gR)})}
-  if(encaixa){encaixa=false;mapa.fitBounds(r.limits)}
 }
 let av=new Set(), am=new Set(), cami=[];
 function estil(f){
