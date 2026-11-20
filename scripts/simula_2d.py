@@ -6,11 +6,14 @@ amb el pendent de la superfície de l'aigua i la fricció de Manning, i la làmi
   - Relleu: la reixa de relleu.py (MDT 5 m de l'IGN) agregada a --pas metres.
   - Pluja: graella del radar OPERA de l'episodi (15 min, 1 km), corregida hora a hora perquè la mitjana sobre la conca
     de l'aforador coincideixi amb el pluviòmetre de l'ACA (el radar infravalora els nuclis convectius).
-  - Pèrdues: llindar per cel·la. Terreny natural: --ia-natural mm (calibrat amb l'aforador el 3-4/10/2026).
-    Zones construïdes (ESA WorldCover 2021, classe 50): --ia-urba mm.
+  - Cobertes del sòl: mapa de l'ICGC (scripts/cobertes.py, Release cobertes-cat). Cada coberta té la seva n de Manning
+    (Chow 1959) i un número de corba (USDA TR-55); --ia-natural i --perdua-natural són la mitjana del terreny natural
+    i es reparteixen per cel·la en proporció a la retenció S = 25400/CN - 254. Amb --sense-cobertes: ESA WorldCover.
+  - Pèrdues: llindar per cel·la. Terreny natural: --ia-natural mm de mitjana (calibrat amb l'aforador el 3-4/10/2026).
+    Zones construïdes: --ia-urba mm.
     Després del llindar, la làmina d'aigua de cada cel·la perd --perdua-natural mm/h (infiltració) al terreny natural i
     --clavegueram mm/h a les zones construïdes (embornals), excepte on el calat supera --h-llera (llera saturada). Així l'aigua embassada també es buida quan para de ploure.
-  - Fricció: n de Manning (--n-natural, --n-urba).
+  - Fricció: n de Manning per coberta (o --n-natural, --n-urba amb --sense-cobertes).
   - Mar i vores del domini: l'aigua surt.
 Sortides (data/<conca>/sim2d/<id>/): un PNG de calat cada --cada minuts en lat/lon, calat màxim, l'hidrograma simulat a
 l'aforador (per validar-lo amb l'observat), index.json i, per al model d'inundació, dues graelles numèriques en UTM:
@@ -175,10 +178,12 @@ def main():
     ap.add_argument("--perdua-natural", type=float, default=12, help="infiltració un cop superat el llindar (mm/h)")
     ap.add_argument("--h-llera", type=float, default=0.1, help="calat a partir del qual la cel·la és llera saturada i no infiltra (m)")
     ap.add_argument("--clavegueram", type=float, default=30, help="capacitat dels embornals a les zones construïdes (mm/h)")
-    ap.add_argument("--n-natural", type=float, default=0.06, help="n de Manning del terreny natural")
-    ap.add_argument("--n-urba", type=float, default=0.02, help="n de Manning de les zones construïdes")
+    ap.add_argument("--n-natural", type=float, default=0.06, help="n de Manning del terreny natural (només amb --sense-cobertes)")
+    ap.add_argument("--n-urba", type=float, default=0.02, help="n de Manning de les zones construïdes (només amb --sense-cobertes)")
     ap.add_argument("--extra-hores", type=float, default=0, help="hores addicionals sense pluja després de l'última dada de radar, per veure com es buida l'aigua")
     ap.add_argument("--cada", type=int, default=10, help="minuts entre fotogrames")
+    ap.add_argument("--sense-cobertes", action="store_true", help="sense el mapa de cobertes de l'ICGC: WorldCover i --n-natural/--n-urba únics")
+    ap.add_argument("--grup-sol", help="grup hidrològic de sòl (A-D) per al número de corba; per defecte el de config/cobertes_parametres.json")
     ap.add_argument("--edificis", help="edificis del Cadastre (cadastre.py: data/<conca>/cadastre/edificis.json.gz): obstacles i soterranis")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
@@ -201,20 +206,39 @@ def main():
     dx = float(tr.a)
     print(f"Domini: {nc}×{nf} cel·les de {dx:.0f} m")
 
-    # cobertura del sòl (ESA WorldCover): construït → pèrdues i fricció baixes
-    urba = np.zeros((nf, nc), dtype=bool)
-    for lon0 in (0, 3):
-        try:
-            with rasterio.open(WORLDCOVER.format(lon0)) as f:
-                dst = np.zeros((nf, nc), dtype=np.uint8)
-                reproject(rasterio.band(f, 1), dst, dst_transform=tr, dst_crs=crs, resampling=Resampling.mode)
-                urba |= dst == 50
-        except Exception as e:
-            print(f"WorldCover E{lon0:03d}: {type(e).__name__} {e}")
-    print(f"Construït: {urba.mean() * 100:.1f} % del domini")
-    ia = np.where(urba, a.ia_urba, a.ia_natural)
-    sorti = np.where(urba, a.clavegueram, a.perdua_natural) / 1000 / 3600     # m/s que perd la làmina un cop superat el llindar
-    n = np.where(urba, a.n_urba, a.n_natural)
+    # cobertes del sòl: mapa de l'ICGC (Release cobertes-cat, scripts/cobertes.py) → n de Manning per coberta (Chow 1959)
+    # i absorció repartida segons la retenció S del número de corba (TR-55); sense, ESA WorldCover i valors únics.
+    cob = None
+    if not a.sense_cobertes:
+        sys.path.insert(0, str(Path(__file__).parent))
+        import cobertes as C
+        cob = C.a_reixa(tr, (nf, nc), crs)
+    if cob is not None:
+        n, cn, tipus = C.parametres(cob, grup_sol=a.grup_sol)
+        urba = tipus == 1
+        aigua = tipus == 2
+        S = 25400 / cn - 254                                     # retenció potencial màxima (mm), SCS
+        nat = ~urba & ~aigua & ~mar
+        rel = S / S[nat].mean() if nat.any() else np.ones_like(S)   # la mitjana del terreny natural conserva el valor calibrat
+        ia = np.where(urba, a.ia_urba, a.ia_natural * rel)
+        sorti = np.where(urba, a.clavegueram, a.perdua_natural * rel) / 1000 / 3600
+        ia[aigua] = 0; sorti[aigua] = 0                          # sobre l'aigua la pluja no s'infiltra
+        print(f"Cobertes ICGC: construït {urba.mean() * 100:.1f} %, aigua {aigua.mean() * 100:.1f} %, n natural mitjana "
+              f"{n[nat].mean():.3f}, absorció natural {a.ia_natural * rel[nat].min():.0f}-{a.ia_natural * rel[nat].max():.0f} mm")
+    else:
+        urba = np.zeros((nf, nc), dtype=bool)
+        for lon0 in (0, 3):
+            try:
+                with rasterio.open(WORLDCOVER.format(lon0)) as f:
+                    dst = np.zeros((nf, nc), dtype=np.uint8)
+                    reproject(rasterio.band(f, 1), dst, dst_transform=tr, dst_crs=crs, resampling=Resampling.mode)
+                    urba |= dst == 50
+            except Exception as e:
+                print(f"WorldCover E{lon0:03d}: {type(e).__name__} {e}")
+        print(f"Construït (WorldCover): {urba.mean() * 100:.1f} % del domini")
+        ia = np.where(urba, a.ia_urba, a.ia_natural)
+        sorti = np.where(urba, a.clavegueram, a.perdua_natural) / 1000 / 3600     # m/s que perd la làmina un cop superat el llindar
+        n = np.where(urba, a.n_urba, a.n_natural)
     phi, psx, psy, desti, edif = obstacles(a.edificis, tr, nf, nc, dx) if a.edificis else (np.ones((nf, nc)), np.ones((nf, nc)), np.ones((nf, nc)), None, None)
 
     # pluja: graella del radar a la reixa, amb correcció horària amb el pluviòmetre
@@ -345,7 +369,8 @@ def main():
         "limits": [[s, w], [nn, e]], "pas_m": dx, "inici_utc": ini.strftime("%Y-%m-%dT%H:%M"),
         "graella_utm": {"crs": str(crs), "x0": tr.c, "y0": tr.f, "nf": nf, "nc": nc, "fitxers": {"calat_max_cm.u2": "uint16 cm",
                         "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai", "durada_min.u2": "uint16 minuts entre superar 15 cm i l'últim moment amb més de 5 cm; 65535 = mai superat"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png", "assecat": "assecat.png", "assecat_final_mullat_km2": round(float(mullat_final.sum()) * dx * dx / 1e6, 3), "llegenda_assecat_h": [0, 1, 3, 6, 12],
-        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "h_llera_m": a.h_llera, "manning": {"natural": a.n_natural, "construit": a.n_urba},
+        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "h_llera_m": a.h_llera, "manning": ({"natural": a.n_natural, "construit": a.n_urba} if cob is None else "per coberta (config/cobertes_parametres.json, Chow 1959)"),
+                      "cobertes": None if cob is None else {"font": "Mapa de cobertes del sòl de Catalunya, ICGC (CC BY 4.0)", "absorcio": "ia_natural × S/S̄ (número de corba TR-55)", "grup_sol": a.grup_sol or json.loads(Path("config/cobertes_parametres.json").read_text())["grup_hidrologic_sol"]},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2],
         "edificis": None if edif is None else {"font": "Cadastre (INSPIRE Buildings)", "metode": "porositat: els edificis treuen espai i amplada de pas a cada cel·la; la pluja de les teulades va al carrer",

@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
-      - run: pip -q install numpy pillow requests
+      - run: pip -q install numpy pillow requests scipy
       - run: python3 scripts/cobertes.py llegenda
       - name: Desa
         run: |
