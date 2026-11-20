@@ -39,7 +39,10 @@ jobs:
         run: echo "matriu=$(python3 scripts/mdt_cat.py lots --lots '${{ inputs.lots || '20' }}' --conques '${{ env.CONQUES }}')" >> "$GITHUB_OUTPUT"
       - name: Vies d'OSM (Geofabrik, Catalunya)
         run: |
-          for i in 1 2 3; do curl -sSfL -o /tmp/cat.osm.pbf https://download.geofabrik.de/europe/spain/cataluna-latest.osm.pbf && break; sleep 30; done
+          # l'URL de l'extracte de Catalunya surt de l'índex de Geofabrik (no l'endevinem)
+          url=$(curl -sSfL https://download.geofabrik.de/index-v1-nogeom.json | python3 -c "import json,sys; f=[x['properties'] for x in json.load(sys.stdin)['features'] if 'catal' in x['properties']['id'].lower() or 'catal' in x['properties']['name'].lower()]; print(f[0]['urls']['pbf'])")
+          echo "Extracte: $url"
+          for i in 1 2 3; do curl -sSfL -o /tmp/cat.osm.pbf "$url" && break; sleep 30; done
           ls -la /tmp/cat.osm.pbf
           python3 scripts/passos_cat.py osm --pbf /tmp/cat.osm.pbf --sortida /tmp/vies.json.gz
       - uses: actions/upload-artifact@v4
