@@ -53,6 +53,7 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
 .cami{font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--muted);word-break:break-word}
 .hint{color:var(--muted);font-size:13px;line-height:1.5}
 .leaflet-relleu-pane img{image-rendering:pixelated}
+.seg.vista{margin-left:0;display:flex}.seg.vista button{flex:1;padding:6px 8px}
 .relleu{border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:0;display:flex;flex-direction:column;gap:8px}
 .relleu legend{padding:0 4px}.relleu label{display:flex;align-items:center;gap:8px;cursor:pointer}
 @media (max-width:760px){.app{grid-template-columns:1fr;grid-template-rows:auto 60vh auto;height:auto}.seg{margin-left:0}}
@@ -77,6 +78,14 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
       <span><i class="sw" style="background:var(--sel)"></i>Conca triada</span>
       <span><i class="sw" style="background:color-mix(in srgb,var(--avall) 60%,var(--conca))"></i>Aigües avall, fins al mar</span>
       <span><i class="sw" style="background:color-mix(in srgb,var(--amunt) 55%,var(--conca))"></i>Aigües amunt (li porten aigua)</span>
+    </div>
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Com es pinten les conques</div>
+      <div class="seg vista" role="group" aria-label="Com es pinten les conques">
+        <button data-v="drenatge" aria-pressed="false" title="Conca triada, aigües amunt i aigües avall pintades">Drenatge</button>
+        <button data-v="relleu" aria-pressed="true" title="Conca triada només amb el contorn; la resta s'aclareix en apropar-se">Relleu</button>
+        <button data-v="contorns" aria-pressed="false" title="Només els contorns de totes les conques, sense emplenat">Contorns</button>
+      </div>
     </div>
     <fieldset class="relleu" id="relleu">
       <legend class="lbl">Relleu de la conca triada (MDT 5 m)</legend>
@@ -184,11 +193,23 @@ function estil(f){
   const [c,fo]= i===sel?[css("--sel"),Math.max(o,.15)*2]: av.has(i)?[css("--avall"),Math.max(o,.15)*1.6]: am.has(i)?[css("--amunt"),Math.max(o,.15)*1.6]:[css("--conca"),buit?.9:o*.5];
   // amb les capes de relleu a la vista, la conca triada només es dibuixa amb el contorn (la carena) i les altres
   // s'aclareixen en apropar-se, perquè no tapin les rieretes ni les zones baixes
-  const rel=relConca!=null&&(kRier.checked||kZb.checked), z=mapa.getZoom(), f2=rel&&z>=11?.35:1;
+  // Vistes: «drenatge» = emplenat (amunt i avall); «relleu» = la triada només amb el contorn i la resta més clara en
+  // apropar-se; «contorns» = cap emplenat, amunt i avall amb el contorn de color
+  if(vista==="contorns"){
+    const cc=i===sel?css("--sel"):av.has(i)?css("--avall"):am.has(i)?css("--amunt"):css("--conca-b");
+    return {color:cc,weight:i===sel?3:(av.has(i)||am.has(i))?2:.6,fillOpacity:0};
+  }
+  const rel=vista==="relleu"&&relConca!=null&&(kRier.checked||kZb.checked), f2=rel&&mapa.getZoom()>=11?.35:1;
   if(rel&&i===sel) return {color:css("--sel"),weight:3,fillOpacity:0};
   return {color:css("--conca-b"),weight:i===sel?2:.6,fillColor:c,fillOpacity:Math.min(fo,1)*f2};
 }
 mapa.on("zoomend",()=>pinta());
+let vista="relleu";
+try{vista=localStorage.getItem("conques_vista")||vista}catch(e){}
+function posaVista(v){vista=v;d3.selectAll(".vista button").attr("aria-pressed",function(){return this.dataset.v===v});
+  try{localStorage.setItem("conques_vista",v)}catch(e){} pinta()}
+d3.selectAll(".vista button").on("click",function(){posaVista(this.dataset.v)});
+posaVista(vista);
 function pinta(){
   const d=dades[mida]; if(!d||!capaC) return;
   av=new Set(); am=new Set(); cami=[];
