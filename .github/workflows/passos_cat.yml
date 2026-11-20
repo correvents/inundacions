@@ -22,7 +22,7 @@ permissions:
   contents: write
 
 env:
-  CONQUES: ${{ inputs.conques || '124,125,188,199' }}
+  CONQUES: ${{ inputs.conques || 'totes' }}
 
 jobs:
   prepara:
