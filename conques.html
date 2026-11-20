@@ -12,18 +12,18 @@
 /* Layout: mapa a tota l'amplada, panell lateral (a sota en mòbil) amb la conca triada */
 :root{
   --bg:#f3f5f6; --panel:#ffffff; --fg:#17232b; --muted:#5c6b75; --line:#c9d2d8;
-  --conca:#dfe6ea; --conca-b:#9aa9b3; --riu:#3d7fb8;
+  --conca:#dfe6ea; --conca-b:#9aa9b3; --riu:#3d7fb8; --rier:#08306b;
   --sel:#0b6e66; --avall:#2459a8; --amunt:#e0a23a; --poble:#c0392b;
   --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0f1519; --panel:#172026; --fg:#e4ebef; --muted:#93a3ad; --line:#2c3a43;
-  --conca:#1f2b33; --conca-b:#3d4f5a; --riu:#5b9bd5;
+  --conca:#1f2b33; --conca-b:#3d4f5a; --riu:#5b9bd5; --rier:#8ec5ff;
   --sel:#2bb3a6; --avall:#6c9ef0; --amunt:#e6b04f; --poble:#ff6b5a; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0f1519; --panel:#172026; --fg:#e4ebef; --muted:#93a3ad; --line:#2c3a43;
-  --conca:#1f2b33; --conca-b:#3d4f5a; --riu:#5b9bd5;
+  --conca:#1f2b33; --conca-b:#3d4f5a; --riu:#5b9bd5; --rier:#8ec5ff;
   --sel:#2bb3a6; --avall:#6c9ef0; --amunt:#e6b04f; --poble:#ff6b5a; color-scheme:dark}
 html,body{height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:14px;
@@ -52,6 +52,8 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
 .sw{width:14px;height:14px;border-radius:3px;flex:none}
 .cami{font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--muted);word-break:break-word}
 .hint{color:var(--muted);font-size:13px;line-height:1.5}
+.leaflet-relleu-pane img{image-rendering:pixelated}
+.seg.vista{margin-left:0;display:flex}.seg.vista button{flex:1;padding:6px 8px}
 .relleu{border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:0;display:flex;flex-direction:column;gap:8px}
 .relleu legend{padding:0 4px}.relleu label{display:flex;align-items:center;gap:8px;cursor:pointer}
 @media (max-width:760px){.app{grid-template-columns:1fr;grid-template-rows:auto 60vh auto;height:auto}.seg{margin-left:0}}
@@ -77,10 +79,18 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
       <span><i class="sw" style="background:color-mix(in srgb,var(--avall) 60%,var(--conca))"></i>Aigües avall, fins al mar</span>
       <span><i class="sw" style="background:color-mix(in srgb,var(--amunt) 55%,var(--conca))"></i>Aigües amunt (li porten aigua)</span>
     </div>
+    <div>
+      <div class="lbl" style="margin-bottom:6px">Com es pinten les conques</div>
+      <div class="seg vista" role="group" aria-label="Com es pinten les conques">
+        <button data-v="drenatge" aria-pressed="false" title="Conca triada, aigües amunt i aigües avall pintades">Drenatge</button>
+        <button data-v="relleu" aria-pressed="true" title="Conca triada només amb el contorn; la resta s'aclareix en apropar-se">Relleu</button>
+        <button data-v="contorns" aria-pressed="false" title="Només els contorns de totes les conques, sense emplenat">Contorns</button>
+      </div>
+    </div>
     <fieldset class="relleu" id="relleu">
       <legend class="lbl">Relleu de la conca triada (MDT 5 m)</legend>
-      <label><input type="checkbox" id="kRier"> Rieretes (conca &gt; 0,05 km²)</label>
-      <label><input type="checkbox" id="kZb"> Zones baixes i depressions</label>
+      <label><input type="checkbox" id="kRier" checked> Rieretes (conca &gt; 0,05 km²)</label>
+      <label><input type="checkbox" id="kZb" checked> Zones baixes i depressions</label>
       <div class="ll" id="llZb" hidden>
         <span><i class="sw" style="background:rgb(198,219,239)"></i>A menys de 2 m del llit</span>
         <span><i class="sw" style="background:rgb(107,174,214)"></i>A menys d'1 m del llit</span>
@@ -126,11 +136,19 @@ function dibuixa(){
   capaR.bringToFront();
   pinta();
 }
-function tria(id){sel=id;pinta();relleu()}
+function tria(id){sel=id;encaixa=false;pinta();relleu()}
 // Capes de relleu calculades al servidor (scripts/mdt_cat.py), una carpeta per conca del tall de 100 km²
 let relIdx=null, capaRier=null, capaZb=null, relConca=null;
 const kRier=document.getElementById("kRier"), kZb=document.getElementById("kZb"), relInfo=document.getElementById("relInfo");
-kRier.onchange=kZb.onchange=()=>relleu();
+// també al selector de capes del mapa (a dalt a la dreta), sincronitzat amb les caselles
+{const pr=mapa.createPane("relleu");pr.style.zIndex=450;pr.style.pointerEvents="none"} // no tapa els clics a les conques
+const gR=L.layerGroup().addTo(mapa), gZ=L.layerGroup().addTo(mapa);
+F.ctl.addOverlay(gZ,"Zones baixes i depressions (conca triada)");
+F.ctl.addOverlay(gR,"Rieretes > 0,05 km² (conca triada)");
+let encaixa=false;
+kRier.onchange=()=>{kRier.checked?gR.addTo(mapa):mapa.removeLayer(gR);encaixa=kRier.checked;relleu()};
+kZb.onchange=()=>{kZb.checked?gZ.addTo(mapa):mapa.removeLayer(gZ);encaixa=kZb.checked;relleu()};
+mapa.on("overlayadd overlayremove",e=>{if(e.layer===gR||e.layer===gZ){kRier.checked=mapa.hasLayer(gR);kZb.checked=mapa.hasLayer(gZ);encaixa=e.type==="overlayadd";relleu()}});
 d3.json("data/catalunya/relleu/index.json").then(j=>{relIdx=j;relleu()}).catch(()=>{relIdx={conques:{}};relleu()});
 function conca100(){ // conca del tall de 100 km² on cau la triada (en el tall de 25, la que conté la seva sortida)
   if(sel==null||!dades["100"]) return null;
@@ -149,31 +167,49 @@ function conca100(){ // conca del tall de 100 km² on cau la triada (en el tall 
 function rierCapa(j){
   const e=j.escala, lin=[];
   j.trams.forEach(t=>{const o=t[0],a=t[1]/100;let x=0,y=0;const ll=[];for(let k=2;k<t.length;k+=2){x+=t[k];y+=t[k+1];ll.push([y/e,x/e])}
-    lin.push(L.polyline(ll,{renderer:rend,color:css("--riu"),weight:Math.max(.6,o*.7),opacity:.85}).bindTooltip(`Conca: ${fmt(a)} km² · ordre ${o}`,{sticky:true}))});
+    lin.push(L.polyline(ll,{renderer:rend,interactive:false,color:css("--rier"),weight:Math.max(.8,o*.8),opacity:.95}))});
   return L.featureGroup(lin);
 }
-const rend=L.canvas({padding:.3});
+const rend=L.canvas({padding:.3,pane:"relleu"});
 function relleu(){
   if(!relIdx) return;
   const id=conca100(), nom=id==null?null:"c"+String(id).padStart(3,"0"), r=nom&&relIdx.conques[nom];
   document.getElementById("llZb").hidden=!kZb.checked;
-  if(nom!==relConca){[capaRier,capaZb].forEach(c=>c&&mapa.removeLayer(c));capaRier=capaZb=null;relConca=nom}
-  if(!kRier.checked&&capaRier){mapa.removeLayer(capaRier);capaRier=null}
-  if(!kZb.checked&&capaZb){mapa.removeLayer(capaZb);capaZb=null}
+  if(nom!==relConca){gR.clearLayers();gZ.clearLayers();capaRier=capaZb=null;relConca=nom}
+  if(!kRier.checked&&capaRier){gR.clearLayers();capaRier=null}
+  if(!kZb.checked&&capaZb){gZ.clearLayers();capaZb=null}
+  if(capaC) capaC.setStyle(estil);
   if(!kRier.checked&&!kZb.checked){relInfo.textContent="";return}
   if(id==null){relInfo.textContent="Tria una conca al mapa.";return}
   if(!r){relInfo.textContent=`La conca ${id} encara no té el relleu calculat.`;return}
   relInfo.textContent=`Conca ${id} (tall de 100 km²): ${r.trams.toLocaleString("ca-ES")} trams de rierata; zones a menys d'1 m del llit: ${fmt(r.km2["2"]+r.km2["3"])} km²; depressions: ${fmt(r.km2["4"])} km².`;
-  if(kZb.checked&&!capaZb){capaZb=L.imageOverlay(`data/catalunya/relleu/${nom}/zones_baixes.png`,r.limits,{opacity:.8,interactive:false}).addTo(mapa)}
-  if(kRier.checked&&!capaRier){const n=nom;d3.json(`data/catalunya/relleu/${nom}/rieretes.json`).then(j=>{if(relConca!==n||!kRier.checked||capaRier)return;capaRier=rierCapa(j).addTo(mapa)})}
-  if(mapa.getZoom()<11) mapa.fitBounds(r.limits);
+  if(kZb.checked&&!capaZb){capaZb=L.imageOverlay(`data/catalunya/relleu/${nom}/zones_baixes.png`,r.limits,{opacity:.8,interactive:false,pane:"relleu"}).addTo(gZ)}
+  if(kRier.checked&&!capaRier){const n=nom;d3.json(`data/catalunya/relleu/${nom}/rieretes.json`).then(j=>{if(relConca!==n||!kRier.checked||capaRier)return;capaRier=rierCapa(j).addTo(gR)})}
+  if(encaixa){encaixa=false;mapa.fitBounds(r.limits)}
 }
 let av=new Set(), am=new Set(), cami=[];
 function estil(f){
   const i=f.properties.id, o=op.value/100, buit=F.senseMapa();
   const [c,fo]= i===sel?[css("--sel"),Math.max(o,.15)*2]: av.has(i)?[css("--avall"),Math.max(o,.15)*1.6]: am.has(i)?[css("--amunt"),Math.max(o,.15)*1.6]:[css("--conca"),buit?.9:o*.5];
-  return {color:css("--conca-b"),weight:i===sel?2:.6,fillColor:c,fillOpacity:Math.min(fo,1)};
+  // amb les capes de relleu a la vista, la conca triada només es dibuixa amb el contorn (la carena) i les altres
+  // s'aclareixen en apropar-se, perquè no tapin les rieretes ni les zones baixes
+  // Vistes: «drenatge» = emplenat (amunt i avall); «relleu» = la triada només amb el contorn i la resta més clara en
+  // apropar-se; «contorns» = cap emplenat, amunt i avall amb el contorn de color
+  if(vista==="contorns"){
+    const cc=i===sel?css("--sel"):av.has(i)?css("--avall"):am.has(i)?css("--amunt"):css("--conca-b");
+    return {color:cc,weight:i===sel?3:(av.has(i)||am.has(i))?2:.6,fillOpacity:0};
+  }
+  const rel=vista==="relleu"&&relConca!=null&&(kRier.checked||kZb.checked), f2=rel&&mapa.getZoom()>=11?.35:1;
+  if(rel&&i===sel) return {color:css("--sel"),weight:3,fillOpacity:0};
+  return {color:css("--conca-b"),weight:i===sel?2:.6,fillColor:c,fillOpacity:Math.min(fo,1)*f2};
 }
+mapa.on("zoomend",()=>pinta());
+let vista="relleu";
+try{vista=localStorage.getItem("conques_vista")||vista}catch(e){}
+function posaVista(v){vista=v;d3.selectAll(".vista button").attr("aria-pressed",function(){return this.dataset.v===v});
+  try{localStorage.setItem("conques_vista",v)}catch(e){} pinta()}
+d3.selectAll(".vista button").on("click",function(){posaVista(this.dataset.v)});
+posaVista(vista);
 function pinta(){
   const d=dades[mida]; if(!d||!capaC) return;
   av=new Set(); am=new Set(); cami=[];

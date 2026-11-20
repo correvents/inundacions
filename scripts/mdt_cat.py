@@ -11,6 +11,8 @@ petites de costa, perquè no quedin forats). Per a cada conca:
 2. Mateix mètode que scripts/relleu.py (mapa de Platja d'Aro): reixa de --pas m en UTM 31N, direccions de
    drenatge i acumulació (pysheds) → rieretes a partir de --llindar-km2 de conca, amb superfície drenada i
    ordre de Strahler; HAND sobre aquesta xarxa i profunditat de les depressions → zones baixes.
+   Els edificis del Cadastre (Release cadastre-cat, scripts/cadastre_cat.py) s'aixequen plantes × 3 m sobre el
+   terreny: les rieretes els volten i dins dels edificis no es marquen zones baixes.
    Diferència: la superfície drenada és només la de dins la conca (no suma el que entra d'aigües amunt).
 3. Retalla els resultats a la conca i els escriu lleugers per a la web:
      data/catalunya/relleu/cNNN/rieretes.json     trams amb coordenades enteres (1e-5 °) i en diferències
@@ -18,7 +20,7 @@ petites de costa, perquè no quedin forats). Per a cada conca:
      data/catalunya/relleu/cNNN/resum.json        límits del PNG, classes, km² de cada classe, trams
 
 Ús:  python3 scripts/mdt_cat.py lots --lots 30 [--conques 1,2,3 | totes | pendents]       → matriu JSON per al workflow
-     python3 scripts/mdt_cat.py conca --id 124 [--mdt fitxer.tif] [--pas 10] [--llindar-km2 0.05]
+     python3 scripts/mdt_cat.py conca --id 124 [--mdt fitxer.tif] [--pas 5] [--llindar-km2 0.05]
      python3 scripts/mdt_cat.py index                                     → data/catalunya/relleu/index.json"""
 import argparse, json, sys, time
 from pathlib import Path
@@ -139,6 +141,48 @@ def a_utm31(z, tr, crs, pas, caixa):
     return out, dtr, dst
 
 
+CAD_URL = "https://github.com/correvents/inundacions/releases/download/cadastre-cat/edificis_{}.json.gz"
+CAD_IDX = Path("data/catalunya/cadastre/municipis.json")
+H_PLANTA = 3.0
+
+
+def edificis(tr, forma, crs):
+    """Alçada dels edificis del Cadastre (plantes sobre rasant × 3 m) a la reixa del càlcul. Torna (alçada, nombre de parts)."""
+    import gzip
+    if not CAD_IDX.exists():
+        print("Sense índex del Cadastre: rieretes sense edificis"); return None, 0
+    assert str(crs).endswith("25831")
+    x0, y1 = tr.c, tr.f
+    x1, y0 = x0 + forma[1] * tr.a, y1 + forma[0] * tr.e
+    idx = json.loads(CAD_IDX.read_text())
+    formes = []
+    for codi, m in idx.items():
+        b = m["bbox"]
+        if b[2] < x0 or b[0] > x1 or b[3] < y0 or b[1] > y1:
+            continue
+        f = TMP / f"edificis_{codi}.json.gz"
+        if not f.exists():
+            for intent in range(4):
+                try:
+                    r = requests.get(CAD_URL.format(codi), timeout=300); r.raise_for_status(); f.write_bytes(r.content); break
+                except requests.RequestException as e:
+                    print(f"  Cadastre {codi}: {e}"); time.sleep(10 * (intent + 1))
+            else:
+                raise RuntimeError(f"no puc baixar els edificis de {codi}")
+        for ref, sobre, sota, an in json.loads(gzip.open(f, "rt").read())["parts"]:
+            if sobre < 1:
+                continue
+            xa, ya = np.min(an[0], axis=0); xb, yb = np.max(an[0], axis=0)
+            if xb < x0 or xa > x1 or yb < y0 or ya > y1:
+                continue
+            formes.append(({"type": "Polygon", "coordinates": an}, min(sobre, 60) * H_PLANTA))
+    if not formes:
+        return None, 0
+    formes.sort(key=lambda f: f[1])                  # les més altes per sobre
+    h = features.rasterize(formes, out_shape=forma, transform=tr, fill=0, dtype="float32")
+    return h, len(formes)
+
+
 def codifica(coords):
     """[[lon,lat],...] → [x0,y0,dx1,dy1,...] enters a 1e-5 °."""
     q = np.round(np.asarray(coords) * 1e5).astype(np.int64)
@@ -154,6 +198,12 @@ def relleu(cami_mdt, geom, nom, pas, llindar):
     z, tr, crs = a_utm31(z5, tr5, crs5, pas, caixa)
     del z5
     mar = np.isnan(z) | (z <= 0.2)
+    # edificis del Cadastre com a obstacles: l'aigua (i les rieretes) els ha de voltar
+    h_ed, n_ed = edificis(tr, z.shape, crs)
+    edif = np.zeros(z.shape, bool) if h_ed is None else (h_ed > 0) & ~mar
+    if h_ed is not None:
+        z = np.where(edif, z + h_ed, z)
+    print(f"Edificis: {n_ed} parts, {edif.sum() * pas ** 2 / 1e6:.2f} km² de reixa")
     perfil = dict(driver="GTiff", height=z.shape[0], width=z.shape[1], count=1, dtype="float32", crs=crs, transform=tr,
                   nodata=np.nan, compress="deflate")
     f10 = TMP / f"mdt{int(pas)}_{nom}.tif"
@@ -202,6 +252,7 @@ def relleu(cami_mdt, geom, nom, pas, llindar):
     classe[(hand < 0.5)] = 3
     classe[prof > 0.3] = 4                      # depressió: l'aigua s'hi queda
     classe[mar] = 0
+    classe[edif] = 0                            # dins dels edificis no es pinta
     classe[features.geometry_mask([mapping(g31)], z.shape, tr, invert=False)] = 0
     km2 = {k: round(float((classe == int(k)).sum() * cel_km2), 2) for k in CLASSES}
 
@@ -228,7 +279,7 @@ def relleu(cami_mdt, geom, nom, pas, llindar):
     (d / "rieretes.json").write_text(json.dumps({"escala": 1e5, "camps": ["ordre", "area_km2*100", "x0", "y0", "dx", "dy", "..."],
                                                  "trams": trams}, separators=(",", ":")))
     resum = {"conca": nom, "limits": [[n - nfil * pas_y, w], [n, w + ncol * pas_x]], "pas_m": pas,
-             "llindar_km2": llindar, "trams": len(trams), "classes": CLASSES, "km2": km2,
+             "llindar_km2": llindar, "trams": len(trams), "edificis": n_ed, "classes": CLASSES, "km2": km2,
              "font": "MDT 5 m IGN (PNOA LiDAR)", "calculat": time.strftime("%Y-%m-%d")}
     (d / "resum.json").write_text(json.dumps(resum, ensure_ascii=False, separators=(",", ":")))
     print(f"rieretes: {len(trams)} trams (conca > {llindar} km²), {(d / 'rieretes.json').stat().st_size / 1e3:.0f} kB; "
@@ -241,7 +292,7 @@ def main():
     sub = ap.add_subparsers(dest="ordre", required=True)
     a1 = sub.add_parser("lots"); a1.add_argument("--lots", type=int, default=30); a1.add_argument("--conques", default="totes")
     a2 = sub.add_parser("conca"); a2.add_argument("--id", type=int, required=True); a2.add_argument("--mdt")
-    a2.add_argument("--pas", type=float, default=10); a2.add_argument("--llindar-km2", type=float, default=0.05)
+    a2.add_argument("--pas", type=float, default=5); a2.add_argument("--llindar-km2", type=float, default=0.05)
     a2.add_argument("--nomes-mdt", action="store_true")
     sub.add_parser("index")
     a = ap.parse_args()

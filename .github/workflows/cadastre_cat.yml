@@ -1,0 +1,93 @@
+name: Edificis del Cadastre de Catalunya
+
+# Baixa els edificis del Cadastre (INSPIRE Buildings) de tots els municipis de Catalunya i els desa a la Release
+# `cadastre-cat` (edificis_MMMMM.json.gz, UTM 31N). Els que ja hi són no es tornen a baixar (entrada «refes» per forçar-ho).
+# L'índex amb el requadre de cada municipi va a data/catalunya/cadastre/municipis.json.
+
+on:
+  workflow_dispatch:
+    inputs:
+      refes:
+        description: "Torna a baixar també els que ja hi són (si/no)"
+        default: "no"
+  push:
+    branches: [claude/project-thread-jrfwlk]
+    paths: [scripts/cadastre_cat.py, .github/workflows/cadastre_cat.yml]
+
+permissions:
+  contents: write
+
+env:
+  ETIQUETA: cadastre-cat
+  LOTS: 16
+
+jobs:
+  prepara:
+    runs-on: ubuntu-latest
+    outputs:
+      matriu: ${{ steps.m.outputs.matriu }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: m
+        run: echo "matriu=$(python3 -c "import json;print(json.dumps({'lot':list(range($LOTS))}))")" >> "$GITHUB_OUTPUT"
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$ETIQUETA" -R "${{ github.repository }}" >/dev/null 2>&1 || \
+          gh release create "$ETIQUETA" -R "${{ github.repository }}" --target main --title "Edificis del Cadastre de Catalunya per municipi" \
+            --notes "Parts d'edifici (INSPIRE Buildings, Dirección General del Catastro) de cada municipi de Catalunya: edificis_MMMMM.json.gz amb [ref, plantes sobre rasant, plantes sota rasant, anells en EPSG:25831]. Fet amb scripts/cadastre_cat.py."
+
+  baixa:
+    needs: prepara
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix: ${{ fromJson(needs.prepara.outputs.matriu) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy rasterio pyproj shapely pillow lxml
+      - name: Lot ${{ matrix.lot }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/cadastre_cat
+          [ "${{ inputs.refes || 'no' }}" = "si" ] || gh api "repos/${{ github.repository }}/releases/tags/$ETIQUETA" --paginate -q '.assets[].name' > /tmp/ja.txt 2>/dev/null || true
+          python3 scripts/cadastre_cat.py baixa --lot ${{ matrix.lot }} --lots $LOTS --salta /tmp/ja.txt
+          ls /tmp/cadastre_cat/edificis_*.json.gz >/dev/null 2>&1 && \
+            gh release upload "$ETIQUETA" /tmp/cadastre_cat/edificis_*.json.gz -R "${{ github.repository }}" --clobber || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: index-${{ matrix.lot }}
+          path: /tmp/cadastre_cat/*_${{ matrix.lot }}.*
+          if-no-files-found: ignore
+
+  desa:
+    needs: baixa
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: index-*
+          merge-multiple: true
+          path: /tmp/idx
+      - run: pip install numpy lxml requests pyproj shapely pillow rasterio
+      - name: Desa
+        run: |
+          python3 scripts/cadastre_cat.py index /tmp/idx/index_*.json
+          f=$(cat /tmp/idx/fallats_*.txt 2>/dev/null | tr -s ' \n' ' ')
+          echo "### Cadastre: municipis fallats: ${f:-cap}" >> "$GITHUB_STEP_SUMMARY"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalunya/cadastre
+          git diff --cached --quiet && exit 0
+          git commit -m "Cadastre de Catalunya: índex de municipis"
+          for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1
