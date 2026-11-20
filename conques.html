@@ -52,6 +52,8 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
 .sw{width:14px;height:14px;border-radius:3px;flex:none}
 .cami{font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--muted);word-break:break-word}
 .hint{color:var(--muted);font-size:13px;line-height:1.5}
+.relleu{border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:0;display:flex;flex-direction:column;gap:8px}
+.relleu legend{padding:0 4px}.relleu label{display:flex;align-items:center;gap:8px;cursor:pointer}
 @media (max-width:760px){.app{grid-template-columns:1fr;grid-template-rows:auto 60vh auto;height:auto}.seg{margin-left:0}}
 </style>
 </head>
@@ -75,6 +77,18 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
       <span><i class="sw" style="background:color-mix(in srgb,var(--avall) 60%,var(--conca))"></i>Aigües avall, fins al mar</span>
       <span><i class="sw" style="background:color-mix(in srgb,var(--amunt) 55%,var(--conca))"></i>Aigües amunt (li porten aigua)</span>
     </div>
+    <fieldset class="relleu" id="relleu">
+      <legend class="lbl">Relleu de la conca triada (MDT 5 m)</legend>
+      <label><input type="checkbox" id="kRier"> Rieretes (conca &gt; 0,05 km²)</label>
+      <label><input type="checkbox" id="kZb"> Zones baixes i depressions</label>
+      <div class="ll" id="llZb" hidden>
+        <span><i class="sw" style="background:rgb(198,219,239)"></i>A menys de 2 m del llit</span>
+        <span><i class="sw" style="background:rgb(107,174,214)"></i>A menys d'1 m del llit</span>
+        <span><i class="sw" style="background:rgb(33,113,181)"></i>A menys de 0,5 m del llit</span>
+        <span><i class="sw" style="background:rgb(128,0,128)"></i>Depressió sense sortida (&gt; 0,3 m)</span>
+      </div>
+      <p class="hint" id="relInfo" style="margin:0"></p>
+    </fieldset>
     <label class="op">Opacitat de les conques <input type="range" id="op" min="0" max="100" value="35"></label>
     <p class="hint" style="margin:0">Mapa de fons i noms de llocs: selector a dalt a la dreta del mapa (també «Sense mapa»).</p>
     <div id="det"><p class="hint">Carregant conques…</p></div>
@@ -112,7 +126,48 @@ function dibuixa(){
   capaR.bringToFront();
   pinta();
 }
-function tria(id){sel=id;pinta()}
+function tria(id){sel=id;pinta();relleu()}
+// Capes de relleu calculades al servidor (scripts/mdt_cat.py), una carpeta per conca del tall de 100 km²
+let relIdx=null, capaRier=null, capaZb=null, relConca=null;
+const kRier=document.getElementById("kRier"), kZb=document.getElementById("kZb"), relInfo=document.getElementById("relInfo");
+kRier.onchange=kZb.onchange=()=>relleu();
+d3.json("data/catalunya/relleu/index.json").then(j=>{relIdx=j;relleu()}).catch(()=>{relIdx={conques:{}};relleu()});
+function conca100(){ // conca del tall de 100 km² on cau la triada (en el tall de 25, la que conté la seva sortida)
+  if(sel==null||!dades["100"]) return null;
+  if(mida==="100") return sel;
+  const g=dades[mida].byId.get(sel); if(!g) return null;
+  // vota la conca de 100 km² que conté més punts interiors de la triada (vèrtexs acostats al centre)
+  const ring=g.geometry.type==="Polygon"?g.geometry.coordinates[0]:g.geometry.coordinates[0][0];
+  const cx=ring.reduce((s,p)=>s+p[0],0)/ring.length, cy=ring.reduce((s,p)=>s+p[1],0)/ring.length;
+  const pas=Math.max(1,Math.floor(ring.length/25)), vots=new Map();
+  for(let k=0;k<ring.length;k+=pas){const pt=[ring[k][0]+(cx-ring[k][0])*.25,ring[k][1]+(cy-ring[k][1])*.25];
+    if(!dinsF(g,pt)) continue;
+    const f=dades["100"].fc.features.find(f=>dinsF(f,pt)); if(f) vots.set(f.properties.id,(vots.get(f.properties.id)||0)+1)}
+  let mill=null,n=0; vots.forEach((v,k)=>{if(v>n){n=v;mill=k}});
+  return mill;
+}
+function rierCapa(j){
+  const e=j.escala, lin=[];
+  j.trams.forEach(t=>{const o=t[0],a=t[1]/100;let x=0,y=0;const ll=[];for(let k=2;k<t.length;k+=2){x+=t[k];y+=t[k+1];ll.push([y/e,x/e])}
+    lin.push(L.polyline(ll,{renderer:rend,color:css("--riu"),weight:Math.max(.6,o*.7),opacity:.85}).bindTooltip(`Conca: ${fmt(a)} km² · ordre ${o}`,{sticky:true}))});
+  return L.featureGroup(lin);
+}
+const rend=L.canvas({padding:.3});
+function relleu(){
+  if(!relIdx) return;
+  const id=conca100(), nom=id==null?null:"c"+String(id).padStart(3,"0"), r=nom&&relIdx.conques[nom];
+  document.getElementById("llZb").hidden=!kZb.checked;
+  if(nom!==relConca){[capaRier,capaZb].forEach(c=>c&&mapa.removeLayer(c));capaRier=capaZb=null;relConca=nom}
+  if(!kRier.checked&&capaRier){mapa.removeLayer(capaRier);capaRier=null}
+  if(!kZb.checked&&capaZb){mapa.removeLayer(capaZb);capaZb=null}
+  if(!kRier.checked&&!kZb.checked){relInfo.textContent="";return}
+  if(id==null){relInfo.textContent="Tria una conca al mapa.";return}
+  if(!r){relInfo.textContent=`La conca ${id} encara no té el relleu calculat.`;return}
+  relInfo.textContent=`Conca ${id} (tall de 100 km²): ${r.trams.toLocaleString("ca-ES")} trams de rierata; zones a menys d'1 m del llit: ${fmt(r.km2["2"]+r.km2["3"])} km²; depressions: ${fmt(r.km2["4"])} km².`;
+  if(kZb.checked&&!capaZb){capaZb=L.imageOverlay(`data/catalunya/relleu/${nom}/zones_baixes.png`,r.limits,{opacity:.8,interactive:false}).addTo(mapa)}
+  if(kRier.checked&&!capaRier){const n=nom;d3.json(`data/catalunya/relleu/${nom}/rieretes.json`).then(j=>{if(relConca!==n||!kRier.checked||capaRier)return;capaRier=rierCapa(j).addTo(mapa)})}
+  if(mapa.getZoom()<11) mapa.fitBounds(r.limits);
+}
 let av=new Set(), am=new Set(), cami=[];
 function estil(f){
   const i=f.properties.id, o=op.value/100, buit=F.senseMapa();
@@ -142,7 +197,7 @@ function pinta(){
    <div><div class="lbl">Camí de l'aigua</div><div class="cami">${[p.id,...cami].join(" → ")} → ${cami.length||p.avall==null?"mar o límit":""}</div></div>
    <p class="hint">Si el camí acaba lluny de la costa, és que el riu surt de Catalunya o la conca toca el límit del mapa.</p>`;
 }
-function canvia(m){mida=m;sel=null;
+function canvia(m){mida=m;sel=null;relleu();
   d3.select("#b25").attr("aria-pressed",m==="25");d3.select("#b100").attr("aria-pressed",m==="100");dibuixa()}
 d3.select("#b25").on("click",()=>canvia("25"));d3.select("#b100").on("click",()=>canvia("100"));
 Promise.all([d3.json("data/catalunya/conques/web/conques_25.json"),d3.json("data/catalunya/conques/web/conques_100.json"),d3.json("data/catalunya/conques/web/rius.json")]).then(([a,b,r])=>{
@@ -150,12 +205,12 @@ Promise.all([d3.json("data/catalunya/conques/web/conques_25.json"),d3.json("data
   dibuixa();
   mapa.fitBounds(capaC.getBounds(),{padding:[10,10]});
   // conca inicial: la que conté Granollers (punt dins de polígon, raig horitzontal)
-  const anell=(r,[x,y])=>{let c=false;for(let k=0,l=r.length-1;k<r.length;l=k++){const[xi,yi]=r[k],[xj,yj]=r[l];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c};
-  const pol=(p,pt)=>anell(p[0],pt)&&!p.slice(1).some(h=>anell(h,pt));
-  const dins=(f,pt)=>f.geometry.type==="Polygon"?pol(f.geometry.coordinates,pt):f.geometry.coordinates.some(p=>pol(p,pt));
-  const gr=a.features.find(f=>dins(f,[2.288,41.608]));
+  const gr=a.features.find(f=>dinsF(f,[2.288,41.608]));
   if(gr) tria(gr.properties.id);
 }).catch(e=>{document.getElementById("det").innerHTML=`<p class="hint">No s'han pogut carregar les conques (${e.message}). Torna a carregar la pàgina.</p>`});
+function anell(r,[x,y]){let c=false;for(let k=0,l=r.length-1;k<r.length;l=k++){const[xi,yi]=r[k],[xj,yj]=r[l];if((yi>y)!==(yj>y)&&x<(xj-xi)*(y-yi)/(yj-yi)+xi)c=!c}return c}
+function polD(p,pt){return anell(p[0],pt)&&!p.slice(1).some(h=>anell(h,pt))}
+function dinsF(f,pt){return f.geometry.type==="Polygon"?polD(f.geometry.coordinates,pt):f.geometry.coordinates.some(p=>polD(p,pt))}
 </script>
 <script src="nav.js"></script>
 </body>
