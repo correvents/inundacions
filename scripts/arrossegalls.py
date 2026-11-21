@@ -94,6 +94,13 @@ def incendis(sortida):
                          for x in (v.get("metadata", {}).get("attachments") or []) if x.get("assetId")}
                 for u in sorted(urls):
                     print(f"    enllaç: {u[:200]}")
+                for u in [u for u in urls if "format-shp" in u]:         # pàgina d'Agricultura amb un zip per any
+                    try:
+                        html = requests.get(u.replace("http://", "https://"), timeout=120).text
+                        from urllib.parse import urljoin
+                        urls |= {urljoin(u, h) for h in re.findall(r'href="([^"]+\.zip)"', html, re.I)}
+                    except Exception as e:                               # noqa: BLE001
+                        print(f"    {u}: {e}")
                 for u in sorted(urls):
                     if not re.search(r"\.zip|/files/|shp|download", u, re.I):
                         continue
@@ -108,8 +115,8 @@ def incendis(sortida):
                 fonts.append(f"Generalitat {res['id']} ({len(fts) - n0})")
     except Exception as e:                                               # noqa: BLE001
         print(f"  Generalitat: {e}")
-    # 2. EFFIS (WFS, Shapefile en zip): només si la Generalitat no n'ha donat
-    if not fts:
+    # 2. EFFIS (WFS, Shapefile en zip, ≥ 30 ha): completa els anys que la Generalitat encara no ha publicat
+    if True:
         for bbox in (f"{CAT_LL[0]},{CAT_LL[1]},{CAT_LL[2]},{CAT_LL[3]}", f"{CAT_LL[1]},{CAT_LL[0]},{CAT_LL[3]},{CAT_LL[2]}",
                      f"{CAT_LL[0]},{CAT_LL[1]},{CAT_LL[2]},{CAT_LL[3]},EPSG:4326"):
             try:
