@@ -4,11 +4,11 @@
 Dues fonts, de més a menys exacta:
   1. Consulta per parcel·la del Cadastre (OVC Consulta_DNPRC, oberta): llista cada immoble de la parcel·la amb la seva planta
      i el seu ús (Residencial, Comercial, Almacén-Estacionamiento...). Dona l'ús real de la planta baixa. Una petició per
-     parcel·la: es fa només per a les conques triades (per defecte les pilot) i es desa a la Release `cadastre-cat`
+     parcel·la: es fa només per a les conques triades (per defecte les pilot) i es desa a la Release `planta-baixa-cat`
      (pb_ovc_cNNN.json.gz, resposta resumida [[planta, ús], ...] per parcel·la) per no repetir-la.
   2. INSPIRE Buildings (tot Catalunya): ús principal de l'edifici, habitatges i unitats. Si no hi ha la consulta per parcel·la,
      la planta baixa s'estima: unifamiliar → habitatge; plurifamiliar amb més unitats que habitatges → «habitatge o local».
-     Es desa a la Release `cadastre-cat` com us_MMMMM.json.gz {ref: [ús, habitatges, unitats]}.
+     Es desa a la Release `planta-baixa-cat` com us_MMMMM.json.gz {ref: [ús, habitatges, unitats]}.
 
 Sortida per conca (tall de 100 km²): data/catalunya/planta_baixa/cNNN.json
   {"classes": [...], "camps": ["font", "classe planta baixa", "habitatges a planta baixa", "immobles a planta baixa",
@@ -36,7 +36,8 @@ TMP = Path("/tmp/planta_baixa")
 SORT = Path("data/catalunya/planta_baixa")
 CAD_IDX = Path("data/catalunya/cadastre/municipis.json")
 CONQUES = Path("data/catalunya/conques/conques_100km2.geojson")
-REL = "https://github.com/correvents/inundacions/releases/download/cadastre-cat/"
+REL = "https://github.com/correvents/inundacions/releases/download/cadastre-cat/"       # edificis_MMMMM.json.gz
+REL_PB = "https://github.com/correvents/inundacions/releases/download/planta-baixa-cat/"  # us_*, pb_ovc_* (la de cadastre-cat és plena: 1000 fitxers)
 OVC = "https://ovc.catastro.meh.es/OVCServWeb/OVCWcfCallejero/COVCCallejero.svc/json/Consulta_DNPRC"
 
 # classes, de més a menys sensible (la planta baixa pren la més sensible dels seus immobles)
@@ -120,14 +121,14 @@ def C_tots():
 
 
 # ---------- edificis d'una conca ----------
-def baixa(nom):
+def baixa(nom, rel=REL):
     TMP.mkdir(parents=True, exist_ok=True)
     f = TMP / nom
     if f.exists():
         return f
     for k in range(4):
         try:
-            r = requests.get(REL + nom, timeout=300)
+            r = requests.get(rel + nom, timeout=300)
             if r.status_code == 404:
                 return None
             r.raise_for_status(); f.write_bytes(r.content); return f
@@ -141,8 +142,8 @@ def edificis_conca(cid):
     fc = json.loads(CONQUES.read_text())
     g = shape(next(f for f in fc["features"] if f["properties"]["id"] == cid)["geometry"])
     t = Transformer.from_crs(4326, 25831, always_xy=True)
-    from shapely.ops import transform
-    g31 = transform(lambda x, y: t.transform(x, y), g)
+    import shapely
+    g31 = shapely.transform(g, lambda xy: np.column_stack(t.transform(xy[:, 0], xy[:, 1])))
     pg = prep(g31)
     x0, y0, x1, y1 = g31.bounds
     out = {}
@@ -245,7 +246,9 @@ def ordre_ovc(a):
     with ThreadPoolExecutor(a.fils) as ex:
         for ref, res in ex.map(consulta, refs):
             previ[ref] = res; fets += 1
-            errors += isinstance(res, dict)
+            if isinstance(res, dict):
+                errors += 1
+                if errors <= 5: print(f"  Error {ref}: {res.get('error')}")
             if fets % 500 == 0:
                 print(f"  {fets}/{len(refs)} ({errors} errors) en {time.time() - t0:.0f} s")
             if time.time() - t0 > a.minuts * 60:
@@ -296,12 +299,12 @@ def estima_inspire(us, hab, unit, sobre, sota):
 def ordre_conca(a):
     ed = edificis_conca(a.conca)
     ovc = {}
-    f = baixa(f"pb_ovc_c{a.conca:03d}.json.gz")
+    f = baixa(f"pb_ovc_c{a.conca:03d}.json.gz", REL_PB)
     if f is not None:
         ovc = json.loads(gzip.open(f, "rt").read())
     ins = {}
     for codi in sorted({v[0] for v in ed.values()}):
-        fu = baixa(f"us_{codi}.json.gz")
+        fu = baixa(f"us_{codi}.json.gz", REL_PB)
         if fu is not None:
             ins.update(json.loads(gzip.open(fu, "rt").read())["edificis"])
     out, fonts = {}, [0, 0, 0]
