@@ -49,6 +49,7 @@ dl{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin:0}
 dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 .ll{display:flex;flex-direction:column;gap:6px}
 .ll span{display:flex;align-items:center;gap:8px}
+.ll[hidden]{display:none}
 .sw{width:14px;height:14px;border-radius:3px;flex:none}
 .cami{font-family:var(--mono);font-size:12px;line-height:1.6;color:var(--muted);word-break:break-word}
 .hint{color:var(--muted);font-size:13px;line-height:1.5}
@@ -108,8 +109,17 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
       </div>
       <label><input type="checkbox" id="kCob"> Cobertes del sòl (ICGC 2024)</label>
       <div class="ll" id="llCob" hidden></div>
+      <label><input type="checkbox" id="kPas"> Passos de torrentets sota vies</label>
+      <div class="ll" id="llPas" hidden>
+        <span><i class="sw" style="background:rgb(215,25,28);border-radius:50%"></i>Terraplè que, si el pas es tapa, vessa per sobre la via</span>
+        <span><i class="sw" style="background:rgb(253,141,60);border-radius:50%"></i>Terraplè que fa llac però no vessa per la via</span>
+        <span><i class="sw" style="background:rgb(65,182,196);opacity:.6"></i>Llac que es forma si el pas es tapa</span>
+        <span><i class="sw" style="background:rgb(120,120,120);border-radius:50%"></i>Gual: el torrentet passa per sobre la via</span>
+        <span><i class="sw" style="background:#fff;border:2px solid #111;border-radius:50%"></i>Vora negra: obra de drenatge a OSM</span>
+      </div>
       <p class="hint" id="relInfo" style="margin:0"></p>
       <p class="hint" id="cobInfo" style="margin:0"></p>
+      <p class="hint" id="pasInfo" style="margin:0"></p>
     </fieldset>
     <label class="op">Opacitat de les conques <input type="range" id="op" min="0" max="100" value="35"></label>
     <p class="hint" style="margin:0">Mapa de fons i noms de llocs: selector a dalt a la dreta del mapa (també «Sense mapa»).</p>
@@ -149,7 +159,7 @@ function dibuixa(){
   capaR.bringToFront();
   pinta();
 }
-function tria(id){sel=id;pinta();relleu();if(typeof cobertes==="function")cobertes()}
+function tria(id){sel=id;pinta();relleu();if(typeof cobertes==="function")cobertes();if(typeof passos==="function")passos()}
 // Capes de relleu calculades al servidor (scripts/mdt_cat.py), una carpeta per conca del tall de 100 km²
 let relIdx=null, capaRier=null, capaZb=null, capaSot=null, relConca=null;
 const kSot=document.getElementById("kSot");
@@ -254,6 +264,52 @@ function cobertes(){
   cobInfo.textContent=`Cobertes: ${top}. n de Manning mitjana ${r.n_manning_mitja}, número de corba mitjà ${r.cn_mitja}. Font: ${cobIdx.font}.`;
   if(!capaCob){capaCob=L.imageOverlay(`data/catalunya/cobertes/${nom}/cobertes.png`,r.limits,{opacity:.75,interactive:false,pane:"relleu"}).addTo(gC)}
 }
+// Passos de torrentets sota carreteres i vies de tren (scripts/passos_cat.py): depressió de l'MDT 5 m tocant una via
+// d'OSM = terraplè amb pas; llac si es tapa; guals on el torrentet travessa la via a nivell. Clicables (fitxa).
+{const pp=mapa.createPane("passos");pp.style.zIndex=460}
+const kPas=document.getElementById("kPas"), pasInfo=document.getElementById("pasInfo"), gP=L.layerGroup();
+F.ctl.addOverlay(gP,"Passos de torrentets sota vies (conca triada)");
+let pasIdx=null, pasConca=null, capaPas=null;
+d3.json("data/catalunya/passos/index.json").then(j=>{pasIdx=j;passos()}).catch(()=>{pasIdx={conques:{}}});
+kPas.onchange=()=>{kPas.checked?gP.addTo(mapa):mapa.removeLayer(gP);passos()};
+mapa.on("overlayadd overlayremove",e=>{if(e.layer===gP){kPas.checked=mapa.hasLayer(gP);passos()}});
+const VIA={motorway:"autopista",motorway_link:"enllaç d'autopista",trunk:"autovia",trunk_link:"enllaç d'autovia",primary:"carretera principal",
+  secondary:"carretera secundària",tertiary:"carretera local",tertiary_link:"enllaç",unclassified:"camí asfaltat",residential:"carrer",
+  living_street:"carrer de vianants",tren:"via de tren"};
+const nv=n=>n==null?"–":n.toLocaleString("ca-ES",{maximumFractionDigits:2});
+function fitxaPas(p){
+  const via=(VIA[p.via]||p.via||"via")+(p.nom?` (${p.nom})`:"");
+  if(p.tipus==="gual") return `<b>Gual ${p.id}</b><br>El torrentet travessa ${via} a nivell, sense pas a sota.<br>Conca que hi drena: ${nv(p.conca_km2)} km²`+(p.obra_osm?"<br>OSM hi marca una obra de drenatge a prop.":"");
+  const e=p.escenaris||{}, t=e.tapat||{};
+  return `<b>Pas ${p.id}</b> sota ${via}<br>Conca que hi drena: ${nv(p.conca_km2)} km²<br>`+
+   `Si es tapa fa un llac de ${nv(p.llac_m3)} m³ (${nv(p.llac_m2)} m², fins a ${nv(p.prof_m)} m de fondària)`+
+   (p.vessa_per_la_via?` i <b>vessa per sobre la via</b> amb ${nv(t.vessa_amb_escolament_mm)} mm d'escolament a la conca.`:`; no vessa per la via.`)+
+   (e.obert&&e.obert.q_m3s!=null?`<br>Cabal de disseny T100 (5.2-IC): ${nv(e.obert.q_m3s)} m³/s obert, ${nv(e.mig_tapat&&e.mig_tapat.q_m3s)} m³/s mig tapat`+(e.obert.tc_h?`; temps de concentració ${nv(e.obert.tc_h)} h`:""):"")+
+   `<br>${p.obra_osm?"OSM hi marca una obra de drenatge.":"OSM no hi marca cap obra de drenatge."}`+
+   `<br><span style="opacity:.7">MDT 5 m en metres enters: terraplens de menys d'1 m no surten.</span>`;
+}
+function passos(){
+  document.getElementById("llPas").hidden=!kPas.checked;
+  const id=conca100(), nom=id==null?null:"c"+String(id).padStart(3,"0");
+  if(nom!==pasConca||!kPas.checked){gP.clearLayers();capaPas=null;pasConca=nom}
+  if(capaC) capaC.setStyle(estil);
+  if(!kPas.checked||!pasIdx||id==null){pasInfo.textContent="";return}
+  const r=pasIdx.conques[String(id)];
+  if(!r||r.passos==null){pasInfo.textContent=r?`La conca ${id} no té vies.`:`La conca ${id} encara no té els passos calculats.`;return}
+  pasInfo.textContent=`Passos (conca ${id}): ${r.passos} terraplens amb pas, ${r.vessen_per_la_via} vessen per la via si es tapen; ${r.guals} guals. Obres de drenatge d'OSM sota via trobades: ${r.obres_osm_trobades} de ${r.obres_osm_sota_via}.`;
+  if(capaPas) return;
+  const n=nom; capaPas=L.layerGroup().addTo(gP);
+  d3.json(`data/catalunya/passos/${nom}.geojson`).then(j=>{if(pasConca!==n||!kPas.checked||!capaPas)return;
+    const rp=L.canvas({padding:.3,pane:"passos"}), ordre=f=>f.geometry.type!=="Point"?0:f.properties.tipus==="gual"?1:2;
+    j.features.sort((a,b)=>ordre(a)-ordre(b));
+    L.geoJSON(j,{renderer:rp,
+      style:f=>f.geometry.type==="Point"?{}:{stroke:false,fillColor:"rgb(65,182,196)",fillOpacity:.55,interactive:false},
+      pointToLayer:(f,ll)=>{const p=f.properties,g=p.tipus==="gual";
+        return L.circleMarker(ll,{renderer:rp,radius:g?3.5:5.5,weight:p.obra_osm?2:1,color:p.obra_osm?"#111":"#fff",
+          fillColor:g?"rgb(120,120,120)":p.vessa_per_la_via?"rgb(215,25,28)":"rgb(253,141,60)",fillOpacity:.95})},
+      onEachFeature:(f,l)=>{if(f.geometry.type==="Point")l.bindPopup(fitxaPas(f.properties),{maxWidth:280})}
+    }).addTo(capaPas)}).catch(()=>{pasInfo.textContent=`No s'han pogut carregar els passos de la conca ${id}.`});
+}
 let av=new Set(), am=new Set(), cami=[];
 function estil(f){
   const i=f.properties.id, o=op.value/100, buit=F.senseMapa();
@@ -266,7 +322,7 @@ function estil(f){
     const cc=i===sel?css("--sel"):av.has(i)?css("--avall"):am.has(i)?css("--amunt"):css("--conca-b");
     return {color:cc,weight:i===sel?3:(av.has(i)||am.has(i))?2:.6,fillOpacity:0};
   }
-  const rel=vista==="relleu"&&relConca!=null&&(kRier.checked||kZb.checked||kSot.checked), f2=rel&&mapa.getZoom()>=11?.35:1;
+  const rel=vista==="relleu"&&relConca!=null&&(kRier.checked||kZb.checked||kSot.checked||kCob.checked||kPas.checked), f2=rel&&mapa.getZoom()>=11?.35:1;
   if(rel&&i===sel) return {color:css("--sel"),weight:3,fillOpacity:0};
   return {color:css("--conca-b"),weight:i===sel?2:.6,fillColor:c,fillOpacity:Math.min(fo,1)*f2};
 }
@@ -300,7 +356,7 @@ function pinta(){
    <div><div class="lbl">Camí de l'aigua</div><div class="cami">${[p.id,...cami].join(" → ")} → ${cami.length||p.avall==null?"mar o límit":""}</div></div>
    <p class="hint">Si el camí acaba lluny de la costa, és que el riu surt de Catalunya o la conca toca el límit del mapa.</p>`;
 }
-function canvia(m){mida=m;sel=null;relleu();cobertes();
+function canvia(m){mida=m;sel=null;relleu();cobertes();passos();
   d3.select("#b25").attr("aria-pressed",m==="25");d3.select("#b100").attr("aria-pressed",m==="100");dibuixa()}
 d3.select("#b25").on("click",()=>canvia("25"));d3.select("#b100").on("click",()=>canvia("100"));
 Promise.all([d3.json("data/catalunya/conques/web/conques_25.json"),d3.json("data/catalunya/conques/web/conques_100.json"),d3.json("data/catalunya/conques/web/rius.json")]).then(([a,b,r])=>{
