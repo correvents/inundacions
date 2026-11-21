@@ -160,7 +160,14 @@ const gR=L.layerGroup().addTo(mapa), gZ=L.layerGroup().addTo(mapa), gS=L.layerGr
 F.ctl.addOverlay(gZ,"Zones baixes i depressions (conca triada)");
 F.ctl.addOverlay(gR,"Rieretes > 0,05 km² (conca triada)");
 F.ctl.addOverlay(gS,"Edificis amb soterrani (conca triada)");
-kSot.onchange=()=>{kSot.checked?gS.addTo(mapa):mapa.removeLayer(gS);relleu()};
+// contorns oficials dels edificis del Cadastre (WMS INSPIRE): els soterranis surten de la mateixa font i hi encaixen
+// exactament; el mapa topogràfic de l'ICGC dibuixa els edificis pel seu compte i pot diferir 1-3 m
+{const pc=mapa.createPane("cadastre");pc.style.zIndex=455;pc.style.pointerEvents="none"}
+const cadWms=L.tileLayer.wms("https://ovc.catastro.meh.es/cartografia/INSPIRE/spadgcwms.aspx",
+  {layers:"BU.Building",format:"image/png",transparent:true,version:"1.3.0",minZoom:16,maxZoom:20,pane:"cadastre",attribution:"© Dirección General del Catastro"});
+F.ctl.addOverlay(cadWms,"Contorns dels edificis del Cadastre (zoom ≥ 16)");
+kSot.onchange=()=>{kSot.checked?(gS.addTo(mapa),cadWms.addTo(mapa)):(mapa.removeLayer(gS),mapa.removeLayer(cadWms));relleu()};
+if(kSot.checked) cadWms.addTo(mapa);
 kRier.onchange=()=>{kRier.checked?gR.addTo(mapa):mapa.removeLayer(gR);relleu()};
 kZb.onchange=()=>{kZb.checked?gZ.addTo(mapa):mapa.removeLayer(gZ);relleu()};
 mapa.on("overlayadd overlayremove",e=>{if(e.layer===gR||e.layer===gZ||e.layer===gS){kRier.checked=mapa.hasLayer(gR);kZb.checked=mapa.hasLayer(gZ);kSot.checked=mapa.hasLayer(gS);relleu()}});
@@ -198,6 +205,13 @@ function rierCapa(j){
   return L.featureGroup(lin);
 }
 const rend=L.canvas({padding:.3,pane:"relleu"});
+// soterranis: polígons del Cadastre (enters a 1e-6 °), taronja; vermell si toquen (≤ 10 m) una zona baixa
+function sotCapa(j){
+  const e=j.escala, col=["","rgb(253,174,97)","rgb(215,25,28)"], pols=[];
+  j.edificis.forEach(b=>{const an=b.slice(2).map(c=>{let x=0,y=0;const ll=[];for(let k=0;k<c.length;k+=2){x+=c[k];y+=c[k+1];ll.push([y/e,x/e])}return ll});
+    pols.push(L.polygon(an,{renderer:rend,interactive:false,stroke:false,fillColor:col[b[0]],fillOpacity:.9}))});
+  return L.featureGroup(pols);
+}
 function relleu(){
   if(!relIdx) return;
   const id=conca100(), nom=id==null?null:"c"+String(id).padStart(3,"0"), r=nom&&relIdx.conques[nom];
@@ -212,7 +226,8 @@ function relleu(){
   if(id==null){relInfo.textContent="Tria una conca al mapa.";return}
   if(!r){relInfo.textContent=`La conca ${id} encara no té el relleu calculat${relMode==="edificis"?" amb edificis":""}.`;return}
   relInfo.textContent=`Conca ${id} (tall de 100 km²): ${r.trams.toLocaleString("ca-ES")} trams de rierata; zones a menys d'1 m del llit: ${fmt(r.km2["2"]+r.km2["3"])} km²; depressions: ${fmt(r.km2["4"])} km².`+(r.soterranis&&r.soterranis.km2?` Soterranis: ${f2(r.soterranis.km2)} km², ${f2(r.soterranis.km2_tocant_zona_baixa)} km² tocant zones baixes.`:"");
-  if(relMode==="edificis"&&kSot.checked&&!capaSot&&r.soterranis&&r.soterranis.km2){capaSot=L.imageOverlay(`${relDir()}/${nom}/soterranis.png`,r.limits,{opacity:.9,interactive:false,pane:"relleu"}).addTo(gS)}
+  if(relMode==="edificis"&&kSot.checked&&!capaSot&&r.soterranis&&r.soterranis.km2){const n=nom;capaSot=L.layerGroup().addTo(gS);
+    d3.json(`${relDir()}/${nom}/soterranis.json`).then(j=>{if(relConca!==n||!kSot.checked||!capaSot)return;sotCapa(j).addTo(capaSot)})}
   if(kZb.checked&&!capaZb){capaZb=L.imageOverlay(`${relDir()}/${nom}/zones_baixes.png`,r.limits,{opacity:.8,interactive:false,pane:"relleu"}).addTo(gZ)}
   if(kRier.checked&&!capaRier){const n=nom;d3.json(`${relDir()}/${nom}/rieretes.json`).then(j=>{if(relConca!==n||!kRier.checked||capaRier)return;capaRier=rierCapa(j).addTo(gR)})}
 }
