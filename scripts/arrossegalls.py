@@ -43,7 +43,7 @@ Sortides: data/catalunya/arrossegalls/cNNN.geojson (un punt per pas i pont) + in
              --vies /tmp/vies.json.gz --incendis /tmp/incendis.geojson
      python3 scripts/arrossegalls.py index
 Al model: from arrossegalls import escenari; escenari(pas, "petita") → "tapat" | "mig_tapat" | "obert"."""
-import argparse, gzip, io, json, sys, tempfile, zipfile
+import argparse, gzip, io, json, re, sys, tempfile, zipfile
 from pathlib import Path
 import numpy as np
 
@@ -71,7 +71,7 @@ def incendis(sortida):
     Desa un GeoJSON (lon/lat) amb la propietat `any`."""
     import requests
     fts, fonts = [], []
-    # 1. Generalitat (Socrata): busca conjunts d'incendis amb geometria
+    # 1. Generalitat (Socrata): conjunts d'incendis amb geometria, o «Base cartogràfica» amb fitxers adjunts (SHP)
     try:
         cat = requests.get("https://api.eu.socrata.com/api/catalog/v1", timeout=60,
                            params={"domains": "analisi.transparenciacatalunya.cat", "q": "incendis forestals", "limit": 50}).json()
@@ -79,49 +79,94 @@ def incendis(sortida):
             res = r["resource"]
             cols = [c.lower() for c in res.get("columns_datatype", [])]
             print(f"  catàleg: {res['id']} «{res['name']}» {set(cols)}")
-            if not any(c in ("polygon", "multipolygon") for c in cols):
-                continue
-            g = requests.get(f"https://analisi.transparenciacatalunya.cat/resource/{res['id']}.geojson",
-                             params={"$limit": 200000}, timeout=300).json()
             n0 = len(fts)
-            for f in g.get("features", []):
-                p = {k.lower(): v for k, v in (f.get("properties") or {}).items()}
-                a = next((str(p[k])[:4] for k in ("any", "data_inici", "data", "dat_inici", "data_incendi", "year") if p.get(k)), None)
-                if f.get("geometry") and a and a.isdigit():
-                    fts.append({"type": "Feature", "geometry": f["geometry"], "properties": {"any": int(a), "font": res["id"]}})
-            fonts.append(f"Generalitat {res['id']} ({len(fts) - n0})")
+            if any(c in ("polygon", "multipolygon") for c in cols):
+                g = requests.get(f"https://analisi.transparenciacatalunya.cat/resource/{res['id']}.geojson",
+                                 params={"$limit": 200000}, timeout=300).json()
+                for f in g.get("features", []):
+                    a = _any(f.get("properties") or {})
+                    if f.get("geometry") and a:
+                        fts.append({"type": "Feature", "geometry": f["geometry"], "properties": {"any": a, "font": res["id"]}})
+            elif "cartogr" in res["name"].lower() or "perímetr" in res["name"].lower():
+                v = requests.get(f"https://analisi.transparenciacatalunya.cat/api/views/{res['id']}.json", timeout=60).json()
+                urls = set(re.findall(r'https?://[^"\\\s]+', json.dumps(v)))
+                urls |= {f"https://analisi.transparenciacatalunya.cat/api/views/{res['id']}/files/{x['assetId']}?filename={x.get('filename', '')}"
+                         for x in (v.get("metadata", {}).get("attachments") or []) if x.get("assetId")}
+                for u in sorted(urls):
+                    print(f"    enllaç: {u[:200]}")
+                for u in sorted(urls):
+                    if not re.search(r"\.zip|/files/|shp|download", u, re.I):
+                        continue
+                    try:
+                        c = requests.get(u, timeout=600).content
+                        if c[:2] == b"PK":
+                            k = _shp_zip(c, fts, f"Generalitat {res['id']}", Path(u).name)
+                            print(f"    {u[:120]} → {k} perímetres")
+                    except Exception as e:                               # noqa: BLE001
+                        print(f"    {u[:120]}: {e}")
+            if len(fts) > n0:
+                fonts.append(f"Generalitat {res['id']} ({len(fts) - n0})")
     except Exception as e:                                               # noqa: BLE001
         print(f"  Generalitat: {e}")
-    # 2. EFFIS (WFS, Shapefile en zip)
-    try:
-        import shapefile                                                 # pyshp
-        r = requests.get("https://maps.effis.emergency.copernicus.eu/effis", timeout=600, params={
-            "service": "WFS", "request": "getfeature", "typename": "ms:modis.ba.poly", "version": "1.1.0",
-            "outputformat": "SHAPEZIP", "bbox": ",".join(map(str, (CAT_LL[1], CAT_LL[0], CAT_LL[3], CAT_LL[2])))})
-        z = zipfile.ZipFile(io.BytesIO(r.content))
-        base = next(n[:-4] for n in z.namelist() if n.endswith(".shp"))
-        prj = z.read(base + ".prj").decode() if base + ".prj" in z.namelist() else ""
-        sf = shapefile.Reader(shp=io.BytesIO(z.read(base + ".shp")), dbf=io.BytesIO(z.read(base + ".dbf")))
-        camps = [c[0].lower() for c in sf.fields[1:]]
-        from pyproj import CRS, Transformer
-        a_ll = Transformer.from_crs(CRS.from_wkt(prj) if prj else 4326, 4326, always_xy=True).transform
-        from shapely.geometry import shape, mapping
-        from shapely.ops import transform as stransform
-        n0 = len(fts)
-        for sr in sf.iterShapeRecords():
-            p = dict(zip(camps, sr.record))
-            d = str(p.get("firedate") or p.get("lastupdate") or "")[:4]
-            pais = str(p.get("country") or "ES")
-            if not d.isdigit() or pais not in ("ES", "FR", "AD"):
-                continue
-            g = stransform(lambda x, y: a_ll(x, y), shape(sr.shape.__geo_interface__))  # noqa
-            if g.intersects(_caixa()):
-                fts.append({"type": "Feature", "geometry": mapping(g), "properties": {"any": int(d), "font": "EFFIS"}})
-        fonts.append(f"EFFIS ({len(fts) - n0})")
-    except Exception as e:                                               # noqa: BLE001
-        print(f"  EFFIS: {e}")
+    # 2. EFFIS (WFS, Shapefile en zip): només si la Generalitat no n'ha donat
+    if not fts:
+        for bbox in (f"{CAT_LL[0]},{CAT_LL[1]},{CAT_LL[2]},{CAT_LL[3]}", f"{CAT_LL[1]},{CAT_LL[0]},{CAT_LL[3]},{CAT_LL[2]}",
+                     f"{CAT_LL[0]},{CAT_LL[1]},{CAT_LL[2]},{CAT_LL[3]},EPSG:4326"):
+            try:
+                r = requests.get("https://maps.effis.emergency.copernicus.eu/effis", timeout=600, params={
+                    "service": "WFS", "request": "getfeature", "typename": "ms:modis.ba.poly", "version": "1.1.0",
+                    "outputformat": "SHAPEZIP", "bbox": bbox})
+                print(f"  EFFIS bbox {bbox}: {r.status_code} {len(r.content)} B {r.content[:80]!r}")
+                if r.content[:2] == b"PK":
+                    k = _shp_zip(r.content, fts, "EFFIS", "")
+                    print(f"    → {k} perímetres")
+                    if k:
+                        fonts.append(f"EFFIS ({k})"); break
+            except Exception as e:                                       # noqa: BLE001
+                print(f"  EFFIS: {e}")
     Path(sortida).write_text(json.dumps({"type": "FeatureCollection", "fonts": fonts, "features": fts}, separators=(",", ":")))
     print(f"Incendis: {len(fts)} perímetres; fonts: {fonts or 'cap (només les zones cremades de les cobertes)'}")
+
+
+def _any(p, nom=""):
+    p = {k.lower(): v for k, v in p.items()}
+    for k in ("any", "any_incen", "year", "data_inici", "data_incen", "data", "dat_inici", "data_incendi", "firedate", "fecha"):
+        v = str(p.get(k) or "")
+        m = re.search(r"(19[6-9]\d|20[0-4]\d)", v)
+        if m:
+            return int(m.group(1))
+    m = re.search(r"(19[6-9]\d|20[0-4]\d)", nom)
+    return int(m.group(1)) if m else None
+
+
+def _shp_zip(contingut, fts, font, nom):
+    """Llegeix tots els Shapefiles d'un zip (també zips dins de zips) i hi afegeix els polígons de Catalunya."""
+    import shapefile
+    from pyproj import CRS, Transformer
+    from shapely.geometry import shape, mapping
+    from shapely.ops import transform as stransform
+    z = zipfile.ZipFile(io.BytesIO(contingut)); n0 = len(fts); caixa = _caixa()
+    for n in z.namelist():
+        if n.lower().endswith(".zip"):
+            _shp_zip(z.read(n), fts, font, n)
+        if not n.lower().endswith(".shp"):
+            continue
+        base = n[:-4]
+        noms = {x.lower(): x for x in z.namelist()}
+        prj = z.read(noms[(base + ".prj").lower()]).decode(errors="ignore") if (base + ".prj").lower() in noms else ""
+        sf = shapefile.Reader(shp=io.BytesIO(z.read(n)), dbf=io.BytesIO(z.read(noms[(base + ".dbf").lower()])), encoding="latin-1")
+        camps = [c[0] for c in sf.fields[1:]]
+        crs = CRS.from_wkt(prj) if prj else CRS.from_epsg(25831)
+        a_ll = Transformer.from_crs(crs, 4326, always_xy=True).transform
+        print(f"      {n}: {len(sf)} elements, camps {camps[:12]}, {crs.name}")
+        for sr in sf.iterShapeRecords():
+            a = _any(dict(zip(camps, sr.record)), n + nom)
+            if not a or sr.shape.shapeType not in (5, 15, 25):
+                continue
+            g = stransform(lambda x, y, *_: a_ll(x, y), shape(sr.shape.__geo_interface__))  # noqa
+            if g.is_valid and g.intersects(caixa):
+                fts.append({"type": "Feature", "geometry": mapping(g.simplify(0.0002)), "properties": {"any": a, "font": font}})
+    return len(fts) - n0
 
 
 def _caixa():
