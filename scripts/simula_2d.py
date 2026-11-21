@@ -121,15 +121,16 @@ def obstacles(fitxer, tr, nf, nc, dx, fi=2.0):
     return phi, psx, psy, desti, ed
 
 
-def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, toca=5.0):
+def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, toca=5.0, tria=None):
     """Edificis amb plantes sota rasant que tenen aigua a tocar: a les cel·les a menys de `toca` m de la planta de les parts amb
     soterrani, l'alçada màxima de l'aigua per sobre del terra de l'edifici (mediana del MDT sota la planta), sense passar del
     calat. Així l'aigua d'una riera encaixada al costat, més baixa que l'edifici, no compta. I minut en què hi passa de 15 cm."""
     from shapely.geometry import Polygon, box
     from shapely.ops import unary_union
+    tria = tria or (lambda ref, sobre, sota: sota > 0)       # per defecte, les parts amb soterrani
     per_ref = {}
     for ref, sobre, sota, an in ed["parts"]:
-        if sota > 0 and len(an[0]) >= 4:
+        if tria(ref, sobre, sota) and len(an[0]) >= 4:
             p = Polygon(an[0], an[1:]).buffer(0)
             if not p.is_empty:
                 per_ref.setdefault(ref, []).append(p)
@@ -165,6 +166,28 @@ def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, toca=5.0
     return len(per_ref), out
 
 
+def plantes_baixes(fitxers, ed, dest, ini, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, llindar=15):
+    """OPCIÓ --planta-baixa: plantes baixes amb aigua a tocar (mateix criteri que els soterranis) i de quin ús són."""
+    pb, classes = {}, None
+    for f in fitxers:
+        j = json.loads(Path(f).read_text())
+        classes = j["classes"]; pb.update(j["edificis"])
+    _, aigua = soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt,
+                          tria=lambda ref, sobre, sota: sobre >= 1 and ref in pb and pb[ref][1] >= 0)
+    out = {ref: v + [pb[ref][1], pb[ref][2], pb[ref][0]] for ref, v in aigua.items()}
+    risc = {ref: v for ref, v in out.items() if v[0] >= llindar}
+    per = {c: sum(1 for v in risc.values() if v[3] == i) for i, c in enumerate(classes)}
+    resum = {"fitxer": "plantes_baixes.json", "llindar_cm": llindar, "edificis_amb_us": len(pb), "amb_aigua_a_tocar": len(out),
+             "risc": len(risc), "risc_per_classe": per, "habitatges_planta_baixa_risc": sum(v[4] for v in risc.values()),
+             "risc_amb_us_de_consulta_parcela": sum(1 for v in risc.values() if v[5] == 0)}
+    (dest / "plantes_baixes.json").write_text(json.dumps({"inici_utc": ini.strftime("%Y-%m-%dT%H:%M"), "toca_m": 5, "llindar_cm": llindar,
+        "classes": classes, "camps": ["aigua a tocar per sobre del terra (cm)", "minut en què passa de 15 cm", "minuts fins que baixa de 5 cm",
+                                      "classe planta baixa", "habitatges a planta baixa", "font de l'ús (0 consulta per parcel·la, 1 estimat)"],
+        "edificis": out}, ensure_ascii=False, separators=(",", ":")))
+    print(f"Plantes baixes: {len(risc)} amb ≥{llindar} cm a tocar: {per}")
+    return resum
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
@@ -184,6 +207,7 @@ def main():
     ap.add_argument("--cada", type=int, default=10, help="minuts entre fotogrames")
     ap.add_argument("--sense-cobertes", action="store_true", help="sense el mapa de cobertes de l'ICGC: WorldCover i --n-natural/--n-urba únics")
     ap.add_argument("--grup-sol", help="grup hidrològic de sòl (A-D) per al número de corba; per defecte el de config/cobertes_parametres.json")
+    ap.add_argument("--planta-baixa", nargs="+", help="OPCIÓ: ús de la planta baixa (planta_baixa.py: data/catalunya/planta_baixa/cNNN.json, una o més conques); amb --edificis, compta les plantes baixes amb aigua a tocar per ús")
     ap.add_argument("--edificis", help="edificis del Cadastre (cadastre.py: data/<conca>/cadastre/edificis.json.gz): obstacles i soterranis")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
@@ -363,6 +387,9 @@ def main():
         (dest / "soterranis.json").write_text(json.dumps({"inici_utc": ini.strftime("%Y-%m-%dT%H:%M"), "toca_m": 5, "llindar_cm": 15,
             "camps": ["aigua a tocar per sobre del terra de l'edifici, màxim (cm)", "minut des de inici_utc en què passa de 15 cm (null = mai)", "minuts des que passa de 15 cm fins que l'aigua del voltant baixa de 5 cm"], "edificis": sot}, separators=(",", ":")))
         print(f"Soterranis: {sum(1 for v in sot.values() if v[0] >= 15)} de {n_sot} edificis amb soterrani tenen ≥15 cm d'aigua a tocar")
+    pb_resum = None
+    if edif is not None and a.planta_baixa:
+        pb_resum = plantes_baixes(a.planta_baixa, edif, dest, ini, tr, nf, nc, dx, hmax, t15, durada, z, z0, tr_mdt)
     np.minimum(np.rint(hmax * 100), 65534).astype("<u2").tofile(dest / "calat_max_cm.u2")
     np.where(np.isfinite(t15), np.minimum(t15, 65534), 65535).astype("<u2").tofile(dest / "minut_15cm.u2")
     (dest / "index.json").write_text(json.dumps({
@@ -375,7 +402,8 @@ def main():
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2],
         "edificis": None if edif is None else {"font": "Cadastre (INSPIRE Buildings)", "metode": "porositat: els edificis treuen espai i amplada de pas a cada cel·la; la pluja de les teulades va al carrer",
                                                "ocupacio_pct": edif["ocupacio_pct"], "soterranis": "soterranis.json",
-                                               "soterranis_risc": sum(1 for v in sot.values() if v[0] >= 15)}}, ensure_ascii=False))
+                                               "soterranis_risc": sum(1 for v in sot.values() if v[0] >= 15)},
+        "plantes_baixes": pb_resum}, ensure_ascii=False))
     print(f"Fet en {time.time() - rellotge:.0f} s: {len(fotos)} fotogrames")
     return 0
 
