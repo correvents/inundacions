@@ -1,0 +1,78 @@
+{
+ "124": {
+  "edificis": 989,
+  "amb_us": 987,
+  "consulta_parcela": 385,
+  "estimat_inspire": 602,
+  "sense_dades": 2,
+  "planta_baixa_per_classe": {
+   "habitatge": 695,
+   "equipament": 22,
+   "comerç": 73,
+   "oficines": 7,
+   "habitatge o local": 121,
+   "industrial": 24,
+   "garatge o magatzem": 31,
+   "agrari": 8,
+   "altres": 3
+  },
+  "habitatges_planta_baixa": 946
+ },
+ "125": {
+  "edificis": 3843,
+  "amb_us": 3836,
+  "consulta_parcela": 304,
+  "estimat_inspire": 3532,
+  "sense_dades": 7,
+  "planta_baixa_per_classe": {
+   "habitatge": 3270,
+   "equipament": 71,
+   "comerç": 60,
+   "oficines": 10,
+   "habitatge o local": 97,
+   "industrial": 100,
+   "garatge o magatzem": 27,
+   "agrari": 196,
+   "altres": 4
+  },
+  "habitatges_planta_baixa": 3407
+ },
+ "188": {
+  "edificis": 21993,
+  "amb_us": 21867,
+  "consulta_parcela": 124,
+  "estimat_inspire": 21743,
+  "sense_dades": 126,
+  "planta_baixa_per_classe": {
+   "habitatge": 14870,
+   "equipament": 410,
+   "comerç": 439,
+   "oficines": 180,
+   "habitatge o local": 3102,
+   "industrial": 2265,
+   "garatge o magatzem": 14,
+   "agrari": 584,
+   "altres": 2
+  },
+  "habitatges_planta_baixa": 14890
+ },
+ "199": {
+  "edificis": 1484,
+  "amb_us": 1480,
+  "consulta_parcela": 221,
+  "estimat_inspire": 1259,
+  "sense_dades": 4,
+  "planta_baixa_per_classe": {
+   "habitatge": 1284,
+   "equipament": 35,
+   "comerç": 11,
+   "oficines": 5,
+   "habitatge o local": 33,
+   "industrial": 66,
+   "garatge o magatzem": 11,
+   "agrari": 33,
+   "altres": 0
+  },
+  "habitatges_planta_baixa": 1348
+ }
+}
