@@ -325,11 +325,16 @@ def ordre_conca(a):
         "edificis": out}, ensure_ascii=False, separators=(",", ":")))
     resum = {"edificis": len(ed), "amb_us": len(out), "consulta_parcela": fonts[0], "estimat_inspire": fonts[1], "sense_dades": fonts[2],
              "planta_baixa_per_classe": per, "habitatges_planta_baixa": sum(v[2] for v in out.values())}
-    idx_f = SORT / "index.json"
-    idx = json.loads(idx_f.read_text()) if idx_f.exists() else {}
-    idx[str(a.conca)] = resum
-    idx_f.write_text(json.dumps(dict(sorted(idx.items(), key=lambda kv: int(kv[0]))), ensure_ascii=False, indent=1))
+    (SORT / f"c{a.conca:03d}.resum.json").write_text(json.dumps(resum, ensure_ascii=False))
+    ordre_index(a)
     print(f"Conca {a.conca}: {json.dumps(resum, ensure_ascii=False)}")
+    return 0
+
+
+def ordre_index(a=None):
+    """index.json a partir de tots els cNNN.resum.json (així dues execucions no es trepitgen)."""
+    idx = {f.name[1:4].lstrip("0"): json.loads(f.read_text()) for f in sorted(SORT.glob("c*.resum.json"))}
+    (SORT / "index.json").write_text(json.dumps(idx, ensure_ascii=False, indent=1))
     return 0
 
 
@@ -341,8 +346,9 @@ def main():
     a2 = sub.add_parser("ovc"); a2.add_argument("--conca", type=int, required=True); a2.add_argument("--max", type=int, default=0)
     a2.add_argument("--previ"); a2.add_argument("--fils", type=int, default=4); a2.add_argument("--minuts", type=float, default=300)
     a3 = sub.add_parser("conca"); a3.add_argument("--conca", type=int, required=True)
+    sub.add_parser("index")
     a = ap.parse_args()
-    return {"inspire": ordre_inspire, "ovc": ordre_ovc, "conca": ordre_conca}[a.ordre](a)
+    return {"inspire": ordre_inspire, "ovc": ordre_ovc, "conca": ordre_conca, "index": ordre_index}[a.ordre](a)
 
 
 if __name__ == "__main__":

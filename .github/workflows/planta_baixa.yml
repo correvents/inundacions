@@ -117,7 +117,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/catalunya/planta_baixa
-          git diff --cached --quiet && exit 0
-          git commit -m "Ús de la planta baixa per conca [skip ci]"
-          for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1
+          mkdir -p /tmp/nous && cp data/catalunya/planta_baixa/c*.json /tmp/nous/
+          for i in 1 2 3 4 5; do
+            git fetch -q origin "${{ github.ref_name }}" && git reset -q --hard FETCH_HEAD
+            mkdir -p data/catalunya/planta_baixa && cp /tmp/nous/* data/catalunya/planta_baixa/
+            python3 scripts/planta_baixa.py index
+            git add data/catalunya/planta_baixa
+            git diff --cached --quiet && exit 0
+            git commit -q -m "Ús de la planta baixa per conca [skip ci]"
+            git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5))
+          done; exit 1
