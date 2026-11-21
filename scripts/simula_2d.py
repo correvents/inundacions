@@ -176,6 +176,11 @@ def main():
     ap.add_argument("--ia-natural", type=float, default=150)
     ap.add_argument("--ia-urba", type=float, default=5)
     ap.add_argument("--perdua-natural", type=float, default=12, help="infiltració un cop superat el llindar (mm/h)")
+    ap.add_argument("--clavegueram-desti", choices=["riu", "perdut"], default="riu",
+                    help="on va l'aigua dels embornals: a la riera més propera amb conca ≥ --riu-km2 (riu) o fora del model (perdut)")
+    ap.add_argument("--riu-km2", type=float, default=1.0, help="conca mínima de la riera que rep el clavegueram (km²)")
+    ap.add_argument("--perdua-sobre", choices=["calat", "pluja"], default="calat",
+                    help="d'on es resta --perdua-natural: de l'aigua que corre per cada cel·la (calat) o de la pluja que hi cau (pluja)")
     ap.add_argument("--h-llera", type=float, default=0.1, help="calat a partir del qual la cel·la és llera saturada i no infiltra (m)")
     ap.add_argument("--clavegueram", type=float, default=30, help="capacitat dels embornals a les zones construïdes (mm/h)")
     ap.add_argument("--n-natural", type=float, default=0.06, help="n de Manning del terreny natural (només amb --sense-cobertes)")
@@ -240,6 +245,22 @@ def main():
         sorti = np.where(urba, a.clavegueram, a.perdua_natural) / 1000 / 3600     # m/s que perd la làmina un cop superat el llindar
         n = np.where(urba, a.n_urba, a.n_natural)
     phi, psx, psy, desti, edif = obstacles(a.edificis, tr, nf, nc, dx) if a.edificis else (np.ones((nf, nc)), np.ones((nf, nc)), np.ones((nf, nc)), None, None)
+    # clavegueram: l'aigua que entra pels embornals surt a la riera més propera (data/<conca>/rieretes.geojson, relleu.py)
+    desti_clav = None
+    fr = Path("data") / cfg["conca"] / "rieretes.geojson"
+    if a.clavegueram_desti == "riu" and fr.exists():
+        from rasterio import features as rfeat
+        from scipy import ndimage
+        from shapely.geometry import shape as shp
+        from shapely.ops import transform as stransf
+        to_c = Transformer.from_crs(4326, crs, always_xy=True)
+        trams = [stransf(to_c.transform, shp(f["geometry"])) for f in json.loads(fr.read_text())["features"]
+                 if f["properties"].get("area_km2", 0) >= a.riu_km2]
+        if trams:
+            riu = rfeat.rasterize([(g, 1) for g in trams], out_shape=(nf, nc), transform=tr, all_touched=True).astype(bool) & ~mar
+            _, (ri_, ci_) = ndimage.distance_transform_edt(~riu, return_indices=True)
+            desti_clav = (ri_ * nc + ci_).ravel()
+            print(f"Clavegueram: surt a {len(trams)} trams de riera amb conca ≥ {a.riu_km2} km²")
 
     # pluja: graella del radar a la reixa, amb correcció horària amb el pluviòmetre
     to_ll = Transformer.from_crs(crs, 4326, always_xy=True)
@@ -296,6 +317,8 @@ def main():
         Image.fromarray(rgba, "RGBA").save(dest / nom, optimize=True)
 
     t, k_frame, k_taxa, taxa, fotos, hidro = ini, 0, -1, None, [], []
+    hidro_caixa, hidro_trans = [], []
+    bal = {"pluja": 0.0, "neta": 0.0, "infiltrat": 0.0, "clavegueram": 0.0}   # m³: balanç d'aigua de tot el domini
     t_seg, dt_max, rellotge = 0.0, 5.0, time.time()
     proxim = ini + timedelta(minutes=a.cada)
     while t < fi:
@@ -315,10 +338,20 @@ def main():
         # pèrdues: només escorre la pluja per sobre del llindar
         pluja_acum += taxa * dt * 1000
         neta = np.maximum(pluja_acum - ia, 0.0)
-        h += (neta - neta_ant) / 1000 / phi                       # la pluja de tota la cel·la (teulades incloses) va al carrer
+        dn = neta - neta_ant
+        if a.perdua_sobre == "pluja":                             # el terreny natural infiltra de la pluja que hi cau, fins a --perdua-natural mm/h
+            dn = np.where(urba, dn, np.maximum(dn - sorti * dt * 1000, 0.0))
+        h += dn / 1000 / phi                                      # la pluja de tota la cel·la (teulades incloses) va al carrer
+        bal["pluja"] += float((taxa * dt)[~mar].sum()) * dx * dx; bal["neta"] += float(dn[~mar].sum()) / 1000 * dx * dx
+        h_abans = h.copy()
         neta_ant = neta
         # al terreny natural, les lleres on ja corre aigua (> --h-llera m) tenen el fons saturat i no hi infiltren; el clavegueram sí que drena
-        np.maximum(h - np.where((pluja_acum >= ia) & (urba | (h < a.h_llera)), sorti * dt / np.where(urba, phi, 1.0), 0.0), 0.0, out=h)
+        perd = (pluja_acum >= ia) & (urba | ((h < a.h_llera) & (a.perdua_sobre == "calat")))
+        np.maximum(h - np.where(perd, sorti * dt / np.where(urba, phi, 1.0), 0.0), 0.0, out=h)
+        dperd = (h_abans - h) * phi
+        bal["infiltrat"] += float(dperd[~urba].sum()) * dx * dx; bal["clavegueram"] += float(dperd[urba].sum()) * dx * dx
+        if desti_clav is not None:                                # el clavegueram desguassa a la riera (volum per cel·la → calat)
+            h += np.bincount(desti_clav, weights=np.where(urba, dperd, 0.0).ravel(), minlength=nf * nc).reshape(nf, nc) / phi
         pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi)
         np.maximum(hmax, h, out=hmax)
         t15[(h > 0.15) & ~np.isfinite(t15)] = t_seg / 60
@@ -327,13 +360,15 @@ def main():
         t_seg += dt; t = ini + timedelta(seconds=t_seg)
         if t >= proxim:
             nom = f"{proxim:%d%H%M}.png"; png(h, nom)
-            if cfg.get("aforador_mode") == "caixa":       # cabal que surt d'una caixa al voltant del punt, sigui quina sigui la direcció del curs
-                k = max(int(150 // dx), 1); r0, r1, c0, c1 = max(gr - k, 1), min(gr + k, nf - 2), max(gc - k, 1), min(gc + k, nc - 2)
-                Qx, Qy = qx * psx, qy * psy
-                q = float((np.maximum(Qx[r0:r1 + 1, c1], 0).sum() + np.maximum(-Qx[r0:r1 + 1, c0 - 1], 0).sum() +
-                           np.maximum(Qy[r1, c0:c1 + 1], 0).sum() + np.maximum(-Qy[r0 - 1, c0:c1 + 1], 0).sum()) * dx)
-            else:
-                q = float(sum(qx[r, gc] * psx[r, gc] for r in tf) * dx)
+            # cabal a l'aforador de dues maneres: el transsecte N-S (cap a l'est) i el que surt d'una caixa de ±150 m al voltant
+            # del punt, sigui quina sigui la direcció del curs (si el riu fa un meandre pel transsecte, aquest descompta)
+            k = max(int(150 // dx), 1); r0, r1, c0, c1 = max(gr - k, 1), min(gr + k, nf - 2), max(gc - k, 1), min(gc + k, nc - 2)
+            Qx, Qy = qx * psx, qy * psy
+            q_caixa = float((np.maximum(Qx[r0:r1 + 1, c1], 0).sum() + np.maximum(-Qx[r0:r1 + 1, c0 - 1], 0).sum() +
+                             np.maximum(Qy[r1, c0:c1 + 1], 0).sum() + np.maximum(-Qy[r0 - 1, c0:c1 + 1], 0).sum()) * dx)
+            q_trans = float(sum(qx[r, gc] * psx[r, gc] for r in tf) * dx)
+            q = q_caixa if cfg.get("aforador_mode") == "caixa" else q_trans
+            hidro_caixa.append(round(q_caixa, 1)); hidro_trans.append(round(q_trans, 1))
             fotos.append({"temps": proxim.strftime("%Y-%m-%dT%H:%M"), "png": nom}); hidro.append(round(q, 1))
             print(f"{proxim:%d %H:%M} dt {dt:.2f} s, calat màx {hm:.2f} m, cabal aforador {q:.1f} m³/s, inundat >15 cm {(h > 0.15).sum() * dx * dx / 1e6:.2f} km² ({time.time() - rellotge:.0f} s)")
             proxim += timedelta(minutes=a.cada)
@@ -368,11 +403,16 @@ def main():
     (dest / "index.json").write_text(json.dumps({
         "limits": [[s, w], [nn, e]], "pas_m": dx, "inici_utc": ini.strftime("%Y-%m-%dT%H:%M"),
         "graella_utm": {"crs": str(crs), "x0": tr.c, "y0": tr.f, "nf": nf, "nc": nc, "fitxers": {"calat_max_cm.u2": "uint16 cm",
-                        "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai", "durada_min.u2": "uint16 minuts entre superar 15 cm i l'últim moment amb més de 5 cm; 65535 = mai superat"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png", "assecat": "assecat.png", "assecat_final_mullat_km2": round(float(mullat_final.sum()) * dx * dx / 1e6, 3), "llegenda_assecat_h": [0, 1, 3, 6, 12],
-        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "h_llera_m": a.h_llera, "manning": ({"natural": a.n_natural, "construit": a.n_urba} if cob is None else "per coberta (config/cobertes_parametres.json, Chow 1959)"),
+                        "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai", "durada_min.u2": "uint16 minuts entre superar 15 cm i l'últim moment amb més de 5 cm; 65535 = mai superat"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "q_aforador_caixa": hidro_caixa, "q_aforador_transsecte": hidro_trans, "maxim": "maxim.png", "assecat": "assecat.png", "assecat_final_mullat_km2": round(float(mullat_final.sum()) * dx * dx / 1e6, 3), "llegenda_assecat_h": [0, 1, 3, 6, 12],
+        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "perdua_sobre": a.perdua_sobre, "clavegueram_mm_h": a.clavegueram, "clavegueram_desti": "riu" if desti_clav is not None else "perdut", "h_llera_m": a.h_llera, "manning": ({"natural": a.n_natural, "construit": a.n_urba} if cob is None else "per coberta (config/cobertes_parametres.json, Chow 1959)"),
                       "cobertes": None if cob is None else {"font": "Mapa de cobertes del sòl de Catalunya, ICGC (CC BY 4.0)", "absorcio": "ia_natural × S/S̄ (número de corba TR-55)", "grup_sol": a.grup_sol or json.loads(Path("config/cobertes_parametres.json").read_text())["grup_hidrologic_sol"]},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2],
+        "balanc_hm3": {**{k: round(v / 1e6, 3) for k, v in bal.items()}, "retingut_llindar": round((bal["pluja"] - bal["neta"]) / 1e6, 3),
+                       "queda_al_final": round(float((h * phi)[~mar].sum()) * dx * dx / 1e6, 3),
+                       "queda_en_clots_gt30cm": round(float((h * phi)[(~mar) & (h > 0.3)].sum()) * dx * dx / 1e6, 3),
+                       "sortit_pel_mar_i_vores": round((bal["neta"] - bal["infiltrat"] - (0 if desti_clav is not None else bal["clavegueram"]) - float((h * phi)[~mar].sum()) * dx * dx) / 1e6, 3),
+                       "volum_aforador_caixa": round(sum(hidro_caixa) * a.cada * 60 / 1e6, 3)},
         "edificis": None if edif is None else {"font": "Cadastre (INSPIRE Buildings)", "metode": "porositat: els edificis treuen espai i amplada de pas a cada cel·la; la pluja de les teulades va al carrer",
                                                "ocupacio_pct": edif["ocupacio_pct"], "soterranis": "soterranis.json",
                                                "soterranis_risc": sum(1 for v in sot.values() if v[0] >= 15)}}, ensure_ascii=False))
