@@ -2,7 +2,7 @@ name: Edificis com a dipòsit de Catalunya
 
 # Precalcula, per a cada municipi de la Release `cadastre-cat`, la capacitat de cada edifici com a dipòsit d'aigua
 # (planta baixa i soterranis) i les seves obertures (scripts/diposit.py). Resultat: Release `diposits-cat`,
-# diposits_MMMMM.json.gz, que simula_2d.py --edificis-diposit --diposits pot llegir directament.
+# diposits_cat.tar amb un diposits_MMMMM.json.gz per municipi, que simula_2d.py --edificis-diposit --diposits pot llegir directament.
 
 on:
   workflow_dispatch:
@@ -33,18 +33,19 @@ jobs:
         run: |
           gh release view "$ETIQUETA" -R "${{ github.repository }}" >/dev/null 2>&1 || \
           gh release create "$ETIQUETA" -R "${{ github.repository }}" --target main --title "Edificis com a dipòsit, per municipi" \
-            --notes "Per a cada edifici del Cadastre: [ref, x, y (EPSG:25831), àrea útil de planta baixa m², volum útil de soterrani m³, obertures m, plantes sota rasant]. Per a simula_2d.py --edificis-diposit. Fet amb scripts/diposit.py."
+            --notes "diposits_cat.tar: un diposits_MMMMM.json.gz per municipi. Per a cada edifici del Cadastre: [ref, x, y (EPSG:25831), àrea útil de planta baixa m², volum útil de soterrani m³, obertures m, plantes sota rasant]. Per a simula_2d.py --edificis-diposit. Fet amb scripts/diposit.py."
       - name: Calcula
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p /tmp/cad /tmp/diposits_cat
-          # l'API de GitHub torna algun 504 en baixar ~950 fitxers: es reprèn saltant els ja baixats
-          for i in 1 2 3 4 5 6; do
-            gh release download "$ORIGEN" -R "${{ github.repository }}" -p 'edificis_*.json.gz' -D /tmp/cad --skip-existing && break
-            sleep $((i*20))
-          done
+          # baixada per l'URL públic de la Release (no gasta crides de l'API, que té un límit d'unes 1.000/h)
+          gh api "repos/${{ github.repository }}/releases/tags/$ORIGEN" --paginate -q '.assets[].browser_download_url' \
+            | grep '/edificis_.*\.json\.gz$' > /tmp/urls.txt
+          (cd /tmp/cad && xargs -P 8 -n 1 curl -sSfL --retry 5 --retry-delay 10 -O < /tmp/urls.txt)
           ls /tmp/cad | wc -l
           python3 scripts/diposit.py cat /tmp/cad/edificis_*.json.gz --sortida /tmp/diposits_cat | tail -n 20
-          gh release upload "$ETIQUETA" /tmp/diposits_cat/diposits_*.json.gz -R "${{ github.repository }}" --clobber
+          # un sol fitxer: pujar-ne ~950 per separat esgota el límit de l'API
+          tar -cf /tmp/diposits_cat.tar -C /tmp/diposits_cat .
+          gh release upload "$ETIQUETA" /tmp/diposits_cat.tar -R "${{ github.repository }}" --clobber
           echo "### Dipòsits: $(ls /tmp/diposits_cat | wc -l) municipis, $(du -sh /tmp/diposits_cat | cut -f1)" >> "$GITHUB_STEP_SUMMARY"
