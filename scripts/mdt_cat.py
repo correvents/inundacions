@@ -271,15 +271,20 @@ def relleu(cami_mdt, geom, nom, pas, llindar, amb_edificis=True):
     classe[features.geometry_mask([mapping(g31)], z.shape, tr, invert=False)] = 0
     km2 = {k: round(float((classe == int(k)).sum() * cel_km2), 2) for k in CLASSES}
 
-    # PNG de paleta en lat/lon per superposar-lo amb Leaflet (cel·les ~quadrades)
+    # PNG de paleta en Web Mercator (EPSG:3857), la projecció del mapa de Leaflet: imageOverlay estira la imatge
+    # linealment entre les cantonades en Mercator, i en lat/lon les files del mig quedaven desplaçades (fins a ~60 m)
     w, s, e, n = geom.bounds
-    lat = (s + n) / 2
-    pas_y = pas / 111320
-    pas_x = pas / (111320 * np.cos(np.radians(lat)))
-    ncol, nfil = int(np.ceil((e - w) / pas_x)), int(np.ceil((n - s) / pas_y))
+    a3857 = Transformer.from_crs(4326, 3857, always_xy=True)
+    x0, y0 = a3857.transform(w, s)
+    x1, y1 = a3857.transform(e, n)
+    pm = pas / np.cos(np.radians((s + n) / 2))      # ~pas metres sobre el terreny
+    ncol, nfil = int(np.ceil((x1 - x0) / pm)), int(np.ceil((y1 - y0) / pm))
+    dtr_png = rasterio.Affine(pm, 0, x0, 0, -pm, y1)
+    sw = Transformer.from_crs(3857, 4326, always_xy=True).transform(x0 + ncol * pm, y1 - nfil * pm)
+    limits = [[sw[1], w], [n, sw[0]]]
     cl = np.zeros((nfil, ncol), dtype=np.uint8)
-    reproject(classe, cl, src_transform=tr, src_crs=crs, dst_transform=rasterio.Affine(pas_x, 0, w, 0, -pas_y, n),
-              dst_crs="EPSG:4326", resampling=Resampling.nearest)
+    reproject(classe, cl, src_transform=tr, src_crs=crs, dst_transform=dtr_png,
+              dst_crs="EPSG:3857", resampling=Resampling.nearest)
     from PIL import Image
     d = (SORT_ED if amb_edificis else SORT) / nom
     d.mkdir(parents=True, exist_ok=True)
@@ -304,14 +309,14 @@ def relleu(cami_mdt, geom, nom, pas, llindar, amb_edificis=True):
         cs[(cs == 1) & mullat] = 2
         ksot = {"km2": round(float((cs > 0).sum() * cel_km2), 3), "km2_tocant_zona_baixa": round(float((cs == 2).sum() * cel_km2), 3)}
         cl2 = np.zeros((nfil, ncol), dtype=np.uint8)
-        reproject(cs, cl2, src_transform=tr, src_crs=crs, dst_transform=rasterio.Affine(pas_x, 0, w, 0, -pas_y, n),
-                  dst_crs="EPSG:4326", resampling=Resampling.nearest)
+        reproject(cs, cl2, src_transform=tr, src_crs=crs, dst_transform=dtr_png,
+                  dst_crs="EPSG:3857", resampling=Resampling.nearest)
         im2 = Image.fromarray(cl2, "P")
         im2.putpalette([0, 0, 0, 253, 174, 97, 215, 25, 28] + [0, 0, 0] * 253)
         im2.save(d / "soterranis.png", optimize=True, transparency=bytes([0, 210, 235]))
     (d / "rieretes.json").write_text(json.dumps({"escala": 1e5, "camps": ["ordre", "area_km2*100", "x0", "y0", "dx", "dy", "..."],
                                                  "trams": trams}, separators=(",", ":")))
-    resum = {"conca": nom, "limits": [[n - nfil * pas_y, w], [n, w + ncol * pas_x]], "pas_m": pas,
+    resum = {"conca": nom, "limits": limits, "pas_m": pas,
              "llindar_km2": llindar, "trams": len(trams), "edificis": n_ed, "classes": CLASSES, "km2": km2,
              "soterranis": ksot,
              "font": "MDT 5 m IGN (PNOA LiDAR)", "calculat": time.strftime("%Y-%m-%d")}
