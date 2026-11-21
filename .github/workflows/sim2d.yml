@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       episodis:
-        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150}]'
+        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150}]; opcionals per episodi (passen per davant de les entrades): "pas", "perdua", "perdua_sobre" (calat/pluja), "grup_sol" (A-D), "cobertes" ("no")'
         required: true
       conca:
         description: "Conca (config/<conca>.json)"
@@ -57,9 +57,11 @@ jobs:
           EP=""; [ -n "${{ matrix.ep.episodi }}" ] && EP="--episodi data/${{ inputs.conca }}/episodis/${{ matrix.ep.episodi }}"
           ED="data/${{ inputs.conca }}/cadastre/edificis.json.gz"; [ -f "$ED" ] && [ "${{ inputs.edificis }}" != "no" ] && EP="$EP --edificis $ED"
           python3 scripts/simula_2d.py --config config/${{ inputs.conca }}.json --mdt /tmp/relleu/mdt.tif --id "${{ matrix.ep.id }}" \
-            --radar "data/${{ inputs.conca }}/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ inputs.pas }}" \
+            --radar "data/${{ inputs.conca }}/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ matrix.ep.pas || inputs.pas }}" \
             --ia-natural "${{ matrix.ep.ia }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}" \
-            --perdua-natural "${{ inputs.perdua_natural }}" --clavegueram "${{ inputs.clavegueram }}" --extra-hores "${{ inputs.extra_hores }}"
+            --perdua-natural "${{ matrix.ep.perdua || inputs.perdua_natural }}" --perdua-sobre "${{ matrix.ep.perdua_sobre || 'calat' }}" \
+            $([ -n "${{ matrix.ep.grup_sol }}" ] && echo --grup-sol ${{ matrix.ep.grup_sol }}) $([ "${{ matrix.ep.cobertes }}" = "no" ] && echo --sense-cobertes) \
+            --clavegueram "${{ inputs.clavegueram }}" --extra-hores "${{ inputs.extra_hores }}"
       - name: Desa
         run: |
           git config user.name "github-actions[bot]"

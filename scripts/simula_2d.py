@@ -176,6 +176,8 @@ def main():
     ap.add_argument("--ia-natural", type=float, default=150)
     ap.add_argument("--ia-urba", type=float, default=5)
     ap.add_argument("--perdua-natural", type=float, default=12, help="infiltració un cop superat el llindar (mm/h)")
+    ap.add_argument("--perdua-sobre", choices=["calat", "pluja"], default="calat",
+                    help="d'on es resta --perdua-natural: de l'aigua que corre per cada cel·la (calat) o de la pluja que hi cau (pluja)")
     ap.add_argument("--h-llera", type=float, default=0.1, help="calat a partir del qual la cel·la és llera saturada i no infiltra (m)")
     ap.add_argument("--clavegueram", type=float, default=30, help="capacitat dels embornals a les zones construïdes (mm/h)")
     ap.add_argument("--n-natural", type=float, default=0.06, help="n de Manning del terreny natural (només amb --sense-cobertes)")
@@ -315,10 +317,14 @@ def main():
         # pèrdues: només escorre la pluja per sobre del llindar
         pluja_acum += taxa * dt * 1000
         neta = np.maximum(pluja_acum - ia, 0.0)
-        h += (neta - neta_ant) / 1000 / phi                       # la pluja de tota la cel·la (teulades incloses) va al carrer
+        dn = neta - neta_ant
+        if a.perdua_sobre == "pluja":                             # el terreny natural infiltra de la pluja que hi cau, fins a --perdua-natural mm/h
+            dn = np.where(urba, dn, np.maximum(dn - sorti * dt * 1000, 0.0))
+        h += dn / 1000 / phi                                      # la pluja de tota la cel·la (teulades incloses) va al carrer
         neta_ant = neta
         # al terreny natural, les lleres on ja corre aigua (> --h-llera m) tenen el fons saturat i no hi infiltren; el clavegueram sí que drena
-        np.maximum(h - np.where((pluja_acum >= ia) & (urba | (h < a.h_llera)), sorti * dt / np.where(urba, phi, 1.0), 0.0), 0.0, out=h)
+        perd = (pluja_acum >= ia) & (urba | ((h < a.h_llera) & (a.perdua_sobre == "calat")))
+        np.maximum(h - np.where(perd, sorti * dt / np.where(urba, phi, 1.0), 0.0), 0.0, out=h)
         pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi)
         np.maximum(hmax, h, out=hmax)
         t15[(h > 0.15) & ~np.isfinite(t15)] = t_seg / 60
@@ -369,7 +375,7 @@ def main():
         "limits": [[s, w], [nn, e]], "pas_m": dx, "inici_utc": ini.strftime("%Y-%m-%dT%H:%M"),
         "graella_utm": {"crs": str(crs), "x0": tr.c, "y0": tr.f, "nf": nf, "nc": nc, "fitxers": {"calat_max_cm.u2": "uint16 cm",
                         "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai", "durada_min.u2": "uint16 minuts entre superar 15 cm i l'últim moment amb més de 5 cm; 65535 = mai superat"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png", "assecat": "assecat.png", "assecat_final_mullat_km2": round(float(mullat_final.sum()) * dx * dx / 1e6, 3), "llegenda_assecat_h": [0, 1, 3, 6, 12],
-        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "h_llera_m": a.h_llera, "manning": ({"natural": a.n_natural, "construit": a.n_urba} if cob is None else "per coberta (config/cobertes_parametres.json, Chow 1959)"),
+        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "perdua_sobre": a.perdua_sobre, "clavegueram_mm_h": a.clavegueram, "h_llera_m": a.h_llera, "manning": ({"natural": a.n_natural, "construit": a.n_urba} if cob is None else "per coberta (config/cobertes_parametres.json, Chow 1959)"),
                       "cobertes": None if cob is None else {"font": "Mapa de cobertes del sòl de Catalunya, ICGC (CC BY 4.0)", "absorcio": "ia_natural × S/S̄ (número de corba TR-55)", "grup_sol": a.grup_sol or json.loads(Path("config/cobertes_parametres.json").read_text())["grup_hidrologic_sol"]},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2],
