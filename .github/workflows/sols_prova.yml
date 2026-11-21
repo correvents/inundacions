@@ -1,0 +1,18 @@
+name: Sols - prova de fonts de litologia
+on:
+  push:
+    branches: [claude/project-thread-eof0ed]
+    paths: [.github/workflows/sols_prova.yml]
+jobs:
+  prova:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for u in "https://mapas.igme.es/gis/rest/services?f=json" \
+                   "https://mapas.igme.es/gis/rest/services/Cartografia_Tematica?f=json" \
+                   "https://mapas.igme.es/gis/rest/services/Cartografia_Tematica/IGME_Permeabilidad_200/MapServer?f=json" \
+                   "https://mapas.igme.es/gis/rest/services/Cartografia_Tematica/IGME_Hidrogeologico_200/MapServer?f=json" \
+                   "https://geoserveis.icgc.cat/servei/catalunya/geologia/wms?SERVICE=WMS&REQUEST=GetCapabilities" \
+                   "https://geoserveis.icgc.cat/icgc_geologia/wms/service?SERVICE=WMS&REQUEST=GetCapabilities"; do
+            echo "=== $u"; curl -sL -m 60 "$u" | head -c 4000; echo
+          done
