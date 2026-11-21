@@ -299,6 +299,7 @@ def main():
 
     t, k_frame, k_taxa, taxa, fotos, hidro = ini, 0, -1, None, [], []
     hidro_caixa, hidro_trans = [], []
+    bal = {"pluja": 0.0, "neta": 0.0, "infiltrat": 0.0, "clavegueram": 0.0}   # m³: balanç d'aigua de tot el domini
     t_seg, dt_max, rellotge = 0.0, 5.0, time.time()
     proxim = ini + timedelta(minutes=a.cada)
     while t < fi:
@@ -322,10 +323,14 @@ def main():
         if a.perdua_sobre == "pluja":                             # el terreny natural infiltra de la pluja que hi cau, fins a --perdua-natural mm/h
             dn = np.where(urba, dn, np.maximum(dn - sorti * dt * 1000, 0.0))
         h += dn / 1000 / phi                                      # la pluja de tota la cel·la (teulades incloses) va al carrer
+        bal["pluja"] += float((taxa * dt)[~mar].sum()) * dx * dx; bal["neta"] += float(dn[~mar].sum()) / 1000 * dx * dx
+        h_abans = h.copy()
         neta_ant = neta
         # al terreny natural, les lleres on ja corre aigua (> --h-llera m) tenen el fons saturat i no hi infiltren; el clavegueram sí que drena
         perd = (pluja_acum >= ia) & (urba | ((h < a.h_llera) & (a.perdua_sobre == "calat")))
         np.maximum(h - np.where(perd, sorti * dt / np.where(urba, phi, 1.0), 0.0), 0.0, out=h)
+        dperd = (h_abans - h) * phi
+        bal["infiltrat"] += float(dperd[~urba].sum()) * dx * dx; bal["clavegueram"] += float(dperd[urba].sum()) * dx * dx
         pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi)
         np.maximum(hmax, h, out=hmax)
         t15[(h > 0.15) & ~np.isfinite(t15)] = t_seg / 60
@@ -382,6 +387,11 @@ def main():
                       "cobertes": None if cob is None else {"font": "Mapa de cobertes del sòl de Catalunya, ICGC (CC BY 4.0)", "absorcio": "ia_natural × S/S̄ (número de corba TR-55)", "grup_sol": a.grup_sol or json.loads(Path("config/cobertes_parametres.json").read_text())["grup_hidrologic_sol"]},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2],
+        "balanc_hm3": {**{k: round(v / 1e6, 3) for k, v in bal.items()}, "retingut_llindar": round((bal["pluja"] - bal["neta"]) / 1e6, 3),
+                       "queda_al_final": round(float((h * phi)[~mar].sum()) * dx * dx / 1e6, 3),
+                       "queda_en_clots_gt30cm": round(float((h * phi)[(~mar) & (h > 0.3)].sum()) * dx * dx / 1e6, 3),
+                       "sortit_pel_mar_i_vores": round((bal["neta"] - bal["infiltrat"] - bal["clavegueram"] - float((h * phi)[~mar].sum()) * dx * dx) / 1e6, 3),
+                       "volum_aforador_caixa": round(sum(hidro_caixa) * a.cada * 60 / 1e6, 3)},
         "edificis": None if edif is None else {"font": "Cadastre (INSPIRE Buildings)", "metode": "porositat: els edificis treuen espai i amplada de pas a cada cel·la; la pluja de les teulades va al carrer",
                                                "ocupacio_pct": edif["ocupacio_pct"], "soterranis": "soterranis.json",
                                                "soterranis_risc": sum(1 for v in sot.values() if v[0] >= 15)}}, ensure_ascii=False))
