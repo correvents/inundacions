@@ -1,0 +1,46 @@
+name: Edificis com a dipòsit de Catalunya
+
+# Precalcula, per a cada municipi de la Release `cadastre-cat`, la capacitat de cada edifici com a dipòsit d'aigua
+# (planta baixa i soterranis) i les seves obertures (scripts/diposit.py). Resultat: Release `diposits-cat`,
+# diposits_MMMMM.json.gz, que simula_2d.py --edificis-diposit --diposits pot llegir directament.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/project-thread-z6s0br]
+    paths: [scripts/diposit.py, .github/workflows/diposits_cat.yml]
+
+permissions:
+  contents: write
+
+env:
+  ORIGEN: cadastre-cat
+  ETIQUETA: diposits-cat
+
+jobs:
+  calcula:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy shapely scipy
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$ETIQUETA" -R "${{ github.repository }}" >/dev/null 2>&1 || \
+          gh release create "$ETIQUETA" -R "${{ github.repository }}" --target main --title "Edificis com a dipòsit, per municipi" \
+            --notes "Per a cada edifici del Cadastre: [ref, x, y (EPSG:25831), àrea útil de planta baixa m², volum útil de soterrani m³, obertures m, plantes sota rasant]. Per a simula_2d.py --edificis-diposit. Fet amb scripts/diposit.py."
+      - name: Calcula
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/cad /tmp/diposits_cat
+          gh release download "$ORIGEN" -R "${{ github.repository }}" -p 'edificis_*.json.gz' -D /tmp/cad
+          ls /tmp/cad | wc -l
+          python3 scripts/diposit.py cat /tmp/cad/edificis_*.json.gz --sortida /tmp/diposits_cat | tail -n 20
+          gh release upload "$ETIQUETA" /tmp/diposits_cat/diposits_*.json.gz -R "${{ github.repository }}" --clobber
+          echo "### Dipòsits: $(ls /tmp/diposits_cat | wc -l) municipis, $(du -sh /tmp/diposits_cat | cut -f1)" >> "$GITHUB_STEP_SUMMARY"

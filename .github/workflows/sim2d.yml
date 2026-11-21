@@ -30,6 +30,9 @@ on:
       clavegueram:
         description: "Capacitat dels embornals a les zones construïdes (mm/h)"
         default: "30"
+      opcions:
+        description: "Opcions a provar, separades per espais: diposit (edificis com a dipòsit), velocitat (velocitat i perill H1-H6)"
+        default: ""
 
 permissions:
   contents: write
@@ -52,14 +55,24 @@ jobs:
       - name: Relleu
         run: python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas 10 --nomes-mdt
       - name: Simulació
+        env:
+          OPCIONS: ${{ inputs.opcions }}
         run: |
+          OPC=""
+          for o in $OPCIONS; do
+            case "$o" in
+              diposit) OPC="$OPC --edificis-diposit" ;;
+              velocitat) OPC="$OPC --velocitat" ;;
+              *) echo "Opció desconeguda: $o"; exit 1 ;;
+            esac
+          done
           rm -rf "data/${{ inputs.conca }}/sim2d/${{ matrix.ep.id }}"
           EP=""; [ -n "${{ matrix.ep.episodi }}" ] && EP="--episodi data/${{ inputs.conca }}/episodis/${{ matrix.ep.episodi }}"
           ED="data/${{ inputs.conca }}/cadastre/edificis.json.gz"; [ -f "$ED" ] && [ "${{ inputs.edificis }}" != "no" ] && EP="$EP --edificis $ED"
           python3 scripts/simula_2d.py --config config/${{ inputs.conca }}.json --mdt /tmp/relleu/mdt.tif --id "${{ matrix.ep.id }}" \
             --radar "data/${{ inputs.conca }}/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ inputs.pas }}" \
             --ia-natural "${{ matrix.ep.ia }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}" \
-            --perdua-natural "${{ inputs.perdua_natural }}" --clavegueram "${{ inputs.clavegueram }}" --extra-hores "${{ inputs.extra_hores }}"
+            --perdua-natural "${{ inputs.perdua_natural }}" --clavegueram "${{ inputs.clavegueram }}" --extra-hores "${{ inputs.extra_hores }}" $OPC
       - name: Desa
         run: |
           git config user.name "github-actions[bot]"
