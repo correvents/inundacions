@@ -221,15 +221,15 @@ def consulta(ref):
     for k in range(5):
         try:
             r = requests.get(OVC, params={"RefCat": ref[:14]}, timeout=60)
-            if r.status_code in (429, 503):
-                time.sleep(15 * (k + 1)); continue
+            if r.status_code in (403, 429, 503):          # el Cadastre talla si anem massa de pressa: esperem
+                time.sleep(30 * (k + 1)); continue
             r.raise_for_status()
             j = r.json()
             if MOSTRA[0] < 3:                       # unes quantes respostes senceres al registre, per revisar el format
                 MOSTRA[0] += 1; print(f"Mostra {ref}: {json.dumps(j, ensure_ascii=False)[:1500]}")
             return ref, resumeix(j)
         except Exception as e:
-            err = f"{type(e).__name__} {e}"; time.sleep(3 * (k + 1))
+            err = f"{type(e).__name__} {e}"; time.sleep(10 * (k + 1))
     return ref, {"error": err}
 
 
@@ -242,13 +242,17 @@ def ordre_ovc(a):
     if a.max:
         refs = refs[:a.max]
     print(f"{len(previ)} parcel·les ja consultades; en consulto {len(refs)}")
-    t0, fets, errors = time.time(), 0, 0
+    t0, fets, errors, seguits = time.time(), 0, 0, 0
     with ThreadPoolExecutor(a.fils) as ex:
         for ref, res in ex.map(consulta, refs):
             previ[ref] = res; fets += 1
             if isinstance(res, dict):
-                errors += 1
+                errors += 1; seguits += 1
                 if errors <= 5: print(f"  Error {ref}: {res.get('error')}")
+                if seguits >= 40:
+                    print("40 errors seguits: el Cadastre ens talla. Ho deixo per a la propera passada"); break
+            else:
+                seguits = 0
             if fets % 500 == 0:
                 print(f"  {fets}/{len(refs)} ({errors} errors) en {time.time() - t0:.0f} s")
             if time.time() - t0 > a.minuts * 60:
@@ -344,7 +348,7 @@ def main():
     a1 = sub.add_parser("inspire"); a1.add_argument("--lot", type=int, required=True); a1.add_argument("--lots", type=int, required=True)
     a1.add_argument("--salta")
     a2 = sub.add_parser("ovc"); a2.add_argument("--conca", type=int, required=True); a2.add_argument("--max", type=int, default=0)
-    a2.add_argument("--previ"); a2.add_argument("--fils", type=int, default=4); a2.add_argument("--minuts", type=float, default=300)
+    a2.add_argument("--previ"); a2.add_argument("--fils", type=int, default=2); a2.add_argument("--minuts", type=float, default=300)
     a3 = sub.add_parser("conca"); a3.add_argument("--conca", type=int, required=True)
     sub.add_parser("index")
     a = ap.parse_args()

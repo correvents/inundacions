@@ -83,6 +83,7 @@ jobs:
     timeout-minutes: 340
     strategy:
       fail-fast: false
+      max-parallel: 2                    # el Cadastre talla si hi ha massa peticions alhora
       matrix:
         conca: ${{ fromJson(needs.prepara.outputs.conques) }}
     steps:
@@ -99,7 +100,13 @@ jobs:
           F=$(printf "pb_ovc_c%03d.json.gz" ${{ matrix.conca }})
           gh release download "$ETIQUETA" -R "${{ github.repository }}" -p "$F" -D /tmp/previ 2>/dev/null || true
           python3 scripts/planta_baixa.py ovc --conca ${{ matrix.conca }} --max "$MAX" --previ "/tmp/previ/$F" --minuts 300
-          gh release upload "$ETIQUETA" "/tmp/planta_baixa/$F" -R "${{ github.repository }}" --clobber
+          for i in 1 2 3 4 5 6; do gh release upload "$ETIQUETA" "/tmp/planta_baixa/$F" -R "${{ github.repository }}" --clobber && exit 0; sleep $((i*120)); done; exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pb-ovc-${{ matrix.conca }}
+          path: /tmp/planta_baixa/pb_ovc_*.json.gz
+          if-no-files-found: ignore
 
   conca:
     needs: [prepara, inspire, ovc]
