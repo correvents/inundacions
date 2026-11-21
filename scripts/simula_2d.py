@@ -184,7 +184,7 @@ def main():
     ap.add_argument("--cada", type=int, default=10, help="minuts entre fotogrames")
     ap.add_argument("--sense-cobertes", action="store_true", help="sense el mapa de cobertes de l'ICGC: WorldCover i --n-natural/--n-urba únics")
     ap.add_argument("--grup-sol", help="grup hidrològic de sòl per al número de corba: A-D (tota la conca igual), «mapa» "
-                    "(scripts/sols.py, NEH-630 0-60 cm + roca) o «mapa-sup» (textura 0-30 cm); per defecte el de config/cobertes_parametres.json")
+                    "(scripts/sols.py, SoilGrids NEH-630 0-60 cm + roca), «mapa-sup» (SoilGrids 0-30 cm) o «litologia» (permeabilitat IGME); per defecte el de config/cobertes_parametres.json")
     ap.add_argument("--sol-referencia", choices=["mitjana", "B"], default="mitjana",
                     help="amb el mapa de sòls: «mitjana» conserva la mitjana calibrada (només reparteix); «B» pren la calibració "
                     "com feta amb grup B a tot arreu, i el mapa també en canvia la mitjana")
@@ -219,7 +219,7 @@ def main():
         cob = C.a_reixa(tr, (nf, nc), crs)
     if cob is not None:
         grup = a.grup_sol
-        if grup in ("mapa", "mapa-sup"):
+        if grup in ("mapa", "mapa-sup", "litologia"):
             import sols
             grup = sols.a_reixa(tr, (nf, nc), crs, variant=a.grup_sol)
             if grup is None:

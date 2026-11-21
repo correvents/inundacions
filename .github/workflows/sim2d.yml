@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       episodis:
-        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150, "sol": "B|mapa|mapa-sup" (opcional), "sol_ref": "mitjana|B" (opcional)}]'
+        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150, "sol": "B|mapa|mapa-sup|litologia" (opcional), "sol_ref": "mitjana|B" (opcional)}]'
         required: true
       conca:
         description: "Conca (config/<conca>.json)"

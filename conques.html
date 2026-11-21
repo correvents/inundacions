@@ -108,7 +108,8 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
       </div>
       <label><input type="checkbox" id="kCob"> Cobertes del sòl (ICGC 2024)</label>
       <div class="ll" id="llCob" hidden></div>
-      <label><input type="checkbox" id="kSol"> Grups hidrològics de sòl (SoilGrids)</label>
+      <label><input type="checkbox" id="kSol"> Grups hidrològics de sòl</label>
+      <select id="solVar" hidden><option value="litologia">De la litologia (IGME 1:200.000)</option><option value="mapa">SoilGrids, 0-60 cm + roca</option><option value="mapa-sup">SoilGrids, 0-30 cm</option></select>
       <div class="ll" id="llSol" hidden>
         <span><i class="sw" style="background:rgb(255,237,160)"></i>A: sorrenc, infiltra molt</span>
         <span><i class="sw" style="background:rgb(161,217,155)"></i>B: textura mitjana</span>
@@ -265,18 +266,22 @@ function cobertes(){
 // Grups hidrològics de sòl (scripts/sols.py): un sol PNG per a tot Catalunya; a la simulació 2D és opcional (--grup-sol mapa)
 const kSol=document.getElementById("kSol"), solInfo=document.getElementById("solInfo"), gS=L.layerGroup();
 F.ctl.addOverlay(gS,"Grups hidrològics de sòl");
-let solRes=null, capaSol=null;
+let solRes=null, capaSol=null, solCapaVar=null;
+const solVar=document.getElementById("solVar");
 d3.json("data/catalunya/sols/resum.json").then(j=>{solRes=j;sols()}).catch(()=>{});
 kSol.onchange=()=>{kSol.checked?gS.addTo(mapa):mapa.removeLayer(gS);sols()};
+solVar.onchange=()=>sols();
 mapa.on("overlayadd overlayremove",e=>{if(e.layer===gS){kSol.checked=mapa.hasLayer(gS);sols()}});
 function sols(){
-  document.getElementById("llSol").hidden=!kSol.checked;
+  document.getElementById("llSol").hidden=solVar.hidden=!kSol.checked;
   if(!kSol.checked){solInfo.textContent="";return}
   if(!solRes){solInfo.textContent="El mapa de grups de sòl encara no està calculat.";return}
-  if(!capaSol){capaSol=L.imageOverlay("data/catalunya/sols/grups.png",solRes.limits,{opacity:.7,interactive:false,pane:"relleu"}).addTo(gS)}
+  const v=solVar.value, vv=(solRes.variants||{})[v]||{png:v==="mapa-sup"?"grups_sup.png":"grups.png",limits:solRes.limits,font:solRes.font};
+  if(v!==solCapaVar){gS.clearLayers();capaSol=null;solCapaVar=v}
+  if(!capaSol){capaSol=L.imageOverlay(`data/catalunya/sols/${vv.png}`,vv.limits,{opacity:.7,interactive:false,pane:"relleu"}).addTo(gS)}
   const id=conca100(), r=id==null?null:solRes.conques["c"+String(id).padStart(3,"0")];
-  const t=v=>v?"ABCD".split("").map((g,k)=>`${g} ${Math.round(v[k])} %`).join(", "):"sense dades";
-  solInfo.textContent=(r?`Conca ${id}: ${t(r.mapa)} (amb la textura només dels primers 30 cm: ${t(r["mapa-sup"])}). `:"")+`Font: ${solRes.font}.`;
+  const t=x=>x?"ABCD".split("").map((g,k)=>`${g} ${Math.round(x[k])} %`).join(", "):"sense dades";
+  solInfo.textContent=(r?`Conca ${id}: ${t(r[v])}. `:"")+`Font: ${vv.font}.`;
 }
 let av=new Set(), am=new Set(), cami=[];
 function estil(f){

@@ -1,0 +1,11 @@
+{
+ "descripcio": "Grup hidrològic de sòl a partir de la permeabilitat de la litologia (variant «litologia» de scripts/sols.py). Correspondència ordinal de les 5 classes de l'IGME als 4 grups NRCS; les dues classes més baixes (formacions impermeables, en marró al mapa de l'IGME) van a D.",
+ "font": "Mapa de Permeabilidades de España 1:200.000, IGME (fet del Mapa Litoestratigráfico 1:200.000)",
+ "correspondencia": {
+  "Muy alta": "A",
+  "Alta": "B",
+  "Media": "C",
+  "Baja": "D",
+  "Muy baja": "D"
+ }
+}

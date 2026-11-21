@@ -19,7 +19,14 @@ Sortida: /tmp/sols/grups_sol_cat.tif (EPSG:25831, 250 m, 2 bandes uint8) i /tmp/
 (argila i sorra 0-30 cm en %, fondària a la roca en cm) per a la Release `sols-cat`; capa web data/catalunya/sols/
 (grups.png en EPSG:3857, resum.json amb % de cada grup per conca de 100 km²).
 
+Variant 3 «litologia» (ordre `litologia`): SoilGrids és molt suau a Catalunya (argila 20-32 %, sorra 20-40 % a tot
+arreu → gairebé tot C), així que també es fa el grup a partir del Mapa de Permeabilitats d'Espanya 1:200.000 de l'IGME
+(fet del Mapa litoestratigràfic, 5 classes), com fa la norma 5.2-IC (2016) amb la litologia. Correspondència ordinal,
+a config/sols_litologia.json: molt alta → A, alta → B, mitjana → C, baixa i molt baixa → D.
+→ /tmp/sols/grups_sol_litologia_cat.tif (EPSG:25831, 50 m, 1=A … 4=D) i data/catalunya/sols/grups_lit.png.
+
 Ús:  python3 scripts/sols.py construeix
+     python3 scripts/sols.py litologia
      python3 scripts/sols.py prova                  # comprova l'accés a les fonts"""
 import argparse, json, os, sys, time
 from pathlib import Path
@@ -45,8 +52,11 @@ CRS = "EPSG:25831"
 TMP = Path("/tmp/sols")
 SORT = Path("data/catalunya/sols")
 CONQUES = Path("data/catalunya/conques/conques_100km2.geojson")
-URL = "https://github.com/correvents/inundacions/releases/download/sols-cat/grups_sol_cat.tif"
-BANDES = {"mapa": 1, "mapa-sup": 2}
+REL = "https://github.com/correvents/inundacions/releases/download/sols-cat/"
+VARIANTS = {"mapa": ("grups_sol_cat.tif", 1), "mapa-sup": ("grups_sol_cat.tif", 2), "litologia": ("grups_sol_litologia_cat.tif", 1)}
+IGME = "https://mapas.igme.es/gis/rest/services/Cartografia_Tematica/IGME_Permeabilidad_200/MapServer/0"
+LIT = Path("config/sols_litologia.json")
+PAS_LIT = 50
 COLORS = {1: (255, 237, 160), 2: (161, 217, 155), 3: (65, 171, 93), 4: (0, 90, 50)}
 
 
@@ -216,20 +226,128 @@ def web(g1, g2, tr, forma, roca_ok):
     print(f"Web: {sum(p.stat().st_size for p in SORT.iterdir()) / 1e3:.0f} kB")
 
 
-def a_reixa(tr, forma, crs, variant="mapa", url=URL):
+def a_reixa(tr, forma, crs, variant="mapa"):
     """Grup hidrològic per cel·la (0=A … 3=D; -1 sense dades) a una reixa qualsevol (simula_2d.py), per veí més proper
     des de la Release sols-cat. Torna None si no s'hi pot accedir."""
     import rasterio
     from rasterio.warp import reproject, Resampling
+    fitxer, banda = VARIANTS[variant]
     try:
-        with rasterio.open(url) as src:
+        with rasterio.open(REL + fitxer) as src:
             out = np.zeros(forma, np.uint8)
-            reproject(rasterio.band(src, BANDES[variant]), out, dst_transform=tr, dst_crs=crs, src_nodata=0,
+            reproject(rasterio.band(src, banda), out, dst_transform=tr, dst_crs=crs, src_nodata=0,
                       dst_nodata=0, resampling=Resampling.nearest)
     except Exception as e:
         print(f"Grups de sòl: {type(e).__name__} {e}")
         return None
     return out.astype(np.int8) - 1
+
+
+def igme_poligons():
+    """Polígons del Mapa de Permeabilitats 1:200.000 (IGME, ArcGIS REST) sobre Catalunya, en EPSG:25831, a trossos de
+    20 km i paginats. Torna (llista de (geometria, valor del camp de permeabilitat), nom del camp)."""
+    import requests
+    from shapely.geometry import shape
+    meta = requests.get(IGME, params={"f": "json"}, timeout=120).json()
+    camps = [f["name"] for f in meta.get("fields", [])]
+    print("Camps IGME:", camps)
+    camp = next((c for c in camps if "perm" in c.lower() and "cod" not in c.lower()), None) or \
+        next(c for c in camps if "perm" in c.lower())
+    maxim = int(meta.get("maxRecordCount", 1000))
+    x0, y0, x1, y1 = CAT
+    vistos, out = set(), []
+    for ya in range(y0, y1, 20000):
+        for xa in range(x0, x1, 20000):
+            off = 0
+            while True:
+                p = {"f": "geojson", "where": "1=1", "geometry": f"{xa},{ya},{xa + 20000},{ya + 20000}",
+                     "geometryType": "esriGeometryEnvelope", "inSR": 25831, "outSR": 25831,
+                     "spatialRel": "esriSpatialRelIntersects", "outFields": f"OBJECTID,{camp}",
+                     "returnGeometry": "true", "resultOffset": off, "resultRecordCount": maxim}
+                for intent in range(5):
+                    try:
+                        j = requests.get(IGME + "/query", params=p, timeout=300).json(); break
+                    except Exception as e:
+                        print(f"IGME {xa},{ya}: {type(e).__name__}"); time.sleep(10 * (intent + 1))
+                else:
+                    raise RuntimeError(f"IGME {xa},{ya} no respon")
+                fs = j.get("features", [])
+                for f in fs:
+                    oid = f["properties"].get("OBJECTID", f.get("id"))
+                    if oid in vistos or not f.get("geometry"):
+                        continue
+                    vistos.add(oid); out.append((shape(f["geometry"]), f["properties"].get(camp)))
+                if len(fs) < maxim and not j.get("exceededTransferLimit"):
+                    break
+                off += len(fs)
+    return out, camp
+
+
+def litologia():
+    import rasterio, unicodedata
+    from collections import Counter
+    from rasterio.features import rasterize
+    from rasterio.transform import from_origin
+    TMP.mkdir(parents=True, exist_ok=True)
+    cfg = json.loads(LIT.read_text())
+    pol, camp = igme_poligons()
+    norm = lambda t: unicodedata.normalize("NFKD", str(t)).encode("ascii", "ignore").decode().strip().lower()
+    vals = Counter(norm(v) for _, v in pol)
+    print(f"IGME: {len(pol)} polígons; valors de {camp}: {dict(vals)}")
+    corr = {norm(k): "ABCD".index(g) + 1 for k, g in cfg["correspondencia"].items()}
+    sense = [v for v in vals if v not in corr]
+    if sense:
+        print("Valors sense correspondència (queden sense dades):", sense)
+    x0, y0, x1, y1 = CAT
+    tr = from_origin(x0, y1, PAS_LIT, PAS_LIT)
+    forma = ((y1 - y0) // PAS_LIT, (x1 - x0) // PAS_LIT)
+    g = rasterize([(geo, corr[norm(v)]) for geo, v in pol if norm(v) in corr], out_shape=forma, transform=tr,
+                  fill=0, dtype="uint8")
+    terra = dins_catalunya(tr, forma)
+    g = omple(g, terra) * terra
+    perfil = dict(driver="GTiff", width=forma[1], height=forma[0], crs=CRS, transform=tr, compress="deflate")
+    with rasterio.open(TMP / "grups_sol_litologia_cat.tif", "w", count=1, dtype="uint8", nodata=0, **perfil) as f:
+        f.write(g, 1)
+        f.set_band_description(1, "litologia: permeabilitat IGME 1:200.000 → grup")
+        f.update_tags(valors="1=A 2=B 3=C 4=D 0=sense dades", font=cfg["font"], correspondencia=json.dumps(cfg["correspondencia"], ensure_ascii=False))
+    v = g[g > 0]
+    print("litologia: " + ", ".join(f"{'ABCD'[k - 1]} {(v == k).mean() * 100:.0f} %" for k in range(1, 5)))
+    web_variant(g, tr, forma, "grups_lit", "litologia", cfg["font"])
+
+
+def web_variant(g, tr, forma, png, clau, font):
+    """Afegeix una variant a la capa web: PNG en EPSG:3857 i % per conca a resum.json."""
+    from rasterio.warp import reproject, Resampling, calculate_default_transform
+    from rasterio.features import rasterize
+    from shapely.geometry import shape
+    from shapely.ops import transform as stransform
+    from pyproj import Transformer
+    from PIL import Image
+    SORT.mkdir(parents=True, exist_ok=True)
+    x0, y0, x1, y1 = CAT
+    t3, w3, h3 = calculate_default_transform(CRS, "EPSG:3857", forma[1], forma[0], x0, y0, x1, y1)
+    esc = max(1, int(np.ceil(max(w3, h3) / 2400)))              # PNG de com a molt ~2400 px
+    t3, w3, h3 = t3 * t3.scale(esc, esc), w3 // esc, h3 // esc
+    o = np.zeros((h3, w3), np.uint8)
+    reproject(g, o, src_transform=tr, src_crs=CRS, dst_transform=t3, dst_crs="EPSG:3857", src_nodata=0, dst_nodata=0,
+              resampling=Resampling.mode)
+    im = Image.fromarray(o, "P")
+    pal = [0, 0, 0] + sum((list(COLORS[k]) for k in range(1, 5)), [])
+    im.putpalette(pal + [0] * (768 - len(pal)))
+    im.save(SORT / f"{png}.png", optimize=True, transparency=bytes([0, 200, 200, 200, 200]))
+    from rasterio.warp import transform_bounds
+    lo0, la0, lo1, la1 = transform_bounds("EPSG:3857", 4326, t3.c, t3.f + h3 * t3.e, t3.c + w3 * t3.a, t3.f)
+    rp = SORT / "resum.json"
+    resum = json.loads(rp.read_text()) if rp.exists() else {"conques": {}, "colors": {"ABCD"[k - 1]: list(COLORS[k]) for k in range(1, 5)}}
+    resum.setdefault("variants", {})[clau] = {"png": f"{png}.png", "limits": [[la0, lo0], [la1, lo1]], "font": font}
+    t = Transformer.from_crs(4326, CRS, always_xy=True).transform
+    for f in json.loads(CONQUES.read_text())["features"]:
+        m = rasterize([(stransform(t, shape(f["geometry"])), 1)], out_shape=forma, transform=tr, fill=0,
+                      dtype="uint8").astype(bool)
+        v = g[m & (g > 0)]
+        resum["conques"].setdefault("c%03d" % f["properties"]["id"], {})[clau] = \
+            [round(float((v == k).mean() * 100), 1) for k in range(1, 5)] if v.size else None
+    rp.write_text(json.dumps(resum, ensure_ascii=False, separators=(",", ":")))
 
 
 def prova():
@@ -250,9 +368,9 @@ def prova():
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("ordre", choices=["construeix", "prova"])
+    ap.add_argument("ordre", choices=["construeix", "litologia", "prova"])
     a = ap.parse_args()
-    {"construeix": construeix, "prova": prova}[a.ordre]()
+    {"construeix": construeix, "litologia": litologia, "prova": prova}[a.ordre]()
 
 
 if __name__ == "__main__":
