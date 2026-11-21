@@ -143,7 +143,10 @@ def _any(p, nom=""):
         if m:
             return int(m.group(1))
     m = re.search(r"(19[6-9]\d|20[0-4]\d)", nom)
-    return int(m.group(1)) if m else None
+    if m:
+        return int(m.group(1))
+    m = re.search(r"incendis(\d\d)\b", nom, re.I)                     # incendis10.zip → 2010
+    return (1900 + int(m.group(1)) if int(m.group(1)) > 60 else 2000 + int(m.group(1))) if m else None
 
 
 def _shp_zip(contingut, fts, font, nom):
@@ -171,7 +174,9 @@ def _shp_zip(contingut, fts, font, nom):
             if not a or sr.shape.shapeType not in (5, 15, 25):
                 continue
             g = stransform(lambda x, y, *_: a_ll(x, y), shape(sr.shape.__geo_interface__))  # noqa
-            if g.is_valid and g.intersects(caixa):
+            if not g.is_valid:
+                g = g.buffer(0)
+            if not g.is_empty and g.intersects(caixa):
                 fts.append({"type": "Feature", "geometry": mapping(g.simplify(0.0002)), "properties": {"any": a, "font": font}})
     return len(fts) - n0
 
