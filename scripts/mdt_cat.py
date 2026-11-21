@@ -18,7 +18,7 @@ petites de costa, perquè no quedin forats). Per a cada conca:
    (amb edificis a data/catalunya/relleu_edificis/; amb --sense-edificis, terreny sol a data/catalunya/relleu/)
      data/catalunya/relleu/cNNN/rieretes.json     trams amb coordenades enteres (1e-5 °) i en diferències
      data/catalunya/relleu/cNNN/zones_baixes.png  PNG de paleta (5 colors), en lat/lon
-     data/catalunya/relleu/cNNN/soterranis.png    edificis amb plantes sota rasant (taronja; vermell si toquen zona baixa)
+     data/catalunya/relleu/cNNN/soterranis.json   polígons dels edificis amb plantes sota rasant (taronja; vermell si toquen zona baixa)
      data/catalunya/relleu/cNNN/resum.json        límits del PNG, classes, km² de cada classe, trams
 
 Ús:  python3 scripts/mdt_cat.py lots --lots 30 [--conques 1,2,3 | totes | pendents]       → matriu JSON per al workflow
@@ -34,7 +34,7 @@ from rasterio.warp import reproject, Resampling, transform_bounds
 from rasterio.transform import from_origin
 from rasterio import features
 from pyproj import Transformer
-from shapely.geometry import shape, mapping, LineString, Point
+from shapely.geometry import shape, mapping, LineString, Point, Polygon
 from shapely.ops import transform as stransform
 from shapely.prepared import prep
 
@@ -153,7 +153,7 @@ def edificis(tr, forma, crs):
     """Alçada dels edificis del Cadastre (plantes sobre rasant × 3 m) a la reixa del càlcul. Torna (alçada, nombre de parts)."""
     import gzip
     if not CAD_IDX.exists():
-        print("Sense índex del Cadastre: rieretes sense edificis"); return None, 0
+        print("Sense índex del Cadastre: rieretes sense edificis"); return None, 0, None, []
     assert str(crs).endswith("25831")
     x0, y1 = tr.c, tr.f
     x1, y0 = x0 + forma[1] * tr.a, y1 + forma[0] * tr.e
@@ -184,16 +184,16 @@ def edificis(tr, forma, crs):
             if sota >= 1:
                 sotans.append((g, min(sota, 9)))
     if not formes:
-        return None, 0, None
+        return None, 0, None, []
     formes.sort(key=lambda f: f[1])                  # les més altes per sobre
     h = features.rasterize(formes, out_shape=forma, transform=tr, fill=0, dtype="float32")
     sot = features.rasterize(sotans, out_shape=forma, transform=tr, fill=0, dtype="uint8", all_touched=False) if sotans else None
-    return h, len(formes), sot
+    return h, len(formes), sot, sotans
 
 
-def codifica(coords):
-    """[[lon,lat],...] → [x0,y0,dx1,dy1,...] enters a 1e-5 °."""
-    q = np.round(np.asarray(coords) * 1e5).astype(np.int64)
+def codifica(coords, escala=1e5):
+    """[[lon,lat],...] → [x0,y0,dx1,dy1,...] enters a 1/escala °."""
+    q = np.round(np.asarray(coords) * escala).astype(np.int64)
     d = np.vstack([q[:1], np.diff(q, axis=0)])
     d = d[(d != 0).any(axis=1) | (np.arange(len(d)) == 0)]
     return d.ravel().tolist()
@@ -207,7 +207,7 @@ def relleu(cami_mdt, geom, nom, pas, llindar, amb_edificis=True):
     del z5
     mar = np.isnan(z) | (z <= 0.2)
     # edificis del Cadastre com a obstacles: l'aigua (i les rieretes) els ha de voltar
-    h_ed, n_ed, sot = edificis(tr, z.shape, crs) if amb_edificis else (None, 0, None)
+    h_ed, n_ed, sot, sot_geoms = edificis(tr, z.shape, crs) if amb_edificis else (None, 0, None, [])
     edif = np.zeros(z.shape, bool) if h_ed is None else (h_ed > 0) & ~mar
     if h_ed is not None:
         z = np.where(edif, z + h_ed, z)
@@ -308,12 +308,20 @@ def relleu(cami_mdt, geom, nom, pas, llindar, amb_edificis=True):
         cs[(sot > 0) & dins_c] = 1
         cs[(cs == 1) & mullat] = 2
         ksot = {"km2": round(float((cs > 0).sum() * cel_km2), 3), "km2_tocant_zona_baixa": round(float((cs == 2).sum() * cel_km2), 3)}
-        cl2 = np.zeros((nfil, ncol), dtype=np.uint8)
-        reproject(cs, cl2, src_transform=tr, src_crs=crs, dst_transform=dtr_png,
-                  dst_crs="EPSG:3857", resampling=Resampling.nearest)
-        im2 = Image.fromarray(cl2, "P")
-        im2.putpalette([0, 0, 0, 253, 174, 97, 215, 25, 28] + [0, 0, 0] * 253)
-        im2.save(d / "soterranis.png", optimize=True, transparency=bytes([0, 210, 235]))
+        # en vectors (polígons del Cadastre en lat/lon), no en ràster: així encaixen exactament amb els edificis
+        # del mapa; classe 2 si alguna cel·la de l'edifici (o la que el toca) és a ≤ 10 m d'una zona baixa
+        ids = features.rasterize([(g, i + 1) for i, (g, _) in enumerate(sot_geoms)], out_shape=z.shape, transform=tr,
+                                 fill=0, dtype="int32", all_touched=True)
+        moll = set(np.unique(ids[mullat & (ids > 0)]).tolist())
+        ed = []
+        for i, (g, sota) in enumerate(sot_geoms):
+            pol = Polygon(g["coordinates"][0], g["coordinates"][1:])
+            if not dins.contains(pol.representative_point()):
+                continue
+            anells = [codifica([a4326.transform(x, y) for x, y in an], 1e6) for an in g["coordinates"]]
+            ed.append([2 if (i + 1) in moll else 1, int(sota)] + anells)
+        (d / "soterranis.json").write_text(json.dumps({"escala": 1e6, "camps": ["classe", "plantes_sota", "anell [x0,y0,dx,dy,...]", "..."],
+                                                       "edificis": ed}, separators=(",", ":")))
     (d / "rieretes.json").write_text(json.dumps({"escala": 1e5, "camps": ["ordre", "area_km2*100", "x0", "y0", "dx", "dy", "..."],
                                                  "trams": trams}, separators=(",", ":")))
     resum = {"conca": nom, "limits": limits, "pas_m": pas,
