@@ -358,7 +358,16 @@ def conca(cid, cami_mdt, cami_cob, vies_gz, cami_inc, any_ref):
 
 # ---------- classes per terços de tot Catalunya ----------
 def classe(v, t1, t2):
+    if v is None or not np.isfinite(v):                                  # sense dades (vora de l'MDT): Baix
+        return "B"
     return "B" if v <= t1 else ("M" if v <= t2 else "A")
+
+
+def _net(p):
+    """NaN → null (JSON vàlid per al navegador)."""
+    for k, v in p.items():
+        if isinstance(v, float) and not np.isfinite(v):
+            p[k] = None
 
 
 def index():
@@ -367,9 +376,14 @@ def index():
     obres = [f["properties"] for d in tots for f in d["features"] if f["properties"]["tipus"] != "gual"]
     if not obres:
         print("Cap obra"); return
-    factors = {"disponibilitat": lambda p: p["disponibilitat"], "mobilitat": lambda p: p["pendent_franja"],
-               "transportabilitat": lambda p: p["pendent_riera"] * np.sqrt(p["conca_km2"])}
-    talls = {k: [float(np.quantile([fn(p) for p in obres], q)) for q in (1 / 3, 2 / 3)] for k, fn in factors.items()}
+    for d in tots:
+        for ft in d["features"]:
+            _net(ft["properties"])
+    nan = float("nan")
+    factors = {"disponibilitat": lambda p: nan if p["disponibilitat"] is None else p["disponibilitat"],
+               "mobilitat": lambda p: nan if p["pendent_franja"] is None else p["pendent_franja"],
+               "transportabilitat": lambda p: nan if p["pendent_riera"] is None else p["pendent_riera"] * np.sqrt(p["conca_km2"])}
+    talls = {k: [float(np.nanquantile([fn(p) for p in obres], q)) for q in (1 / 3, 2 / 3)] for k, fn in factors.items()}
     idx, tot = {}, {"A": 0, "M": 0, "B": 0}
     for f, d in zip(fitxers, tots):
         for ft in d["features"]:
