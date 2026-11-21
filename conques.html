@@ -160,7 +160,14 @@ const gR=L.layerGroup().addTo(mapa), gZ=L.layerGroup().addTo(mapa), gS=L.layerGr
 F.ctl.addOverlay(gZ,"Zones baixes i depressions (conca triada)");
 F.ctl.addOverlay(gR,"Rieretes > 0,05 km² (conca triada)");
 F.ctl.addOverlay(gS,"Edificis amb soterrani (conca triada)");
-kSot.onchange=()=>{kSot.checked?gS.addTo(mapa):mapa.removeLayer(gS);relleu()};
+// contorns oficials dels edificis del Cadastre (WMS INSPIRE): els soterranis surten de la mateixa font i hi encaixen
+// exactament; el mapa topogràfic de l'ICGC dibuixa els edificis pel seu compte i pot diferir 1-3 m
+{const pc=mapa.createPane("cadastre");pc.style.zIndex=455;pc.style.pointerEvents="none"}
+const cadWms=L.tileLayer.wms("https://ovc.catastro.meh.es/cartografia/INSPIRE/spadgcwms.aspx",
+  {layers:"BU.Building",format:"image/png",transparent:true,version:"1.3.0",minZoom:16,maxZoom:20,pane:"cadastre",attribution:"© Dirección General del Catastro"});
+F.ctl.addOverlay(cadWms,"Contorns dels edificis del Cadastre (zoom ≥ 16)");
+kSot.onchange=()=>{kSot.checked?(gS.addTo(mapa),cadWms.addTo(mapa)):(mapa.removeLayer(gS),mapa.removeLayer(cadWms));relleu()};
+if(kSot.checked) cadWms.addTo(mapa);
 kRier.onchange=()=>{kRier.checked?gR.addTo(mapa):mapa.removeLayer(gR);relleu()};
 kZb.onchange=()=>{kZb.checked?gZ.addTo(mapa):mapa.removeLayer(gZ);relleu()};
 mapa.on("overlayadd overlayremove",e=>{if(e.layer===gR||e.layer===gZ||e.layer===gS){kRier.checked=mapa.hasLayer(gR);kZb.checked=mapa.hasLayer(gZ);kSot.checked=mapa.hasLayer(gS);relleu()}});
