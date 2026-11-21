@@ -1,0 +1,47 @@
+name: Grups hidrològics de sòl de Catalunya
+
+# Mapa de grups hidrològics de sòl A-D (USDA-NRCS NEH-630) de tot Catalunya a 250 m, de SoilGrids 2.0 (ISRIC):
+# GeoTIFF a la Release `sols-cat` (per a simula_2d.py --grup-sol mapa|mapa-sup) i capa web data/catalunya/sols/.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/project-thread-eof0ed]
+    paths: [.github/workflows/sols_cat.yml, scripts/sols.py]
+
+permissions:
+  contents: write
+
+env:
+  ETIQUETA: sols-cat
+
+jobs:
+  sols:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q requests numpy rasterio pyproj shapely pillow scipy
+      - name: Prova d'accés
+        run: python3 scripts/sols.py prova
+      - name: Construeix
+        run: python3 scripts/sols.py construeix
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$ETIQUETA" -R "${{ github.repository }}" >/dev/null 2>&1 || \
+          gh release create "$ETIQUETA" -R "${{ github.repository }}" --target main --title "Grups hidrològics de sòl de Catalunya" \
+            --notes "Grups hidrològics de sòl A-D (USDA-NRCS, National Engineering Handbook part 630 cap. 7) a 250 m, EPSG:25831, de la textura de SoilGrids 2.0 (ISRIC, CC BY 4.0) i la fondària a la roca de SoilGrids 2017. grups_sol_cat.tif: banda 1 «mapa» (capa menys permeable 0-60 cm, D amb roca < 50 cm), banda 2 «mapa-sup» (textura 0-30 cm); 1=A 2=B 3=C 4=D 0=sense dades. textura_sol_cat.tif: argila i sorra 0-30 cm (%) i fondària a la roca (cm). Fet amb scripts/sols.py."
+          gh release upload "$ETIQUETA" /tmp/sols/grups_sol_cat.tif /tmp/sols/textura_sol_cat.tif -R "${{ github.repository }}" --clobber
+      - name: Desa la capa web
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalunya/sols
+          git diff --cached --quiet && exit 0
+          git commit -m "Grups hidrològics de sòl de Catalunya (SoilGrids) [skip ci]"
+          for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1

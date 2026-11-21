@@ -108,8 +108,16 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
       </div>
       <label><input type="checkbox" id="kCob"> Cobertes del sòl (ICGC 2024)</label>
       <div class="ll" id="llCob" hidden></div>
+      <label><input type="checkbox" id="kSol"> Grups hidrològics de sòl (SoilGrids)</label>
+      <div class="ll" id="llSol" hidden>
+        <span><i class="sw" style="background:rgb(255,237,160)"></i>A: sorrenc, infiltra molt</span>
+        <span><i class="sw" style="background:rgb(161,217,155)"></i>B: textura mitjana</span>
+        <span><i class="sw" style="background:rgb(65,171,93)"></i>C: llimós o argilós</span>
+        <span><i class="sw" style="background:rgb(0,90,50)"></i>D: argilós o roca a menys de 50 cm</span>
+      </div>
       <p class="hint" id="relInfo" style="margin:0"></p>
       <p class="hint" id="cobInfo" style="margin:0"></p>
+      <p class="hint" id="solInfo" style="margin:0"></p>
     </fieldset>
     <label class="op">Opacitat de les conques <input type="range" id="op" min="0" max="100" value="35"></label>
     <p class="hint" style="margin:0">Mapa de fons i noms de llocs: selector a dalt a la dreta del mapa (també «Sense mapa»).</p>
@@ -149,7 +157,7 @@ function dibuixa(){
   capaR.bringToFront();
   pinta();
 }
-function tria(id){sel=id;pinta();relleu();if(typeof cobertes==="function")cobertes()}
+function tria(id){sel=id;pinta();relleu();if(typeof cobertes==="function")cobertes();if(typeof sols==="function")sols()}
 // Capes de relleu calculades al servidor (scripts/mdt_cat.py), una carpeta per conca del tall de 100 km²
 let relIdx=null, capaRier=null, capaZb=null, capaSot=null, relConca=null;
 const kSot=document.getElementById("kSot");
@@ -254,6 +262,22 @@ function cobertes(){
   cobInfo.textContent=`Cobertes: ${top}. n de Manning mitjana ${r.n_manning_mitja}, número de corba mitjà ${r.cn_mitja}. Font: ${cobIdx.font}.`;
   if(!capaCob){capaCob=L.imageOverlay(`data/catalunya/cobertes/${nom}/cobertes.png`,r.limits,{opacity:.75,interactive:false,pane:"relleu"}).addTo(gC)}
 }
+// Grups hidrològics de sòl (scripts/sols.py): un sol PNG per a tot Catalunya; a la simulació 2D és opcional (--grup-sol mapa)
+const kSol=document.getElementById("kSol"), solInfo=document.getElementById("solInfo"), gS=L.layerGroup();
+F.ctl.addOverlay(gS,"Grups hidrològics de sòl");
+let solRes=null, capaSol=null;
+d3.json("data/catalunya/sols/resum.json").then(j=>{solRes=j;sols()}).catch(()=>{});
+kSol.onchange=()=>{kSol.checked?gS.addTo(mapa):mapa.removeLayer(gS);sols()};
+mapa.on("overlayadd overlayremove",e=>{if(e.layer===gS){kSol.checked=mapa.hasLayer(gS);sols()}});
+function sols(){
+  document.getElementById("llSol").hidden=!kSol.checked;
+  if(!kSol.checked){solInfo.textContent="";return}
+  if(!solRes){solInfo.textContent="El mapa de grups de sòl encara no està calculat.";return}
+  if(!capaSol){capaSol=L.imageOverlay("data/catalunya/sols/grups.png",solRes.limits,{opacity:.7,interactive:false,pane:"relleu"}).addTo(gS)}
+  const id=conca100(), r=id==null?null:solRes.conques["c"+String(id).padStart(3,"0")];
+  const t=v=>v?"ABCD".split("").map((g,k)=>`${g} ${Math.round(v[k])} %`).join(", "):"sense dades";
+  solInfo.textContent=(r?`Conca ${id}: ${t(r.mapa)} (amb la textura només dels primers 30 cm: ${t(r["mapa-sup"])}). `:"")+`Font: ${solRes.font}.`;
+}
 let av=new Set(), am=new Set(), cami=[];
 function estil(f){
   const i=f.properties.id, o=op.value/100, buit=F.senseMapa();
@@ -300,7 +324,7 @@ function pinta(){
    <div><div class="lbl">Camí de l'aigua</div><div class="cami">${[p.id,...cami].join(" → ")} → ${cami.length||p.avall==null?"mar o límit":""}</div></div>
    <p class="hint">Si el camí acaba lluny de la costa, és que el riu surt de Catalunya o la conca toca el límit del mapa.</p>`;
 }
-function canvia(m){mida=m;sel=null;relleu();cobertes();
+function canvia(m){mida=m;sel=null;relleu();cobertes();sols();
   d3.select("#b25").attr("aria-pressed",m==="25");d3.select("#b100").attr("aria-pressed",m==="100");dibuixa()}
 d3.select("#b25").on("click",()=>canvia("25"));d3.select("#b100").on("click",()=>canvia("100"));
 Promise.all([d3.json("data/catalunya/conques/web/conques_25.json"),d3.json("data/catalunya/conques/web/conques_100.json"),d3.json("data/catalunya/conques/web/rius.json")]).then(([a,b,r])=>{
