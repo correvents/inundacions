@@ -1,0 +1,27 @@
+name: Cobertes del sòl - llegenda
+
+# Colors del WMS de cobertes de l'ICGC → codi i nom de coberta (config/cobertes_llegenda.json). Només cal tornar-lo a
+# llançar si l'ICGC canvia els colors o es passa a una altra edició del mapa.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  llegenda:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip -q install numpy pillow requests scipy
+      - run: python3 scripts/cobertes.py llegenda
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/cobertes_llegenda.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Llegenda de les cobertes del sòl (WMS ICGC)"
+          for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1

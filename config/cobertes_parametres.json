@@ -1,0 +1,688 @@
+{
+ "descripcio": "Paràmetres hidrològics per coberta del Mapa de cobertes del sòl de Catalunya (ICGC, 41 classes). Res ajustat a mà: cada valor surt d'una fila de taula publicada, indicada a cada classe.",
+ "font_cobertes": "Mapa de cobertes del sòl de Catalunya 2024, ICGC (CC BY 4.0)",
+ "font_n": "Chow, V.T. (1959) Open-channel hydraulics, taula 5-6, valors normals (reproduïda al manual de HEC-RAS); per a les zones urbanes, el carrer: els edificis ja hi són com a obstacles (porositat).",
+ "font_cn": "USDA-NRCS (1986) Urban hydrology for small watersheds, TR-55, taules 2-2a, 2-2b i 2-2c (A, B, C, D).",
+ "us_cn": "simula_2d.py: l'absorció inicial i la infiltració del terreny natural, calibrades a l'aforador com a mitjana de la conca, es reparteixen per cel·la en proporció a la retenció S = 25400/CN - 254 (mm). Urbà: clavegueram; aigua: sense pèrdues.",
+ "grup_hidrologic_sol": "B",
+ "grup_hidrologic_nota": "Provisional: grup B (sòls de textura mitjana) a tot arreu fins que hi hagi mapa de grups hidrològics de sòl. Només canvia el repartiment relatiu entre cobertes, no la mitjana calibrada.",
+ "sense_dades": 14,
+ "grups": {
+  "conreu": {
+   "nom": "Conreus herbacis",
+   "color": [
+    245,
+    215,
+    80
+   ],
+   "n": "0,030–0,040",
+   "cn": "75–86"
+  },
+  "llenyos": {
+   "nom": "Vinyes, oliverars i fruiters",
+   "color": [
+    190,
+    140,
+    60
+   ],
+   "n": "0,035–0,040",
+   "cn": "65–78"
+  },
+  "bosc_dens": {
+   "nom": "Bosc dens",
+   "color": [
+    30,
+    110,
+    40
+   ],
+   "n": "0,100–0,150",
+   "cn": "55"
+  },
+  "bosc_clar": {
+   "nom": "Bosc clar i zones cremades",
+   "color": [
+    110,
+    170,
+    80
+   ],
+   "n": "0,040–0,060",
+   "cn": "60–66"
+  },
+  "matollar": {
+   "nom": "Matollar",
+   "color": [
+    160,
+    190,
+    90
+   ],
+   "n": "0,100",
+   "cn": "48"
+  },
+  "prat": {
+   "nom": "Prats i zones verdes",
+   "color": [
+    200,
+    230,
+    140
+   ],
+   "n": "0,030–0,035",
+   "cn": "61"
+  },
+  "nu": {
+   "nom": "Sòl nu, roca i platja",
+   "color": [
+    200,
+    185,
+    165
+   ],
+   "n": "0,022–0,040",
+   "cn": "86"
+  },
+  "urba_dens": {
+   "nom": "Urbà dens, indústria i vials",
+   "color": [
+    200,
+    40,
+    40
+   ],
+   "n": "0,016",
+   "cn": "88–98"
+  },
+  "urba_dispers": {
+   "nom": "Urbà dispers",
+   "color": [
+    245,
+    140,
+    140
+   ],
+   "n": "0,016–0,035",
+   "cn": "69–85"
+  },
+  "aigua": {
+   "nom": "Aigua i zones humides",
+   "color": [
+    60,
+    130,
+    220
+   ],
+   "n": "0,030–0,050",
+   "cn": "98"
+  }
+ },
+ "classes": {
+  "1": {
+   "nom": "Conreus herbacis",
+   "grup": "conreu",
+   "tipus": "natural",
+   "n": 0.04,
+   "n_font": "Flood plains, cultivated areas, mature field crops",
+   "cn": [
+    63,
+    75,
+    83,
+    87
+   ],
+   "cn_font": "2-2b Small grain, straight row, good"
+  },
+  "2": {
+   "nom": "Horta, vivers i conreus forçats",
+   "grup": "conreu",
+   "tipus": "natural",
+   "n": 0.035,
+   "n_font": "Flood plains, cultivated areas, mature row crops",
+   "cn": [
+    67,
+    78,
+    85,
+    89
+   ],
+   "cn_font": "2-2b Row crops, straight row, good"
+  },
+  "3": {
+   "nom": "Vinyes",
+   "grup": "llenyos",
+   "tipus": "natural",
+   "n": 0.035,
+   "n_font": "Flood plains, cultivated areas, mature row crops",
+   "cn": [
+    67,
+    78,
+    85,
+    89
+   ],
+   "cn_font": "2-2b Row crops, straight row, good"
+  },
+  "4": {
+   "nom": "Oliverars",
+   "grup": "llenyos",
+   "tipus": "natural",
+   "n": 0.04,
+   "n_font": "Flood plains, trees, cleared land with tree stumps, no sprouts",
+   "cn": [
+    43,
+    65,
+    76,
+    82
+   ],
+   "cn_font": "2-2c Woods-grass combination (orchard), fair"
+  },
+  "5": {
+   "nom": "Altres conreus llenyosos",
+   "grup": "llenyos",
+   "tipus": "natural",
+   "n": 0.04,
+   "n_font": "Flood plains, trees, cleared land with tree stumps, no sprouts",
+   "cn": [
+    43,
+    65,
+    76,
+    82
+   ],
+   "cn_font": "2-2c Woods-grass combination (orchard), fair"
+  },
+  "6": {
+   "nom": "Conreus en transformació",
+   "grup": "conreu",
+   "tipus": "natural",
+   "n": 0.03,
+   "n_font": "Flood plains, cultivated areas, no crop",
+   "cn": [
+    77,
+    86,
+    91,
+    94
+   ],
+   "cn_font": "2-2b Fallow, bare soil"
+  },
+  "7": {
+   "nom": "Boscos densos d'aciculifolis",
+   "grup": "bosc_dens",
+   "tipus": "natural",
+   "n": 0.1,
+   "n_font": "Flood plains, trees, heavy stand of timber, flood stage below branches",
+   "cn": [
+    30,
+    55,
+    70,
+    77
+   ],
+   "cn_font": "2-2c Woods, good"
+  },
+  "8": {
+   "nom": "Boscos densos de caducifolis",
+   "grup": "bosc_dens",
+   "tipus": "natural",
+   "n": 0.1,
+   "n_font": "Flood plains, trees, heavy stand of timber, flood stage below branches",
+   "cn": [
+    30,
+    55,
+    70,
+    77
+   ],
+   "cn_font": "2-2c Woods, good"
+  },
+  "9": {
+   "nom": "Boscos densos d'esclerofil·les i laurifolis",
+   "grup": "bosc_dens",
+   "tipus": "natural",
+   "n": 0.1,
+   "n_font": "Flood plains, trees, heavy stand of timber, flood stage below branches",
+   "cn": [
+    30,
+    55,
+    70,
+    77
+   ],
+   "cn_font": "2-2c Woods, good"
+  },
+  "10": {
+   "nom": "Matollar",
+   "grup": "matollar",
+   "tipus": "natural",
+   "n": 0.1,
+   "n_font": "Flood plains, brush, medium to dense brush, summer",
+   "cn": [
+    30,
+    48,
+    65,
+    73
+   ],
+   "cn_font": "2-2c Brush, good"
+  },
+  "11": {
+   "nom": "Boscos clars d'aciculifolis",
+   "grup": "bosc_clar",
+   "tipus": "natural",
+   "n": 0.06,
+   "n_font": "Flood plains, brush, light brush and trees, summer",
+   "cn": [
+    36,
+    60,
+    73,
+    79
+   ],
+   "cn_font": "2-2c Woods, fair"
+  },
+  "12": {
+   "nom": "Boscos clars de caducifolis",
+   "grup": "bosc_clar",
+   "tipus": "natural",
+   "n": 0.06,
+   "n_font": "Flood plains, brush, light brush and trees, summer",
+   "cn": [
+    36,
+    60,
+    73,
+    79
+   ],
+   "cn_font": "2-2c Woods, fair"
+  },
+  "13": {
+   "nom": "Boscos clars d'esclerofil·les i laurifolis",
+   "grup": "bosc_clar",
+   "tipus": "natural",
+   "n": 0.06,
+   "n_font": "Flood plains, brush, light brush and trees, summer",
+   "cn": [
+    36,
+    60,
+    73,
+    79
+   ],
+   "cn_font": "2-2c Woods, fair"
+  },
+  "14": {
+   "nom": "Prats i herbassars",
+   "grup": "prat",
+   "tipus": "natural",
+   "n": 0.035,
+   "n_font": "Flood plains, pasture no brush, high grass",
+   "cn": [
+    39,
+    61,
+    74,
+    80
+   ],
+   "cn_font": "2-2c Pasture, grassland or range, good"
+  },
+  "15": {
+   "nom": "Bosc de ribera",
+   "grup": "bosc_dens",
+   "tipus": "natural",
+   "n": 0.15,
+   "n_font": "Flood plains, trees, dense willows, summer",
+   "cn": [
+    30,
+    55,
+    70,
+    77
+   ],
+   "cn_font": "2-2c Woods, good"
+  },
+  "16": {
+   "nom": "Sòl nu forestal",
+   "grup": "nu",
+   "tipus": "natural",
+   "n": 0.025,
+   "n_font": "Excavated, earth winding and sluggish, no vegetation",
+   "cn": [
+    77,
+    86,
+    91,
+    94
+   ],
+   "cn_font": "2-2a Newly graded areas"
+  },
+  "17": {
+   "nom": "Zones cremades",
+   "grup": "bosc_clar",
+   "tipus": "natural",
+   "n": 0.04,
+   "n_font": "Flood plains, trees, cleared land with tree stumps, no sprouts",
+   "cn": [
+    45,
+    66,
+    77,
+    83
+   ],
+   "cn_font": "2-2c Woods, poor"
+  },
+  "18": {
+   "nom": "Roquissars i congestes",
+   "grup": "nu",
+   "tipus": "natural",
+   "n": 0.04,
+   "n_font": "Excavated, rock cuts, jagged and irregular",
+   "cn": [
+    77,
+    86,
+    91,
+    94
+   ],
+   "cn_font": "2-2a Newly graded areas"
+  },
+  "19": {
+   "nom": "Platges",
+   "grup": "nu",
+   "tipus": "natural",
+   "n": 0.025,
+   "n_font": "Excavated, earth straight and uniform, gravel uniform section clean",
+   "cn": [
+    77,
+    86,
+    91,
+    94
+   ],
+   "cn_font": "2-2a Newly graded areas"
+  },
+  "20": {
+   "nom": "Zones humides",
+   "grup": "aigua",
+   "tipus": "aigua",
+   "n": 0.05,
+   "n_font": "Flood plains, brush, scattered brush, heavy weeds",
+   "cn": [
+    98,
+    98,
+    98,
+    98
+   ],
+   "cn_font": "saturat: sense infiltració"
+  },
+  "21": {
+   "nom": "Casc urbà",
+   "grup": "urba_dens",
+   "tipus": "urba",
+   "n": 0.016,
+   "n_font": "Lined, asphalt, rough",
+   "cn": [
+    89,
+    92,
+    94,
+    95
+   ],
+   "cn_font": "2-2a Commercial and business"
+  },
+  "22": {
+   "nom": "Eixample",
+   "grup": "urba_dens",
+   "tipus": "urba",
+   "n": 0.016,
+   "n_font": "Lined, asphalt, rough",
+   "cn": [
+    89,
+    92,
+    94,
+    95
+   ],
+   "cn_font": "2-2a Commercial and business"
+  },
+  "23": {
+   "nom": "Zones urbanes laxes",
+   "grup": "urba_dispers",
+   "tipus": "urba",
+   "n": 0.016,
+   "n_font": "Lined, asphalt, rough",
+   "cn": [
+    61,
+    75,
+    83,
+    87
+   ],
+   "cn_font": "2-2a Residential, 1/4 acre"
+  },
+  "24": {
+   "nom": "Edificacions aïllades en l'espai rural",
+   "grup": "urba_dispers",
+   "tipus": "natural",
+   "n": 0.035,
+   "n_font": "Flood plains, pasture no brush, high grass",
+   "cn": [
+    59,
+    74,
+    82,
+    86
+   ],
+   "cn_font": "2-2c Farmsteads"
+  },
+  "25": {
+   "nom": "Àrees residencials aïllades",
+   "grup": "urba_dispers",
+   "tipus": "urba",
+   "n": 0.016,
+   "n_font": "Lined, asphalt, rough",
+   "cn": [
+    54,
+    70,
+    80,
+    85
+   ],
+   "cn_font": "2-2a Residential, 1/2 acre"
+  },
+  "26": {
+   "nom": "Zones verdes",
+   "grup": "prat",
+   "tipus": "natural",
+   "n": 0.03,
+   "n_font": "Flood plains, pasture no brush, short grass",
+   "cn": [
+    39,
+    61,
+    74,
+    80
+   ],
+   "cn_font": "2-2a Open space, good condition"
+  },
+  "27": {
+   "nom": "Zones industrials, comercials i/o de serveis",
+   "grup": "urba_dens",
+   "tipus": "urba",
+   "n": 0.016,
+   "n_font": "Lined, asphalt, rough",
+   "cn": [
+    81,
+    88,
+    91,
+    93
+   ],
+   "cn_font": "2-2a Industrial"
+  },
+  "28": {
+   "nom": "Zones esportives i de lleure",
+   "grup": "urba_dispers",
+   "tipus": "natural",
+   "n": 0.03,
+   "n_font": "Flood plains, pasture no brush, short grass",
+   "cn": [
+    49,
+    69,
+    79,
+    84
+   ],
+   "cn_font": "2-2a Open space, fair condition"
+  },
+  "29": {
+   "nom": "Zones d'extracció minera i/o abocadors",
+   "grup": "nu",
+   "tipus": "natural",
+   "n": 0.025,
+   "n_font": "Excavated, earth winding and sluggish, no vegetation",
+   "cn": [
+    77,
+    86,
+    91,
+    94
+   ],
+   "cn_font": "2-2a Newly graded areas"
+  },
+  "30": {
+   "nom": "Zones en transformació",
+   "grup": "nu",
+   "tipus": "natural",
+   "n": 0.022,
+   "n_font": "Excavated, earth straight and uniform, clean after weathering",
+   "cn": [
+    77,
+    86,
+    91,
+    94
+   ],
+   "cn_font": "2-2a Newly graded areas"
+  },
+  "31": {
+   "nom": "Xarxa viària",
+   "grup": "urba_dens",
+   "tipus": "urba",
+   "n": 0.016,
+   "n_font": "Lined, asphalt, rough",
+   "cn": [
+    98,
+    98,
+    98,
+    98
+   ],
+   "cn_font": "2-2a Paved streets, curbs and storm sewers"
+  },
+  "32": {
+   "nom": "Sòl nu urbà",
+   "grup": "nu",
+   "tipus": "natural",
+   "n": 0.022,
+   "n_font": "Excavated, earth straight and uniform, clean after weathering",
+   "cn": [
+    77,
+    86,
+    91,
+    94
+   ],
+   "cn_font": "2-2a Newly graded areas"
+  },
+  "33": {
+   "nom": "Zones aeroportuàries",
+   "grup": "urba_dens",
+   "tipus": "urba",
+   "n": 0.016,
+   "n_font": "Lined, asphalt, rough",
+   "cn": [
+    81,
+    88,
+    91,
+    93
+   ],
+   "cn_font": "2-2a Industrial"
+  },
+  "34": {
+   "nom": "Xarxa ferroviària",
+   "grup": "urba_dispers",
+   "tipus": "natural",
+   "n": 0.025,
+   "n_font": "Excavated, earth straight and uniform, gravel uniform section clean",
+   "cn": [
+    76,
+    85,
+    89,
+    91
+   ],
+   "cn_font": "2-2a Gravel roads"
+  },
+  "35": {
+   "nom": "Zones portuàries",
+   "grup": "urba_dens",
+   "tipus": "urba",
+   "n": 0.016,
+   "n_font": "Lined, asphalt, rough",
+   "cn": [
+    98,
+    98,
+    98,
+    98
+   ],
+   "cn_font": "2-2a Paved parking lots, roofs, driveways"
+  },
+  "36": {
+   "nom": "Embassaments",
+   "grup": "aigua",
+   "tipus": "aigua",
+   "n": 0.03,
+   "n_font": "Excavated, earth winding and sluggish, earth bottom and rubble side",
+   "cn": [
+    98,
+    98,
+    98,
+    98
+   ],
+   "cn_font": "aigua: sense infiltració"
+  },
+  "37": {
+   "nom": "Llacs i llacunes",
+   "grup": "aigua",
+   "tipus": "aigua",
+   "n": 0.03,
+   "n_font": "Excavated, earth winding and sluggish, earth bottom and rubble side",
+   "cn": [
+    98,
+    98,
+    98,
+    98
+   ],
+   "cn_font": "aigua: sense infiltració"
+  },
+  "38": {
+   "nom": "Cursos d'aigua",
+   "grup": "aigua",
+   "tipus": "aigua",
+   "n": 0.03,
+   "n_font": "Excavated, earth winding and sluggish, earth bottom and rubble side",
+   "cn": [
+    98,
+    98,
+    98,
+    98
+   ],
+   "cn_font": "aigua: sense infiltració"
+  },
+  "39": {
+   "nom": "Basses",
+   "grup": "aigua",
+   "tipus": "aigua",
+   "n": 0.03,
+   "n_font": "Excavated, earth winding and sluggish, earth bottom and rubble side",
+   "cn": [
+    98,
+    98,
+    98,
+    98
+   ],
+   "cn_font": "aigua: sense infiltració"
+  },
+  "40": {
+   "nom": "Canals artificials",
+   "grup": "aigua",
+   "tipus": "aigua",
+   "n": 0.03,
+   "n_font": "Excavated, earth winding and sluggish, earth bottom and rubble side",
+   "cn": [
+    98,
+    98,
+    98,
+    98
+   ],
+   "cn_font": "aigua: sense infiltració"
+  },
+  "41": {
+   "nom": "Mar",
+   "grup": "aigua",
+   "tipus": "aigua",
+   "n": 0.03,
+   "n_font": "Excavated, earth winding and sluggish, earth bottom and rubble side",
+   "cn": [
+    98,
+    98,
+    98,
+    98
+   ],
+   "cn_font": "aigua: sense infiltració"
+  }
+ }
+}

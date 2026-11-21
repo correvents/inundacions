@@ -106,7 +106,10 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
         <span><i class="sw" style="background:rgb(253,174,97)"></i>Amb plantes sota rasant</span>
         <span><i class="sw" style="background:rgb(215,25,28)"></i>Amb soterrani i tocant (≤ 10 m) una zona a menys d'1 m del llit o una depressió</span>
       </div>
+      <label><input type="checkbox" id="kCob"> Cobertes del sòl (ICGC 2024)</label>
+      <div class="ll" id="llCob" hidden></div>
       <p class="hint" id="relInfo" style="margin:0"></p>
+      <p class="hint" id="cobInfo" style="margin:0"></p>
     </fieldset>
     <label class="op">Opacitat de les conques <input type="range" id="op" min="0" max="100" value="35"></label>
     <p class="hint" style="margin:0">Mapa de fons i noms de llocs: selector a dalt a la dreta del mapa (també «Sense mapa»).</p>
@@ -146,7 +149,7 @@ function dibuixa(){
   capaR.bringToFront();
   pinta();
 }
-function tria(id){sel=id;pinta();relleu()}
+function tria(id){sel=id;pinta();relleu();if(typeof cobertes==="function")cobertes()}
 // Capes de relleu calculades al servidor (scripts/mdt_cat.py), una carpeta per conca del tall de 100 km²
 let relIdx=null, capaRier=null, capaZb=null, capaSot=null, relConca=null;
 const kSot=document.getElementById("kSot");
@@ -213,6 +216,29 @@ function relleu(){
   if(kZb.checked&&!capaZb){capaZb=L.imageOverlay(`${relDir()}/${nom}/zones_baixes.png`,r.limits,{opacity:.8,interactive:false,pane:"relleu"}).addTo(gZ)}
   if(kRier.checked&&!capaRier){const n=nom;d3.json(`${relDir()}/${nom}/rieretes.json`).then(j=>{if(relConca!==n||!kRier.checked||capaRier)return;capaRier=rierCapa(j).addTo(gR)})}
 }
+// Cobertes del sòl (scripts/cobertes.py): mapa de l'ICGC a la reixa de l'MDT, agrupat; cada grup porta la seva
+// rugositat (n de Manning) i infiltració (número de corba) a la simulació 2D
+const kCob=document.getElementById("kCob"), cobInfo=document.getElementById("cobInfo"), gC=L.layerGroup();
+F.ctl.addOverlay(gC,"Cobertes del sòl (conca triada)");
+let cobIdx=null, capaCob=null, cobConca=null;
+d3.json("data/catalunya/cobertes/index.json").then(j=>{cobIdx=j;
+  document.getElementById("llCob").innerHTML=Object.entries(j.grups).map(([k,g])=>`<span title="n de Manning ${g.n}; número de corba ${g.cn}"><i class="sw" style="background:rgb(${g.color})"></i>${g.nom}</span>`).join("");
+  cobertes()}).catch(()=>{cobIdx={conques:{}}});
+kCob.onchange=()=>{kCob.checked?gC.addTo(mapa):mapa.removeLayer(gC);cobertes()};
+mapa.on("overlayadd overlayremove",e=>{if(e.layer===gC){kCob.checked=mapa.hasLayer(gC);cobertes()}});
+function cobertes(){
+  document.getElementById("llCob").hidden=!kCob.checked;
+  const id=conca100(), nom=id==null?null:"c"+String(id).padStart(3,"0");
+  if(nom!==cobConca||!kCob.checked){gC.clearLayers();capaCob=null;cobConca=nom}
+  if(!kCob.checked||!cobIdx){cobInfo.textContent="";return}
+  if(id==null){cobInfo.textContent="";return}
+  const r=cobIdx.conques[nom];
+  if(!r){cobInfo.textContent=`La conca ${id} encara no té les cobertes calculades.`;return}
+  const tot=Object.values(r.km2).reduce((a,b)=>a+b,0), g=cobIdx.grups;
+  const top=Object.entries(r.km2).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${g[k].nom.toLowerCase()} ${Math.round(100*v/tot)} %`).join(", ");
+  cobInfo.textContent=`Cobertes: ${top}. n de Manning mitjana ${r.n_manning_mitja}, número de corba mitjà ${r.cn_mitja}. Font: ${cobIdx.font}.`;
+  if(!capaCob){capaCob=L.imageOverlay(`data/catalunya/cobertes/${nom}/cobertes.png`,r.limits,{opacity:.75,interactive:false,pane:"relleu"}).addTo(gC)}
+}
 let av=new Set(), am=new Set(), cami=[];
 function estil(f){
   const i=f.properties.id, o=op.value/100, buit=F.senseMapa();
@@ -259,7 +285,7 @@ function pinta(){
    <div><div class="lbl">Camí de l'aigua</div><div class="cami">${[p.id,...cami].join(" → ")} → ${cami.length||p.avall==null?"mar o límit":""}</div></div>
    <p class="hint">Si el camí acaba lluny de la costa, és que el riu surt de Catalunya o la conca toca el límit del mapa.</p>`;
 }
-function canvia(m){mida=m;sel=null;relleu();
+function canvia(m){mida=m;sel=null;relleu();cobertes();
   d3.select("#b25").attr("aria-pressed",m==="25");d3.select("#b100").attr("aria-pressed",m==="100");dibuixa()}
 d3.select("#b25").on("click",()=>canvia("25"));d3.select("#b100").on("click",()=>canvia("100"));
 Promise.all([d3.json("data/catalunya/conques/web/conques_25.json"),d3.json("data/catalunya/conques/web/conques_100.json"),d3.json("data/catalunya/conques/web/rius.json")]).then(([a,b,r])=>{
