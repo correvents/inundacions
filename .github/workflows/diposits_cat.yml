@@ -39,7 +39,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p /tmp/cad /tmp/diposits_cat
-          gh release download "$ORIGEN" -R "${{ github.repository }}" -p 'edificis_*.json.gz' -D /tmp/cad
+          # l'API de GitHub torna algun 504 en baixar ~950 fitxers: es reprèn saltant els ja baixats
+          for i in 1 2 3 4 5 6; do
+            gh release download "$ORIGEN" -R "${{ github.repository }}" -p 'edificis_*.json.gz' -D /tmp/cad --skip-existing && break
+            sleep $((i*20))
+          done
           ls /tmp/cad | wc -l
           python3 scripts/diposit.py cat /tmp/cad/edificis_*.json.gz --sortida /tmp/diposits_cat | tail -n 20
           gh release upload "$ETIQUETA" /tmp/diposits_cat/diposits_*.json.gz -R "${{ github.repository }}" --clobber
