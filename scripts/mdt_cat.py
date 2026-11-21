@@ -187,7 +187,7 @@ def edificis(tr, forma, crs):
         return None, 0, None
     formes.sort(key=lambda f: f[1])                  # les més altes per sobre
     h = features.rasterize(formes, out_shape=forma, transform=tr, fill=0, dtype="float32")
-    sot = features.rasterize(sotans, out_shape=forma, transform=tr, fill=0, dtype="uint8", all_touched=True) if sotans else None
+    sot = features.rasterize(sotans, out_shape=forma, transform=tr, fill=0, dtype="uint8", all_touched=False) if sotans else None
     return h, len(formes), sot
 
 

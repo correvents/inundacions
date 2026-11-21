@@ -71,6 +71,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # sortida neta: l'artefacte només ha de portar les conques d'aquest lot (si no, en ajuntar els lots,
+          # les còpies velles d'un lot trepitgen les noves d'un altre)
+          rm -rf data/catalunya/relleu data/catalunya/relleu_edificis
           mkdir -p /tmp/mdt_cat; fallades=""
           for id in ${{ matrix.lot }}; do
             nom=$(printf "c%03d" "$id"); f=/tmp/mdt_cat/mdt5_$nom.tif
