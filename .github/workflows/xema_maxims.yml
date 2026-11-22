@@ -11,6 +11,9 @@ on:
       fins:
         description: "Últim any"
         default: "2025"
+  push:
+    branches: [claude/project-thread-9hrued]
+    paths: [scripts/xema_maxims.py, .github/workflows/xema_maxims.yml]
 
 permissions:
   contents: write
@@ -25,7 +28,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -q requests
-      - run: python3 scripts/xema_maxims.py --des "${{ inputs.des }}" --fins "${{ inputs.fins }}"
+      - run: python3 scripts/xema_maxims.py --des "${{ inputs.des || '2009' }}" --fins "${{ inputs.fins || '2025' }}"
       - name: Desa
         if: always()
         run: |
