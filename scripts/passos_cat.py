@@ -25,7 +25,9 @@ Sense cap número triat a mà per a cada pas:
    - obert: desguassa el cabal de disseny de la norma de carreteres 5.2-IC (crescuda de 100 anys de la conca de l'obra),
      calculat com a scripts/passos.py: Gumbel regional dels màxims de pluja diària de la XEMA, Témez, Kt, Ka, i P0 =
      absorció inicial de l'episodi amb el terreny més moll del model (la norma dimensiona amb terreny humit). Només on hi ha XEMA i episodis (conques pilot
-     i les veïnes que cauen dins la caixa de simulació d'una pilot, amb la pluja d'aquesta); a la resta, null.
+     i les veïnes que cauen dins la caixa de simulació d'una pilot, amb la pluja d'aquesta). A la resta de Catalunya, la
+     pluja de 100 anys surt del mateix Gumbel regional amb les estacions XEMA a menys de 20 km (scripts/xema_maxims.py) i
+     P0 = 0,2·S, la retenció mitjana del número de corba de la conca de l'obra (cobertes ICGC, com la simulació 2D).
    Qualsevol cabal entrant per sobre del de l'escenari va omplint el llac; quan n'entra el volum, l'aigua passa per
    sobre de la via.
 
@@ -132,6 +134,67 @@ def p24_t100(conca):
     return 1.13 * float(np.mean(mitj)) * (mu - beta * np.log(-np.log(1 - 1 / 100))), len(norm)
 
 
+MAXIMS = Path("data/catalunya/xema/maxims_diaris.json")
+RADI_KM, PAS_KM, MIN_ANYS_ESTACIO = 20, 10, 20        # els de p24_t100(): estacions a 20 km (pluja_xema.py) i ≥ 20 anys-estació
+
+
+def p24_t100_punt(lon, lat, _cache={}):
+    """Pluja de 100 anys en 24 h a qualsevol punt de Catalunya: el mateix Gumbel regional que p24_t100() amb les estacions
+    de la XEMA a menys de 20 km (scripts/xema_maxims.py). Si no arriben a 20 anys-estació, s'amplia el radi de 10 en 10 km."""
+    import math
+    if "e" not in _cache:
+        _cache["e"] = [(r["lat"], r["lon"], list(r["anys"].values())) for r in json.loads(MAXIMS.read_text()).values()
+                       if len(r["anys"]) >= 5] if MAXIMS.exists() else []
+    est = _cache["e"]
+    if not est:
+        return None, 0, None
+    km = sorted((math.hypot((la - lat) * 111.2, (lo - lon) * 111.2 * math.cos(math.radians(lat))), v) for la, lo, v in est)
+    radi = RADI_KM
+    while True:
+        sel = [v for d, v in km if d <= radi]
+        if sum(len(v) for v in sel) >= MIN_ANYS_ESTACIO or radi > 200:
+            break
+        radi += PAS_KM
+    norm = [x / np.mean(v) for v in sel for x in v]
+    if len(norm) < MIN_ANYS_ESTACIO:
+        return None, len(norm), radi
+    x = np.array(norm); beta = x.std(ddof=1) * np.sqrt(6) / np.pi; mu = x.mean() - 0.5772 * beta
+    return 1.13 * float(np.mean([np.mean(v) for v in sel])) * (mu - beta * np.log(-np.log(1 - 1 / 100))), len(norm), radi
+
+
+def retencio(cami_cob, tr, forma, crs, grup_sol=None):
+    """Retenció potencial S (mm) del número de corba de cada cel·la (cobertes ICGC, config/cobertes_parametres.json, com
+    la simulació 2D). La 5.2-IC fa servir P0 = 0,2·S, l'abstracció inicial del número de corba."""
+    import cobertes as C
+    from rasterio.warp import reproject, Resampling
+    with rasterio.open(cami_cob) as src:
+        cob = np.zeros(forma, np.uint8)
+        reproject(rasterio.band(src, 1), cob, dst_transform=tr, dst_crs=crs, src_nodata=0, dst_nodata=0, resampling=Resampling.mode)
+    _, cn, _ = C.parametres(cob, grup_sol=grup_sol)
+    return (25400 / np.clip(cn, 1, 100) - 254).astype("float64")
+
+
+def acumula(acc, fd, w):
+    """Suma de w de tota la conca de cada cel·la (inclosa), recorrent de menys a més acumulació com recorreguts()."""
+    import numba
+
+    @numba.njit(cache=True)
+    def passa(ordre, fd, w, nf, nc):
+        dr = {64: -1, 128: -1, 1: 0, 2: 1, 4: 1, 8: 1, 16: 0, 32: -1}
+        dc = {64: 0, 128: 1, 1: 1, 2: 1, 4: 0, 8: -1, 16: -1, 32: -1}
+        for k in ordre:
+            r = k // nc; c = k % nc; d = fd[r, c]
+            if d not in dr:
+                continue
+            r2 = r + dr[d]; c2 = c + dc[d]
+            if 0 <= r2 < nf and 0 <= c2 < nc:
+                w[r2, c2] += w[r, c]
+
+    W = np.where(np.isfinite(w), w, 0).astype("float64")
+    passa(np.argsort(acc, axis=None, kind="stable"), np.asarray(fd).astype("int64"), W, *W.shape)
+    return W
+
+
 def q_disseny(area_km2, l_km, j, p24, p0):
     tc = max(0.3 * (l_km / max(j, 1e-3) ** 0.25) ** 0.76, 0.25)       # Témez, h
     ka = 1 - np.log10(area_km2) / 15 if area_km2 > 1 else 1.0
@@ -220,7 +283,12 @@ def conca(cid, cami_mdt, vies_gz, a):
     via_dil = ndimage.binary_dilation(via_r > 0, iterations=a.peu)
     arbre_o = STRtree(obres) if obres else None
     pilot = pluja_pilot(cid, shape(C[cid]["geometry"]))
-    rec = recorreguts(fd, acc, z) if pilot else None
+    # fora de les pilots: pluja regional de la XEMA al punt i P0 = 0,2·S mitjana de la conca de l'obra (cobertes)
+    Sacc = None
+    if not pilot and a.cobertes and Path(a.cobertes).exists():
+        sys.path.insert(0, str(Path(__file__).parent))
+        Sacc = acumula(acc, fd, retencio(a.cobertes, tr, z.shape, crs))
+    rec = recorreguts(fd, acc, z) if (pilot or Sacc is not None) else None
     fts, passos, ocupat = [], [], np.zeros(z.shape, bool)
     for k in candidats:
         r0, r1 = max(sl[k - 1][0].start - a.peu - 1, 0), min(sl[k - 1][0].stop + a.peu + 1, nf)
@@ -251,11 +319,18 @@ def conca(cid, cami_mdt, vies_gz, a):
         ocupat[r0:r1, c0:c1] |= ndimage.binary_dilation(m, iterations=3)
         V, A, H = float(vol[k - 1]), float(m.sum() * cel), float(prof[k - 1])
         esc = {"tapat": {"q_m3s": 0, "vessa_amb_escolament_mm": round(V / (area * 1e6) * 1000, 1)}}
-        if pilot:
-            q, tc = cabal_obra(rec, z, tr, r0 + rs, c0 + cs, area, pilot)
+        pl = pilot
+        if not pl and Sacc is not None:
+            p24, n_ae, radi = p24_t100_punt(*a_ll(xs, ys))
+            p0 = 0.2 * float(Sacc[r0 + rs, c0 + cs]) / max(float(acc[r0 + rs, c0 + cs]), 1)
+            if p24 and p0 > 0:
+                pl = {"_p24": p24, "_p0": p0, "font": f"XEMA a {radi} km ({n_ae} anys-estació), P0 = 0,2·S de les cobertes"}
+        if pl:
+            q, tc = cabal_obra(rec, z, tr, r0 + rs, c0 + cs, area, pl)
             if q is not None:
                 esc["mig_tapat"] = {"q_m3s": round(q / 2, 2)}
-                esc["obert"] = {"q_m3s": round(q, 2), "tc_h": round(tc, 2)}
+                esc["obert"] = {"q_m3s": round(q, 2), "tc_h": round(tc, 2), "p24_t100_mm": round(pl["_p24"]), "p0_mm": round(pl["_p0"]),
+                                "font": pl.get("font", "conca pilot: XEMA de la conca, P0 de l'episodi més moll")}
         pid = f"{cid}-{len(passos) + 1}"
         prop = {"id": pid, "tipus": "terraplè", "via": v["tipus"], "nom": v["nom"], "osm_via": v["id"],
                 "conca_km2": round(area, 3), "llac_m3": round(V), "llac_m2": round(A), "prof_m": round(H, 1),
@@ -366,6 +441,7 @@ def main():
     o = sub.add_parser("osm"); o.add_argument("--pbf", required=True); o.add_argument("--sortida", required=True)
     c = sub.add_parser("conca"); c.add_argument("--id", type=int, required=True); c.add_argument("--mdt", required=True)
     c.add_argument("--vies", required=True)
+    c.add_argument("--cobertes", help="cobertes 5 m de la conca (Release cobertes-cat), per al P0 fora de les pilots")
     c.add_argument("--conca-min", type=float, default=0.05, help="conca mínima d'un torrentet (km², la de les rieretes)")
     c.add_argument("--gual-min", type=float, default=0.25, help="conca mínima d'un gual per desar-lo (km²)")
     c.add_argument("--fons-min", type=float, default=0.5, help="fondària mínima del llac si es tapa (m)")

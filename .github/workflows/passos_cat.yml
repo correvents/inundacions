@@ -75,8 +75,11 @@ jobs:
           mkdir -p /tmp/mdt; fallades=""
           for id in ${{ matrix.lot }}; do
             nom=$(printf "c%03d" "$id")
+            # cobertes de la conca per al P0 del cabal de disseny (si no hi són, el pas queda sense cabal de disseny)
+            gh release download cobertes-cat -R "${{ github.repository }}" -p "cobertes5_$nom.tif" -D /tmp/mdt --clobber || echo "sense cobertes $nom"
+            COB=""; [ -f "/tmp/mdt/cobertes5_$nom.tif" ] && COB="--cobertes /tmp/mdt/cobertes5_$nom.tif"
             if gh release download mdt5-cat -R "${{ github.repository }}" -p "mdt5_$nom.tif" -D /tmp/mdt --clobber && \
-               timeout 3600 python3 scripts/passos_cat.py conca --id "$id" --mdt "/tmp/mdt/mdt5_$nom.tif" --vies /tmp/vies.json.gz; then :
+               timeout 3600 python3 scripts/passos_cat.py conca --id "$id" --mdt "/tmp/mdt/mdt5_$nom.tif" --vies /tmp/vies.json.gz $COB; then :
             else fallades="$fallades $id"; fi
             rm -f /tmp/mdt/*.tif
           done
