@@ -276,6 +276,10 @@ def tot(a):
             n = int(r.get("obertures") or 1)
             B = (r.get("llum_m") or r.get("amplada_m") or r.get("diametre_m"))
             H = r.get("galib_m") or r.get("alcada_m") or r.get("diametre_m")
+            if B and r.get("amplada_tauler_m") and (r.get("tipus") or "").startswith(("Obra", "Cobertura")):
+                # en obres i cobertes la fitxa a vegades dona la «longitud» al llarg del curs i l'«amplada» a través
+                # (24 de 248): la llum és la més petita de les dues (una obra sota una via és més llarga que ampla)
+                B = min(B, r["amplada_tauler_m"])
             if B and n > 1:
                 B = B / n                                       # llum total repartida entre obertures (piles no restades)
             e.update({"font": "ACA PSE", "ref": r["codi"], "fitxa": r["fitxa"], "dist_m": round(pse_pt[j].distance(pt)),
