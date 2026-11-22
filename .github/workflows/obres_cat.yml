@@ -1,0 +1,43 @@
+name: Secció i capacitat dels passos (tot Catalunya)
+
+# Posa a cada pas de torrentet sota via (data/catalunya/passos) la secció de l'obra i la seva capacitat de desguàs:
+# 1) inventari ACA de punts singulars estructurals (instantània data/catalunya/obres/aca_pse.json),
+# 2) culverts d'OSM amb mida (Geofabrik), 3) ajust secció~conca fet amb 1 i 2. Vegeu scripts/obres_cat.py.
+# Resultat (OPCIÓ, no canvia res més): data/catalunya/obres/cNNN.json + index.json.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/project-thread-7ruhwb]
+    paths: [scripts/obres_cat.py, .github/workflows/obres_cat.yml, data/catalunya/obres/aca_pse.json]
+
+permissions:
+  contents: write
+
+jobs:
+  obres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q numpy shapely pyproj osmium
+      - name: Culverts d'OSM (Geofabrik, Catalunya)
+        run: |
+          url=$(curl -sSfL https://download.geofabrik.de/index-v1-nogeom.json | python3 -c "import json,sys; f=[x['properties'] for x in json.load(sys.stdin)['features'] if 'catal' in x['properties']['id'].lower() or 'catal' in x['properties']['name'].lower()]; print(f[0]['urls']['pbf'])")
+          echo "Extracte: $url"
+          for i in 1 2 3; do curl -sSfL -o /tmp/cat.osm.pbf "$url" && break; sleep 30; done
+          python3 scripts/obres_cat.py osm --pbf /tmp/cat.osm.pbf --sortida /tmp/culverts.json.gz
+      - name: Secció i capacitat de cada pas
+        run: python3 scripts/obres_cat.py tot --culverts /tmp/culverts.json.gz | tee /tmp/log.txt
+      - name: Desa
+        run: |
+          echo '### Obres de drenatge' >> "$GITHUB_STEP_SUMMARY"; sed 's/^/    /' /tmp/log.txt >> "$GITHUB_STEP_SUMMARY"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalunya/obres
+          git diff --cached --quiet && exit 0
+          git commit -m "Secció i capacitat dels passos (ACA PSE + OSM + ajust empíric)"
+          for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1
