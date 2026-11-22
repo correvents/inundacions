@@ -10,12 +10,11 @@ precalculat per a tot Catalunya) es converteix en un conducte que travessa el te
   - Sortida: la cel·la més propera a l'altra banda del terraplè, fora del llac, més baixa que l'entrada, dins
     l'amplada de la base del terraplè: calçada de 10 m (carril 3,5 m × 2 + vorals, norma 3.1-IC) + talussos 3H:2V a
     banda i banda (1,5 × fondària del llac cada un).
-  - Cabal: el d'un orifici amb la diferència de nivell d'aigua entre les dues bandes (Δh):
-      · si es coneix la secció real de l'obra (propietat seccio_m2 o diametre_m del pas): Q = Cd·A·√(2gΔh), Cd = 0,6;
-      · si no, amb el cabal de disseny de la norma 5.2-IC que passos_cat.py ja calcula (escenaris.obert.q_m3s):
-        l'obra porta aquest cabal quan el llac és ple (Δh = fondària del llac) i Q = Qd·√(Δh/fondària), que és la
-        mateixa llei d'orifici sense haver de saber la mida;
-      · sense cap de les dues (fora de les conques pilot, fins que hi hagi la mida real), el pas queda tapat i es diu.
+  - Cabal: el d'un orifici amb la diferència de nivell d'aigua entre les dues bandes (Δh), Q = Qo·√(Δh/hw), amb Qo el
+    cabal de l'obra amb l'aigua a hw. Qo i hw, per ordre: obra real de data/catalunya/obres (fitxa PSE de l'ACA o OSM,
+    scripts/obres_cat.py), cabal de disseny 5.2-IC de passos_cat.py amb hw = fondària del llac, mida empírica segons la
+    conca d'obres_cat.py (sobreestima els tubs petits). Si el pas porta seccio_m2 o diametre_m i no hi ha cap
+    d'aquests cabals, orifici Q = Cd·A·√(2gΔh), Cd = 0,6. Sense res, el pas queda tapat i es diu.
   - Taponament: Q × (1 − bloqueig). Modes:
       · oberts: bloqueig 0 a tots els passos;
       · arrossegalls: bloqueig de disseny de l'ARR 2019 (scripts/arrossegalls.py, data/catalunya/arrossegalls),
@@ -35,15 +34,19 @@ CD = 0.6                       # coeficient de descàrrega d'un orifici (entrada
 CALCADA = 10.0                 # m: 2 carrils de 3,5 m + vorals (3.1-IC)
 TALUS = 1.5                    # talús 3H:2V
 L10 = 1.5                      # ARR 2019: llargada típica dels arrossegalls (arrossegalls.py)
+BLOQ = {"petita": {"A": 1.0, "M": 0.5, "B": 0.25}, "mitjana": {"A": 0.2, "M": 0.1, "B": 0.0},   # taula de bloqueig ARR 2019,
+        "gran": {"A": 0.1, "M": 0.0, "B": 0.0}}                                                # la d'arrossegalls.py
 PASSOS = Path("data/catalunya/passos")
 ARROSS = Path("data/catalunya/arrossegalls")
+OBRES = Path("data/catalunya/obres")          # mida i capacitat de cada obra (scripts/obres_cat.py): ACA, OSM o empíric
+REALS = ("ACA PSE", "OSM")
 
 
 def _classe_obertura(w):
     return "petita" if w < L10 else ("mitjana" if w <= 3 * L10 else "gran")
 
 
-def prepara(mode, obertura, tr, nf, nc, crs, z, mar, psx, psy, dir_passos=PASSOS, dir_arr=ARROSS):
+def prepara(mode, obertura, tr, nf, nc, crs, z, mar, psx, psy, dir_passos=PASSOS, dir_arr=ARROSS, dir_obres=OBRES):
     """Conductes dels passos dins el domini. Modifica psx/psy als ponts (mode arrossegalls).
     Torna (taula de conductes per a transfereix(), llista d'informació per pas, resum)."""
     from pyproj import Transformer
@@ -69,6 +72,9 @@ def prepara(mode, obertura, tr, nf, nc, crs, z, mar, psx, psy, dir_passos=PASSOS
                     passos.append((g["coordinates"], p))
             elif "llac_de" in p:
                 llacs.setdefault(p["llac_de"], []).append(g)
+    obres = {}
+    for f in sorted(Path(dir_obres).glob("c[0-9]*.json")):
+        obres.update(json.loads(f.read_text()))
     arr = {}
     if mode == "arrossegalls":
         fitxers = sorted(Path(dir_arr).glob("c[0-9]*.geojson"))
@@ -93,11 +99,24 @@ def prepara(mode, obertura, tr, nf, nc, crs, z, mar, psx, psy, dir_passos=PASSOS
         b, ob = 0.0, None
         A = float(p.get("seccio_m2") or 0) or (math.pi * float(p["diametre_m"]) ** 2 / 4 if p.get("diametre_m") else 0.0)
         qd = ((p.get("escenaris") or {}).get("obert") or {}).get("q_m3s")
+        H = max(float(p.get("prof_m") or 0), 0.1)
+        H_llac = H
+        # capacitat, per ordre: obra real (fitxa ACA o OSM), cabal de disseny 5.2-IC, mida empírica segons la conca
+        # (obres_cat.py; sobreestima els tubs petits). Q = q_obert·√(Δh/hw): q_obert és el cabal amb l'aigua a hw.
+        o = obres.get(p["id"]) or {}
+        W = None
+        font = "5.2-IC" if qd else None
+        if o.get("q_obert_m3s") and (o.get("font") in REALS or not qd):
+            qd, H, font = float(o["q_obert_m3s"]), max(float(o.get("hw_m") or H), 0.1), o.get("font")
+            if o.get("font") in REALS and o.get("B_m"):
+                W = float(o["B_m"])
         if mode == "arrossegalls":
-            ob = _classe_obertura(float(p["diametre_m"])) if p.get("diametre_m") else obertura
-            bl = (arr.get(p["id"], (None, {}))[1].get("bloqueig") or {})
-            b = float(bl.get(ob, bl.get("petita", 0.0)) or 0.0)
-        reg = {"id": p["id"], "via": p.get("via"), "nom": p.get("nom"), "conca_km2": p.get("conca_km2"), "bloqueig": b, "obertura": ob}
+            ob = _classe_obertura(float(p["diametre_m"])) if p.get("diametre_m") else (_classe_obertura(W) if W else obertura)
+            pa = arr.get(p["id"], (None, {}))[1]
+            bl = pa.get("bloqueig") or {}
+            b = float(bl[ob]) if ob in bl else BLOQ[ob].get(pa.get("potencial"), 0.0)
+        reg = {"id": p["id"], "via": p.get("via"), "nom": p.get("nom"), "conca_km2": p.get("conca_km2"), "bloqueig": b, "obertura": ob,
+               "capacitat": font, "ref": o.get("ref") if o.get("font") in REALS else None}
         if not A and not qd:
             cnt["sense_capacitat"] += 1; reg["estat"] = "tapat (sense mida ni cabal de disseny)"; info.append(reg); continue
         # entrada: cel·la més baixa del llac (a la reixa de la simulació)
@@ -109,8 +128,7 @@ def prepara(mode, obertura, tr, nf, nc, crs, z, mar, psx, psy, dir_passos=PASSOS
         m &= ~mar
         rr, cc = np.nonzero(m)
         k = int(np.argmin(z[rr, cc])); ru, cu = int(rr[k]), int(cc[k])
-        H = max(float(p.get("prof_m") or 0), 0.1)
-        K = max(int(math.ceil((CALCADA + 2 * TALUS * H) / dx)), 1)
+        K = max(int(math.ceil((CALCADA + 2 * TALUS * H_llac) / dx)), 1)
         ra, rb, ca, cb = max(ru - K - 1, 1), min(ru + K + 2, nf - 1), max(cu - K - 1, 1), min(cu + K + 2, nc - 1)
         sub_m = m[ra:rb, ca:cb]
         dist = ndimage.distance_transform_edt(~sub_m) * dx                 # distància al llac
@@ -121,8 +139,8 @@ def prepara(mode, obertura, tr, nf, nc, crs, z, mar, psx, psy, dir_passos=PASSOS
         clau = np.where(cand, dist * 1e4 + z[ra:rb, ca:cb], np.inf)
         kd = np.unravel_index(np.argmin(clau), clau.shape); rd, cd = ra + int(kd[0]), ca + int(kd[1])
         taula.append((ru, cu, rd, cd, A, float(qd or 0), H, b))
-        reg.update({"estat": "conducte", "entrada": [ru, cu], "sortida": [rd, cd], "seccio_m2": A or None, "q_disseny_m3s": qd,
-                    "fondaria_m": H})
+        reg.update({"estat": "conducte", "entrada": [ru, cu], "sortida": [rd, cd], "seccio_m2": A or None, "q_obra_m3s": qd,
+                    "hw_m": H, "fondaria_m": H_llac})
         info.append(reg)
         cnt["conductes"] += 1
     # ponts: el bloqueig treu pas a les cares de la cel·la del pont
@@ -139,6 +157,7 @@ def prepara(mode, obertura, tr, nf, nc, crs, z, mar, psx, psy, dir_passos=PASSOS
         ponts += 1
         info.append({"id": pid, "tipus": "pont", "nom": p.get("nom"), "llum_m": p.get("llum_m"), "bloqueig": b, "cella": [r, c]})
     cnt["ponts_amb_bloqueig"] = ponts
+    cnt["capacitat"] = {k: sum(1 for r in info if r.get("estat") == "conducte" and r.get("capacitat") == k) for k in ("ACA PSE", "OSM", "5.2-IC", "empíric")}
     t = np.array(taula, dtype=np.float64).reshape(-1, 8)
     print(f"Passos ({mode}{'' if mode != 'arrossegalls' else ', obertura ' + obertura}): {cnt}")
     return t, info, cnt
