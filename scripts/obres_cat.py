@@ -127,7 +127,7 @@ def llegeix_fitxa(txt):
         m = re.search(r"Nom estructura:\s*(.+?)\((\d{3}E\d{4})\)", t, re.S)
         if m:
             r["nom"] = " ".join(m.group(1).split())
-    m = re.search(r"Coordenades UTM:\s*\((\d+)[, ]+(\d+)\)", t)
+    m = re.search(r"Coordenades UTM:[^(\n]*\((\d+)[, ]+(\d+)\)", t)
     if m:
         r["utm"] = [int(m.group(1)), int(m.group(2))]
     m = re.search(r"Descripció:\s*(.+?)(?:\n\s*\n|Codificació)", t, re.S)
@@ -148,7 +148,7 @@ def aca(a):
     if a.wfs and Path(a.wfs).exists():
         for f in json.loads(Path(a.wfs).read_text())["features"]:
             wfs[f["properties"]["CODI_PSE"]] = f["properties"]
-    codis = sorted(p.stem for p in d.glob("*.txt"))
+    codis = sorted(p.stem for p in d.glob("*.txt") if not p.name.startswith("._"))
     out, buits = [], []
     for c in codis:
         r = llegeix_fitxa((d / f"{c}.txt").read_text(errors="replace"))
@@ -156,7 +156,7 @@ def aca(a):
         if "utm" not in r and w.get("X"):
             r["utm"] = [w["X"], w["Y"]]
         if "utm" not in r:
-            buits.append(c); continue
+            buits.append(c); print("  sense coordenades:", c); continue
         r["lonlat"] = [round(v, 6) for v in lonlat(*r["utm"])]
         for k, kw in (("q_max_m3s", "Q_MAX_DESG"), ("tipus", "TIPUS_ESTR"), ("grau_afeccio", "G_AFEC_HID")):
             if r.get(k) in (None, "") and w.get(kw) not in (None, ""):
@@ -240,50 +240,62 @@ def tot(a):
     arbre_c = STRtree([c[2] for c in cul]) if cul else None
     print(f"ACA PSE: {len(pse)}  ·  OSM culverts amb mida: {len(cul)}")
 
-    fitxers = sorted(PASSOS.glob("c*.geojson"))
-    res, mostres = {}, []
-    for fp in fitxers:
+    # tots els passos (punts) de Catalunya
+    pas = []                                                   # (cid, props, punt UTM)
+    for fp in sorted(PASSOS.glob("c*.geojson")):
         cid = int(fp.stem[1:])
-        d = {}
         for f in json.loads(fp.read_text())["features"]:
-            p = f["properties"]
-            if "id" not in p or f["geometry"]["type"] != "Point":
-                continue
-            pt = Point(utm(*f["geometry"]["coordinates"]))
-            hw = p.get("prof_m") if p.get("tipus") == "terraplè" else None
-            e = {"tipus_pas": p.get("tipus"), "conca_km2": p.get("conca_km2"), "hw_m": hw,
-                 "hw_font": "fondària del llac si es tapa (MDT 5 m IGN, metres enters)" if hw else None}
-            # 1. ACA
-            if arbre_p is not None:
-                ii = arbre_p.query(pt.buffer(a.dist_aca))
-                if len(ii):
-                    j = min(ii, key=lambda k: pse_pt[k].distance(pt)); r = pse[j]
-                    n = int(r.get("obertures") or 1)
-                    B = (r.get("llum_m") or r.get("amplada_m") or r.get("diametre_m"))
-                    H = r.get("galib_m") or r.get("alcada_m") or r.get("diametre_m")
-                    if B and n > 1 and r.get("tipus", "").startswith("Pont"):
-                        B = B / n                                   # llum total repartida entre obertures (piles no restades)
-                    e.update({"font": "ACA PSE", "ref": r["codi"], "fitxa": r["fitxa"], "dist_m": round(pse_pt[j].distance(pt)),
-                              "estructura": r.get("tipus"), "forma": r.get("seccio"), "B_m": B, "H_m": H, "n": n,
-                              "q_obert_m3s": r.get("q_max_m3s") or r.get("q_max_min_m3s"),
-                              "q_obert_es_minim": bool(r.get("q_max_min_m3s") and not r.get("q_max_m3s")) or None,
-                              "q_font": f"ACA, fitxa PSE ({r.get('metode') or 'model hidràulic'})" if (r.get("q_max_m3s") or r.get("q_max_min_m3s")) else None,
-                              "q_afeccio_rasant": r.get("q_afeccio_rasant"), "grau_afeccio": r.get("grau_afeccio")})
-                    if H and B and r.get("cota_rasant_m") and r.get("cota_clau_m"):
-                        e["hw_m"] = round(r["cota_rasant_m"] - r["cota_clau_m"] + H, 2)
-                        e["hw_font"] = "cota rasant − cota clau + gàlib (fitxa ACA)"
-            # 2. OSM
-            if "font" not in e and arbre_c is not None:
-                ii = arbre_c.query(pt.buffer(a.dist_osm))
-                if len(ii):
-                    j = min(ii, key=lambda k: cul[k][2].distance(pt)); wid, s, g = cul[j]
-                    e.update({"font": "OSM", "ref": f"way/{wid}", "dist_m": round(g.distance(pt)), **s})
-            if e.get("font") and e.get("B_m") and e.get("H_m") and p.get("conca_km2"):
-                es_drenatge = e["font"] == "OSM" or (e.get("estructura") or "").startswith(("Obra de drenatge", "Cobertura"))
-                if es_drenatge:
-                    mostres.append((p["conca_km2"], e["B_m"] * e["H_m"] * e.get("n", 1)))
-            d[p["id"]] = e
-        res[cid] = d
+            if "id" in f["properties"] and f["geometry"]["type"] == "Point":
+                pas.append((cid, f["properties"], Point(utm(*f["geometry"]["coordinates"]))))
+    arbre_pas = STRtree([x[2] for x in pas])
+    # cada obra es casa amb UN sol pas: el PSE de l'ACA amb el pas de més conca a menys de dist-aca (terraplè abans
+    # que gual: el PSE és al riu principal, no al torrentet del costat); el culvert d'OSM amb el pas més proper.
+    de_pse, de_cul = {}, {}
+    for j, pt in enumerate(pse_pt):
+        ii = arbre_pas.query(pt.buffer(a.dist_aca))
+        if len(ii):
+            k = max(ii, key=lambda k: (pas[k][1].get("tipus") == "terraplè", pas[k][1].get("conca_km2") or 0))
+            if k not in de_pse or pt.distance(pas[k][2]) < pse_pt[de_pse[k]].distance(pas[k][2]):
+                de_pse[k] = j
+    for j, (wid, s_, g) in enumerate(cul):
+        ii = arbre_pas.query(g.buffer(a.dist_osm))
+        if len(ii):
+            k = min(ii, key=lambda k: g.distance(pas[k][2]))
+            if k not in de_cul or g.distance(pas[k][2]) < cul[de_cul[k]][2].distance(pas[k][2]):
+                de_cul[k] = j
+
+    res, mostres = {}, []
+    for k, (cid, p, pt) in enumerate(pas):
+        d = res.setdefault(cid, {})
+        hw = p.get("prof_m") if p.get("tipus") == "terraplè" else None
+        e = {"tipus_pas": p.get("tipus"), "conca_km2": p.get("conca_km2"), "hw_m": hw,
+             "hw_font": "fondària del llac si es tapa (MDT 5 m IGN, metres enters)" if hw else None}
+        # 1. ACA
+        if k in de_pse:
+            j = de_pse[k]; r = pse[j]
+            n = int(r.get("obertures") or 1)
+            B = (r.get("llum_m") or r.get("amplada_m") or r.get("diametre_m"))
+            H = r.get("galib_m") or r.get("alcada_m") or r.get("diametre_m")
+            if B and n > 1:
+                B = B / n                                       # llum total repartida entre obertures (piles no restades)
+            e.update({"font": "ACA PSE", "ref": r["codi"], "fitxa": r["fitxa"], "dist_m": round(pse_pt[j].distance(pt)),
+                      "estructura": r.get("tipus"), "forma": r.get("seccio"), "B_m": B, "H_m": H, "n": n,
+                      "q_obert_m3s": r.get("q_max_m3s") or r.get("q_max_min_m3s"),
+                      "q_obert_es_minim": bool(r.get("q_max_min_m3s") and not r.get("q_max_m3s")) or None,
+                      "q_font": f"ACA, fitxa PSE ({r.get('metode') or 'model hidràulic'})" if (r.get("q_max_m3s") or r.get("q_max_min_m3s")) else None,
+                      "q_afeccio_rasant": r.get("q_afeccio_rasant"), "grau_afeccio": r.get("grau_afeccio")})
+            if H and B and r.get("cota_rasant_m") and r.get("cota_clau_m"):
+                e["hw_m"] = round(r["cota_rasant_m"] - r["cota_clau_m"] + H, 2)
+                e["hw_font"] = "cota rasant − cota clau + gàlib (fitxa ACA)"
+        # 2. OSM
+        elif k in de_cul:
+            wid, s_, g = cul[de_cul[k]]
+            e.update({"font": "OSM", "ref": f"way/{wid}", "dist_m": round(g.distance(pt)), **s_})
+        if e.get("font") and e.get("B_m") and e.get("H_m") and p.get("conca_km2") and p.get("tipus") == "terraplè":
+            es_drenatge = e["font"] == "OSM" or (e.get("estructura") or "").startswith(("Obra de drenatge", "Cobertura"))
+            if es_drenatge:
+                mostres.append((p["conca_km2"], e["B_m"] * e["H_m"] * e.get("n", 1), e["font"]))
+        d[p["id"]] = e
 
     # 3. ajust empíric secció ~ conca, amb les obres de drenatge trobades (no ponts)
     aj = None
@@ -291,7 +303,7 @@ def tot(a):
         S = np.log([m[0] for m in mostres]); A = np.log([m[1] for m in mostres])
         b, a0 = np.polyfit(S, A, 1)
         resid = A - (a0 + b * S)
-        aj = {"n": len(mostres), "a": round(float(a0), 4), "b": round(float(b), 4), "r2": round(float(1 - resid.var() / A.var()), 3),
+        aj = {"n": len(mostres), "n_aca": sum(m[2] == "ACA PSE" for m in mostres), "n_osm": sum(m[2] == "OSM" for m in mostres), "a": round(float(a0), 4), "b": round(float(b), 4), "r2": round(float(1 - resid.var() / A.var()), 3),
               "p25": round(float(np.percentile(resid, 25)), 3), "p75": round(float(np.percentile(resid, 75)), 3),
               "formula": "A_m2 = exp(a) · S_km2^b"}
         print(f"Ajust empíric: {aj}")
