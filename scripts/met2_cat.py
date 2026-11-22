@@ -11,12 +11,15 @@ a la Release.
 Per a cada conca del tall de 100 km² (data/catalunya/conques/conques_100km2.geojson):
   1. Zones urbanes: les cel·les construïdes del mapa de cobertes de l'ICGC (Release cobertes-cat, tipus 1 a
      config/cobertes_parametres.json), en blocs de 64 m, eixamplades --marge m i retallades a la conca + 500 m.
+     Amb --rieres, també una franja a banda i banda de totes les lleres (rius, torrents i torrentets de més de
+     0,05 km², data/catalunya/relleu/cNNN/rieretes.json): amplada = mín(300, 25 + 12·√A) m, amb A la conca drenada
+     en km²; als trams de l'ordre més alt de la conca s'hi suma el que hi entra d'aigües amunt (km2_amunt − km2).
   2. Llegeix el MET 2 m només als blocs de 512 m que en toquen i deixa sense dades la resta.
   3. Desa el fitxer de la conca: reixa de 2 m alineada amb la de l'ICGC (EPSG:25831), alçada en cm (int32), sense
      dades -3276800 (com mdt5_cNNN.tif). Les conques sense zones urbanes no tenen fitxer.
 
-Ús:  python3 scripts/met2_cat.py conca --id 124 [--font 2008|2021] [--sortida DIR]
-     python3 scripts/met2_cat.py totes [--font 2008|2021] [--conques 1,2,3] [--fils 4] [--sortida DIR]   (salta les fetes)"""
+Ús:  python3 scripts/met2_cat.py conca --id 124 [--font 2008|2021] [--rieres] [--sortida DIR]
+     python3 scripts/met2_cat.py totes [--font 2008|2021] [--rieres] [--conques 1,2,3] [--fils 4] [--sortida DIR]   (salta les fetes)"""
 import argparse, json, os, sys, time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -31,7 +34,7 @@ from rasterio.transform import Affine
 from rasterio.warp import reproject, Resampling
 from rasterio.windows import Window
 from pyproj import Transformer
-from shapely.geometry import shape, mapping
+from shapely.geometry import shape, mapping, box
 from shapely.ops import transform as stransform
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -49,6 +52,30 @@ ND = -32768 * 100
 BLOC = 32            # píxels de 2 m: blocs de 64 m per a la màscara urbana
 TROS = 256           # píxels de 2 m: lectures de 512 m (els blocs interns del COG)
 MARGE_CONCA = 500
+RIERETES = Path("data/catalunya/relleu/{}/rieretes.json")
+
+
+def lleres(nom, feat, t):
+    """Franges al voltant de les lleres de la conca (EPSG:25831), amplada segons la conca drenada."""
+    from shapely.geometry import LineString
+    from shapely.ops import unary_union
+    f = Path(str(RIERETES).format(nom))
+    if not f.exists():
+        print(f"{nom}: sense rieretes.json, només zones urbanes"); return None
+    j = json.loads(f.read_text())
+    esc = j["escala"]
+    trams = j["trams"]
+    omax = max(tr[0] for tr in trams)
+    extra = max(feat["properties"].get("km2_amunt", 0) - feat["properties"].get("km2", 0), 0)
+    peces = []
+    for tr in trams:
+        xy = np.cumsum(np.array(tr[2:], dtype=np.int64).reshape(-1, 2), axis=0) / esc
+        if len(xy) < 2:
+            continue
+        A = tr[1] / 100 + (extra if tr[0] == omax else 0)
+        x, y = t.transform(xy[:, 0], xy[:, 1])
+        peces.append(LineString(np.column_stack([x, y])).buffer(min(300, 25 + 12 * np.sqrt(A)), resolution=4))
+    return unary_union(peces) if peces else None
 
 
 def conques():
@@ -74,7 +101,7 @@ def llegeix(src, fac, c, f, w, h):
     return v
 
 
-def conca(i, feat, src, sortida, marge, font="2008"):
+def conca(i, feat, src, sortida, marge, font="2008", rieres=False):
     _, agr, prefix, desc = FONTS[font]
     nom = f"c{i:03d}"
     out = sortida / f"{prefix}_{nom}.tif"
@@ -104,6 +131,11 @@ def conca(i, feat, src, sortida, marge, font="2008"):
     bf, bc = nf // BLOC, nc // BLOC
     urb = urb[: bf * fac, : bc * fac].reshape(bf, fac, bc, fac).any(axis=(1, 3))
     urb = eixampla(urb, int(np.ceil(marge / (BLOC * 2))))
+    urb_bl = urb.copy()                # blocs urbans: es desen sencers
+    ll = lleres(nom, feat, t) if rieres else None
+    if ll is not None:                 # les lleres només per triar quins trossos es llegeixen; la franja va a 2 m
+        ll = ll.intersection(g)
+        urb |= features.geometry_mask([mapping(ll)], (bf, bc), tr * Affine.scale(BLOC), invert=True, all_touched=True)
     dins = features.geometry_mask([mapping(g)], (bf, bc), tr * Affine.scale(BLOC), invert=True, all_touched=True)
     urb &= dins
     if not urb.any():
@@ -113,6 +145,7 @@ def conca(i, feat, src, sortida, marge, font="2008"):
     k = TROS // BLOC
     tf, tc = -(-bf // k), -(-bc // k)
     pad = np.zeros((tf * k, tc * k), bool); pad[:bf, :bc] = urb
+    pad_u = np.zeros((tf * k, tc * k), bool); pad_u[:bf, :bc] = urb_bl & dins
     tros = pad.reshape(tf, k, tc, k).any(axis=(1, 3))
     fs, cs_ = np.where(tros.any(axis=1))[0], np.where(tros.any(axis=0))[0]
     tf0, tf1, tc0, tc1 = fs[0], fs[-1] + 1, cs_[0], cs_[-1] + 1
@@ -133,7 +166,13 @@ def conca(i, feat, src, sortida, marge, font="2008"):
                 except rasterio.errors.RasterioIOError as e:
                     if intent == 5: raise
                     time.sleep(10 * (intent + 1))
-            m = np.repeat(np.repeat(pad[a * k:(a + 1) * k, b * k:(b + 1) * k], BLOC, 0), BLOC, 1)[:h, :w]
+            m = np.repeat(np.repeat(pad_u[a * k:(a + 1) * k, b * k:(b + 1) * k], BLOC, 0), BLOC, 1)[:h, :w]
+            if ll is not None:
+                trw = tr * Affine.translation(ca, fa)
+                caixa = box(trw.c, trw.f + h * trw.e, trw.c + w * trw.a, trw.f)
+                tros_ll = ll.intersection(caixa)
+                if not tros_ll.is_empty:
+                    m = m | features.geometry_mask([mapping(tros_ll)], (h, w), trw, invert=True)
             ok = m & np.isfinite(v)
             bloc = np.where(ok, np.round(v * 100), ND).astype(np.int32)
             z[fa - tf0 * TROS: fa - tf0 * TROS + h, ca - tc0 * TROS: ca - tc0 * TROS + w] = bloc
@@ -146,7 +185,8 @@ def conca(i, feat, src, sortida, marge, font="2008"):
                        transform=trz, nodata=ND, compress="deflate", predictor=2, zlevel=9, tiled=True,
                        blockxsize=256, blockysize=256) as f:
         f.write(z, 1)
-        f.update_tags(unitats="cm", conca=nom, marge_urba_m=str(marge), font=desc)
+        f.update_tags(unitats="cm", conca=nom, marge_urba_m=str(marge), font=desc,
+                      zones="urbanes + lleres" if rieres else "urbanes")
     tmp.rename(out)
     km2 = (z != ND).sum() * 4 / 1e6
     print(f"{prefix}_{nom}: {km2:.1f} km² amb dades, {llegits} trossos, {out.stat().st_size / 1e6:.1f} MB")
@@ -161,6 +201,7 @@ def main():
         s.add_argument("--sortida", default="/tmp/met2_cat")
         s.add_argument("--marge", type=float, default=250, help="m al voltant de les zones construïdes")
         s.add_argument("--font", choices=sorted(FONTS), default="2008")
+        s.add_argument("--rieres", action="store_true", help="també franges al voltant de rius, torrents i torrentets")
     sub.choices["conca"].add_argument("--id", type=int, required=True)
     sub.choices["totes"].add_argument("--conques", default="totes")
     sub.choices["totes"].add_argument("--fils", type=int, default=4)
@@ -169,7 +210,7 @@ def main():
     CQ = conques()
     if a.ordre == "conca":
         with rasterio.open(FONTS[a.font][0]) as src:
-            conca(a.id, CQ[a.id], src, sortida, a.marge, a.font)
+            conca(a.id, CQ[a.id], src, sortida, a.marge, a.font, a.rieres)
         return
     ids = sorted(CQ) if a.conques == "totes" else [int(x) for x in a.conques.split(",")]
     fet = sortida / ("fetes.txt" if a.font == "2008" else f"fetes_{a.font}.txt")
@@ -180,7 +221,7 @@ def main():
     def una(i):
         try:
             with rasterio.open(FONTS[a.font][0]) as src:   # un lector per fil (GDAL no és segur entre fils)
-                conca(i, CQ[i], src, sortida, a.marge, a.font)
+                conca(i, CQ[i], src, sortida, a.marge, a.font, a.rieres)
             with open(fet, "a") as f:
                 f.write(f"{i}\n")
         except Exception as e:
