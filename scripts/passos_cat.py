@@ -24,7 +24,8 @@ Sense cap número triat a mà per a cada pas:
    - mig tapat: la meitat de la secció. Desguassa la meitat del cabal de disseny.
    - obert: desguassa el cabal de disseny de la norma de carreteres 5.2-IC (crescuda de 100 anys de la conca de l'obra),
      calculat com a scripts/passos.py: Gumbel regional dels màxims de pluja diària de la XEMA, Témez, Kt, Ka, i P0 =
-     absorció inicial de l'episodi amb el terreny més moll del model (la norma dimensiona amb terreny humit). Només on hi ha XEMA i episodis (conques pilot); a la resta, null.
+     absorció inicial de l'episodi amb el terreny més moll del model (la norma dimensiona amb terreny humit). Només on hi ha XEMA i episodis (conques pilot
+     i les veïnes que cauen dins la caixa de simulació d'una pilot, amb la pluja d'aquesta); a la resta, null.
    Qualsevol cabal entrant per sobre del de l'escenari va omplint el llac; quan n'entra el volum, l'aigua passa per
    sobre de la via.
 
@@ -54,6 +55,24 @@ TRENS = ("rail", "light_rail", "narrow_gauge")
 RIERES = ("river", "stream", "ditch", "drain", "canal", "brook")
 # conques del tall de 100 km² amb XEMA i episodis del model (per al cabal de disseny de l'escenari obert)
 PILOTS = {124: "ridaura", 125: "ridaura", 188: "granollers", 199: "cabrera"}
+CAIXA_RIDAURA = [2.86, 41.75, 3.09, 41.89]       # la de relleu.py (config/ridaura.json no en porta)
+
+
+def pilot_de(cid, geom_ll=None):
+    """Conca pilot que dona la pluja de disseny: la mateixa conca, o la pilot el domini de simulació de la qual (caixa de
+    config/<pilot>.json) toca la conca. Així els passos de les conques veïnes que cauen dins la simulació 2D d'una
+    pilot també tenen cabal de disseny, amb la pluja regional de la pilot."""
+    if cid in PILOTS:
+        return PILOTS[cid]
+    if geom_ll is None:
+        return None
+    from shapely.geometry import box
+    for nom in dict.fromkeys(PILOTS.values()):
+        cfg = Path("config") / f"{nom}.json"
+        caixa = json.loads(cfg.read_text()).get("caixa", CAIXA_RIDAURA if nom == "ridaura" else None) if cfg.exists() else None
+        if caixa and geom_ll.intersects(box(*caixa)):
+            return nom
+    return None
 
 
 # ---------- 1. OSM ----------
@@ -124,8 +143,8 @@ def q_disseny(area_km2, l_km, j, p24, p0):
     return c * i * area_km2 * kt / 3.6, tc
 
 
-def pluja_pilot(cid):
-    nom = PILOTS.get(cid)
+def pluja_pilot(cid, geom_ll=None):
+    nom = pilot_de(cid, geom_ll)
     if not nom:
         return None
     p24, n = p24_t100(nom)
@@ -200,7 +219,7 @@ def conca(cid, cami_mdt, vies_gz, a):
     sl = ndimage.find_objects(lab)
     via_dil = ndimage.binary_dilation(via_r > 0, iterations=a.peu)
     arbre_o = STRtree(obres) if obres else None
-    pilot = pluja_pilot(cid)
+    pilot = pluja_pilot(cid, shape(C[cid]["geometry"]))
     rec = recorreguts(fd, acc, z) if pilot else None
     fts, passos, ocupat = [], [], np.zeros(z.shape, bool)
     for k in candidats:

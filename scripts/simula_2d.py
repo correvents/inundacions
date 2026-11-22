@@ -15,6 +15,9 @@ amb el pendent de la superfície de l'aigua i la fricció de Manning, i la làmi
     --clavegueram mm/h a les zones construïdes (embornals), excepte on el calat supera --h-llera (llera saturada). Així l'aigua embassada també es buida quan para de ploure.
   - Fricció: n de Manning per coberta (o --n-natural, --n-urba amb --sense-cobertes).
   - Mar i vores del domini: l'aigua surt.
+  - Passos de torrentets sota vies (--passos, opció): per defecte tapats, com surten a l'MDT (el terraplè fa de dic).
+    Amb oberts, cada pas de scripts/passos_cat.py és un conducte amb la seva capacitat; amb arrossegalls, a més, es tapa
+    total o parcialment segons el risc d'arrossegalls (ARR 2019, scripts/arrossegalls.py), també als ponts. Vegeu scripts/passos_2d.py.
 Sortides (data/<conca>/sim2d/<id>/): un PNG de calat cada --cada minuts en lat/lon, calat màxim, l'hidrograma simulat a
 l'aforador (per validar-lo amb l'observat), index.json i, per al model d'inundació, dues graelles numèriques en UTM:
 calat màxim (cm) i minut en què cada cel·la supera 15 cm d'aigua.
@@ -189,6 +192,11 @@ def main():
     ap.add_argument("--cada", type=int, default=10, help="minuts entre fotogrames")
     ap.add_argument("--sense-cobertes", action="store_true", help="sense el mapa de cobertes de l'ICGC: WorldCover i --n-natural/--n-urba únics")
     ap.add_argument("--grup-sol", help="grup hidrològic de sòl (A-D) per al número de corba; per defecte el de config/cobertes_parametres.json")
+    ap.add_argument("--passos", choices=["tapats", "oberts", "arrossegalls"], default="tapats",
+                    help="passos de torrentets sota vies (scripts/passos_2d.py): tapats (per defecte, com l'MDT), oberts amb la seva capacitat, "
+                         "o tapats en part segons el risc d'arrossegalls (ARR 2019), també als ponts")
+    ap.add_argument("--obertura", choices=["petita", "mitjana"], default="petita",
+                    help="amb --passos arrossegalls, obertura dels passos de mida desconeguda (taula de bloqueig ARR)")
     ap.add_argument("--edificis", help="edificis del Cadastre (cadastre.py: data/<conca>/cadastre/edificis.json.gz): obstacles i soterranis")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
@@ -245,6 +253,12 @@ def main():
         sorti = np.where(urba, a.clavegueram, a.perdua_natural) / 1000 / 3600     # m/s que perd la làmina un cop superat el llindar
         n = np.where(urba, a.n_urba, a.n_natural)
     phi, psx, psy, desti, edif = obstacles(a.edificis, tr, nf, nc, dx) if a.edificis else (np.ones((nf, nc)), np.ones((nf, nc)), np.ones((nf, nc)), None, None)
+    t_pas = None
+    if a.passos != "tapats":
+        sys.path.insert(0, str(Path(__file__).parent))
+        import passos_2d as P2
+        t_pas, info_pas, resum_pas = P2.prepara(a.passos, a.obertura, tr, nf, nc, crs, z, mar, psx, psy)
+        qmax_pas, vol_pas = np.zeros(len(t_pas)), np.zeros(len(t_pas))
     # clavegueram: l'aigua que entra pels embornals surt a la riera més propera (data/<conca>/rieretes.geojson, relleu.py)
     desti_clav = None
     fr = Path("data") / cfg["conca"] / "rieretes.geojson"
@@ -353,6 +367,8 @@ def main():
         if desti_clav is not None:                                # el clavegueram desguassa a la riera (volum per cel·la → calat)
             h += np.bincount(desti_clav, weights=np.where(urba, dperd, 0.0).ravel(), minlength=nf * nc).reshape(nf, nc) / phi
         pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi)
+        if t_pas is not None and len(t_pas):                      # conductes dels passos sota vies
+            P2.transfereix(t_pas, z, h, phi, dx, dt, qmax_pas, vol_pas)
         np.maximum(hmax, h, out=hmax)
         t15[(h > 0.15) & ~np.isfinite(t15)] = t_seg / 60
         mullat = h > 0.05
@@ -398,13 +414,25 @@ def main():
         (dest / "soterranis.json").write_text(json.dumps({"inici_utc": ini.strftime("%Y-%m-%dT%H:%M"), "toca_m": 5, "llindar_cm": 15,
             "camps": ["aigua a tocar per sobre del terra de l'edifici, màxim (cm)", "minut des de inici_utc en què passa de 15 cm (null = mai)", "minuts des que passa de 15 cm fins que l'aigua del voltant baixa de 5 cm"], "edificis": sot}, separators=(",", ":")))
         print(f"Soterranis: {sum(1 for v in sot.values() if v[0] >= 15)} de {n_sot} edificis amb soterrani tenen ≥15 cm d'aigua a tocar")
+    if t_pas is not None:
+        k = 0
+        for reg in info_pas:
+            if reg.get("estat") == "conducte":
+                (ru, cu), (rd, cd) = reg["entrada"], reg["sortida"]
+                reg.update({"q_max_m3s": round(float(qmax_pas[k]), 2), "volum_m3": round(float(vol_pas[k])),
+                            "calat_max_entrada_m": round(float(hmax[ru, cu]), 2), "calat_max_sortida_m": round(float(hmax[rd, cd]), 2),
+                            "vessa": bool(hmax[ru, cu] >= reg["fondaria_m"])})
+                k += 1
+        (dest / "passos.json").write_text(json.dumps({"mode": a.passos, "obertura": a.obertura if a.passos == "arrossegalls" else None,
+                                                      "resum": resum_pas, "passos": info_pas}, ensure_ascii=False, separators=(",", ":")))
     np.minimum(np.rint(hmax * 100), 65534).astype("<u2").tofile(dest / "calat_max_cm.u2")
     np.where(np.isfinite(t15), np.minimum(t15, 65534), 65535).astype("<u2").tofile(dest / "minut_15cm.u2")
     (dest / "index.json").write_text(json.dumps({
         "limits": [[s, w], [nn, e]], "pas_m": dx, "inici_utc": ini.strftime("%Y-%m-%dT%H:%M"),
         "graella_utm": {"crs": str(crs), "x0": tr.c, "y0": tr.f, "nf": nf, "nc": nc, "fitxers": {"calat_max_cm.u2": "uint16 cm",
                         "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai", "durada_min.u2": "uint16 minuts entre superar 15 cm i l'últim moment amb més de 5 cm; 65535 = mai superat"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "q_aforador_caixa": hidro_caixa, "q_aforador_transsecte": hidro_trans, "maxim": "maxim.png", "assecat": "assecat.png", "assecat_final_mullat_km2": round(float(mullat_final.sum()) * dx * dx / 1e6, 3), "llegenda_assecat_h": [0, 1, 3, 6, 12],
-        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "perdua_sobre": a.perdua_sobre, "clavegueram_mm_h": a.clavegueram, "clavegueram_desti": "riu" if desti_clav is not None else "perdut", "h_llera_m": a.h_llera, "manning": ({"natural": a.n_natural, "construit": a.n_urba} if cob is None else "per coberta (config/cobertes_parametres.json, Chow 1959)"),
+        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "perdua_sobre": a.perdua_sobre, "clavegueram_mm_h": a.clavegueram, "clavegueram_desti": "riu" if desti_clav is not None else "perdut", "h_llera_m": a.h_llera,
+                      "passos": "tapats (MDT)" if t_pas is None else {"mode": a.passos, "obertura": a.obertura if a.passos == "arrossegalls" else None, **resum_pas, "fitxer": "passos.json"}, "manning": ({"natural": a.n_natural, "construit": a.n_urba} if cob is None else "per coberta (config/cobertes_parametres.json, Chow 1959)"),
                       "cobertes": None if cob is None else {"font": "Mapa de cobertes del sòl de Catalunya, ICGC (CC BY 4.0)", "absorcio": "ia_natural × S/S̄ (número de corba TR-55)", "grup_sol": a.grup_sol or json.loads(Path("config/cobertes_parametres.json").read_text())["grup_hidrologic_sol"]},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2],

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       episodis:
-        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150}]; opcionals per episodi (passen per davant de les entrades): "pas", "perdua", "perdua_sobre" (calat/pluja), "grup_sol" (A-D), "cobertes" ("no"), "clavegueram_desti" (riu/perdut)'
+        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150}]; opcionals per episodi (passen per davant de les entrades): "pas", "perdua", "perdua_sobre" (calat/pluja), "grup_sol" (A-D), "cobertes" ("no"), "clavegueram_desti" (riu/perdut), "passos" (tapats/oberts/arrossegalls), "obertura" (petita/mitjana)'
         required: true
       conca:
         description: "Conca (config/<conca>.json)"
@@ -61,6 +61,7 @@ jobs:
             --ia-natural "${{ matrix.ep.ia }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}" \
             --perdua-natural "${{ matrix.ep.perdua || inputs.perdua_natural }}" --perdua-sobre "${{ matrix.ep.perdua_sobre || 'calat' }}" \
             $([ -n "${{ matrix.ep.grup_sol }}" ] && echo --grup-sol ${{ matrix.ep.grup_sol }}) $([ "${{ matrix.ep.cobertes }}" = "no" ] && echo --sense-cobertes) --clavegueram-desti "${{ matrix.ep.clavegueram_desti || 'riu' }}" \
+            --passos "${{ matrix.ep.passos || 'tapats' }}" --obertura "${{ matrix.ep.obertura || 'petita' }}" \
             --clavegueram "${{ inputs.clavegueram }}" --extra-hores "${{ inputs.extra_hores }}"
       - name: Desa
         run: |
