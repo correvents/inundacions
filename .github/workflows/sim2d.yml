@@ -30,8 +30,8 @@ on:
       clavegueram:
         description: "Capacitat dels embornals a les zones construïdes (mm/h)"
         default: "30"
-      met2:
-        description: "Relleu: MET 2 m de l'ICGC a les zones urbanes (si) o només MDT 5 m de l'IGN (no). Amb si, convé un pas petit (2-5 m)"
+      met:
+        description: "Relleu a les zones urbanes: no (només MDT 5 m IGN), 2008 (MET 2 m ICGC, LiDAR 2008-2011) o 2021 (MET 1 m ICGC 2021-2023 a 2 m). Amb MET, convé un pas petit (2-5 m)"
         default: "no"
 
 permissions:
@@ -54,9 +54,9 @@ jobs:
       - run: pip install requests numpy rasterio pyproj shapely pillow numba scipy
       - name: Relleu
         run: |
-          if [ "${{ inputs.met2 }}" = "si" ]; then
+          if [ "${{ inputs.met }}" = "2008" ] || [ "${{ inputs.met }}" = "2021" ]; then
             # reixa directament al pas de la simulació (fins a 10 m), perquè el detall de 2 m no es perdi abans
-            python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas "$(python3 -c 'print(min(10, float("${{ inputs.pas }}")))')" --nomes-mdt --met2
+            python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas "$(python3 -c 'print(min(10, float("${{ inputs.pas }}")))')" --nomes-mdt --met "${{ inputs.met }}"
           else
             python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas 10 --nomes-mdt
           fi
