@@ -192,7 +192,7 @@ def resumeix(j):
     """Resposta de Consulta_DNPRC → [[planta, ús], ...] (un per immoble o, si és un sol immoble, per construcció)."""
     r = j.get("consulta_dnprcResult", j)
     if r.get("lerr"):
-        return {"error": str(troba(r["lerr"], "des"))}
+        return {"no": str(troba(r["lerr"], "des"))}         # resposta definitiva (p. ex. la referència no és una parcel·la): no es repeteix
     out = []
     for u in llista(troba_obj(r, "lrcdnp", "rcdnp")):
         out.append([troba(u, "pt") or "", troba(u, "luso") or ""])
@@ -238,7 +238,9 @@ def ordre_ovc(a):
     previ = {}
     if a.previ and Path(a.previ).exists():
         previ = json.loads(gzip.open(a.previ, "rt").read())
-    refs = [r for r in sorted(ed) if not isinstance(previ.get(r), list)]
+    fet = lambda v: isinstance(v, list) or (isinstance(v, dict) and "no" in v)
+    # primer els edificis amb soterrani i després els de més plantes (on hi ha més gent i locals), la resta al final
+    refs = sorted((r for r in ed if not fet(previ.get(r))), key=lambda r: (-(ed[r][2] > 0), -ed[r][1], r))
     if a.max:
         refs = refs[:a.max]
     print(f"{len(previ)} parcel·les ja consultades; en consulto {len(refs)}")
@@ -246,7 +248,9 @@ def ordre_ovc(a):
     with ThreadPoolExecutor(a.fils) as ex:
         for ref, res in ex.map(consulta, refs):
             previ[ref] = res; fets += 1
-            if isinstance(res, dict):
+            if isinstance(res, dict) and "no" in res:
+                seguits = 0
+            elif isinstance(res, dict):
                 errors += 1; seguits += 1
                 if errors <= 5: print(f"  Error {ref}: {res.get('error')}")
                 if seguits >= 40:

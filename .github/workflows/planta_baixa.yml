@@ -17,6 +17,8 @@ on:
       max:
         description: "Màxim de parcel·les noves per conca en aquesta passada (0 = totes)"
         default: "0"
+  schedule:
+    - cron: "17 1 * * *"     # cada nit continua la consulta per parcel·la on es va quedar (treure-ho quan estigui completa)
   push:
     branches: [claude/project-thread-4fpmsl]
     paths: [scripts/planta_baixa.py, .github/workflows/planta_baixa.yml]
@@ -27,9 +29,9 @@ permissions:
 env:
   ETIQUETA: planta-baixa-cat
   LOTS: 16
-  FASES: ${{ inputs.fases || 'inspire,ovc,conca' }}
+  FASES: ${{ inputs.fases || (github.event_name == 'schedule' && 'ovc,conca') || 'inspire,ovc,conca' }}
   CONQUES: ${{ inputs.conques || '124,125,188,199' }}
-  MAX: ${{ inputs.max || '200' }}
+  MAX: ${{ inputs.max || (github.event_name == 'schedule' && '0') || '200' }}
 
 jobs:
   prepara:
@@ -52,7 +54,7 @@ jobs:
 
   inspire:
     needs: prepara
-    if: contains(github.event.inputs.fases || 'inspire,ovc,conca', 'inspire')
+    if: contains(github.event.inputs.fases || (github.event_name == 'schedule' && 'ovc,conca') || 'inspire,ovc,conca', 'inspire')
     runs-on: ubuntu-latest
     timeout-minutes: 300
     strategy:
