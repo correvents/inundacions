@@ -1,11 +1,21 @@
 {
  "passos_per_font": {
-  "ACA PSE": 0,
-  "OSM": 87,
-  "empíric": 0,
-  "sense": 52111
+  "ACA PSE": 722,
+  "OSM": 24,
+  "empíric": 16297,
+  "sense": 35155
  },
- "ajust_empiric": null,
- "aca_pse": 0,
+ "ajust_empiric": {
+  "n": 73,
+  "n_aca": 73,
+  "n_osm": 0,
+  "a": 2.6117,
+  "b": 0.3625,
+  "r2": 0.175,
+  "p25": -0.624,
+  "p75": 0.289,
+  "formula": "A_m2 = exp(a) · S_km2^b"
+ },
+ "aca_pse": 2619,
  "osm_culverts_amb_mida": 183
 }

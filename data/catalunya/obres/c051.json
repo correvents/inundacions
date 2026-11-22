@@ -1,1 +1,1 @@
-{"51-1":{"tipus_pas":"terraplè","conca_km2":3.27,"hw_m":2.0,"hw_font":"fondària del llac si es tapa (MDT 5 m IGN, metres enters)"}}
+{"51-1":{"tipus_pas":"terraplè","conca_km2":3.27,"hw_m":2.0,"hw_font":"fondària del llac si es tapa (MDT 5 m IGN, metres enters)","font":"empíric","ref":"ajust secció~conca amb obres ACA+OSM (index.json)","forma":"equivalent quadrada","B_m":10.46,"H_m":2.0,"n":1,"A_interval_m2":[11.21,27.93],"q_obert_m3s":50.44,"q_font":"control d'entrada (boca lliure / orifici Cd 0,6) amb hw","q_mig_tapat_m3s":34.05}}
