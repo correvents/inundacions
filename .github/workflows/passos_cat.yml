@@ -80,13 +80,15 @@ jobs:
             else fallades="$fallades $id"; fi
             rm -f /tmp/mdt/*.tif
           done
-          echo "Fallades:$fallades"; mkdir -p data/catalunya/passos
-          echo "$fallades" > data/catalunya/passos/fallades_${{ strategy.job-index }}.txt
+          echo "Fallades:$fallades"; mkdir -p /tmp/sortida
+          # només les conques d'aquest lot: si cada lot puja tota la carpeta, en ajuntar-los el mateix fitxer es pot escriure barrejat
+          for id in ${{ matrix.lot }}; do f=$(printf "data/catalunya/passos/c%03d.geojson" "$id"); [ -f "$f" ] && cp "$f" /tmp/sortida/; done
+          echo "$fallades" > /tmp/sortida/fallades_${{ strategy.job-index }}.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: passos-${{ strategy.job-index }}
-          path: data/catalunya/passos/
+          path: /tmp/sortida/
           if-no-files-found: ignore
 
   desa:
