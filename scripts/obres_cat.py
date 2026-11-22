@@ -324,7 +324,10 @@ def tot(a):
                     s = math.sqrt(A); H = min(s, e["hw_m"]) if e.get("hw_m") else s
                     e.update({"font": "empíric", "ref": "ajust secció~conca amb obres ACA+OSM (index.json)", "forma": "equivalent quadrada",
                               "B_m": round(A / H, 2), "H_m": round(H, 2), "n": 1,
-                              "A_interval_m2": [round(A * math.exp(aj["p25"]), 2), round(A * math.exp(aj["p75"]), 2)]})
+                              "A_interval_m2": [round(A * math.exp(aj["p25"]), 2), round(A * math.exp(aj["p75"]), 2)],
+                              "confianca": "baixa" if aj["r2"] < 0.5 or aj["n_osm"] < 30 else "mitjana",
+                              "avis": "ajust amb obres de les fonts 1-2; si gairebé totes són ACA ≥ 2 m, sobreestima les obres petites"
+                              if aj["n_osm"] < 30 else None})
                 else:
                     e["font"] = None
             if e.get("q_obert_m3s") is None and e.get("B_m") and e.get("H_m") and e.get("hw_m"):
