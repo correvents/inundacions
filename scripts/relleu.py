@@ -13,7 +13,11 @@ Escriu:
   data/<conca>/zones_baixes.png i zones_baixes.json (límits per superposar-la al mapa)
   /tmp/relleu/mdt.tif (la reixa, per a la simulació 2D; no va al repo)
 
-Ús:  python3 scripts/relleu.py --config config/ridaura.json [--pas 10] [--llindar-km2 0.05]"""
+Opció --met: a les zones urbanes, un MET de 2 m de l'ICGC (scripts/met2_cat.py) substitueix l'MDT de 5 m de l'IGN a
+la reixa; fora d'aquestes zones es queda el de 5 m. --met 2008: MET 2 m LiDAR 2008-2011 (Release met2-cat);
+--met 2021: MET 1 m LiDAR 2021-2023 agregat a 2 m (Release met21-cat). Per defecte, només el de 5 m.
+
+Ús:  python3 scripts/relleu.py --config config/ridaura.json [--pas 10] [--llindar-km2 0.05] [--met 2008|2021]"""
 import argparse, json, sys, time
 from pathlib import Path
 import numpy as np, requests
@@ -71,12 +75,44 @@ def a_utm31(z, tr, crs, nodata, pas):
     return out, dtr, dst
 
 
+MET_URL = {"2008": "https://github.com/correvents/inundacions/releases/download/met2-cat/met2_{}.tif",
+           "2021": "https://github.com/correvents/inundacions/releases/download/met21-cat/met21_{}.tif"}
+CONQUES = Path("data/catalunya/conques/conques_100km2.geojson")
+
+
+def met2(z, tr, crs, font="2008"):
+    """Posa el MET de 2 m de l'ICGC (zones urbanes, un fitxer per conca del tall de 100 km²) a la reixa z, on n'hi ha."""
+    from shapely.geometry import box
+    b = box(*CAIXA)
+    n0 = np.isfinite(z).sum()
+    posats = np.zeros(z.shape, bool)
+    for f in json.loads(CONQUES.read_text())["features"]:
+        if not shape(f["geometry"]).intersects(b):
+            continue
+        nom = f"c{f['properties']['id']:03d}"
+        try:
+            with rasterio.open(MET_URL[font].format(nom)) as src:
+                v = src.read(1).astype("float32")
+                v[v == src.nodata] = np.nan
+                tmp = np.full(z.shape, np.nan, dtype="float32")
+                reproject(v / 100, tmp, src_transform=src.transform, src_crs=src.crs, src_nodata=np.nan,
+                          dst_transform=tr, dst_crs=crs, dst_nodata=np.nan, resampling=Resampling.average)
+        except rasterio.errors.RasterioIOError:
+            continue                          # conca sense zones urbanes (no té fitxer)
+        ok = np.isfinite(tmp)
+        z[ok] = tmp[ok]
+        posats |= ok
+    print(f"MET 2 m ICGC ({font}): {posats.sum() / max(n0, 1) * 100:.1f} % de la reixa ({posats.sum() * abs(tr.a * tr.e) / 1e6:.1f} km²)")
+    return z
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
     ap.add_argument("--pas", type=float, default=10)
     ap.add_argument("--llindar-km2", type=float, default=0.05)
     ap.add_argument("--nomes-mdt", action="store_true", help="només prepara /tmp/relleu/mdt.tif (per a la simulació 2D)")
+    ap.add_argument("--met", choices=["2008", "2021"], help="MET de 2 m de l'ICGC a les zones urbanes: LiDAR 2008-2011 o 2021-2023")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
     global CAIXA
@@ -86,6 +122,8 @@ def main():
 
     z5, tr5, crs5, nd5 = baixa_mdt()
     z, tr, crs = a_utm31(z5, tr5, crs5, nd5, a.pas)
+    if a.met:
+        z = met2(z, tr, crs, a.met)
     z[z < -50] = np.nan
     mar = np.isnan(z) | (z <= 0.2)
     perfil = dict(driver="GTiff", height=z.shape[0], width=z.shape[1], count=1, dtype="float32", crs=crs, transform=tr,

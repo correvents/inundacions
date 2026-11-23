@@ -42,6 +42,9 @@ on:
       opcions:
         description: "Opcions a provar, separades per espais: diposit (edificis com a dipòsit), velocitat (velocitat i perill H1-H6)"
         default: ""
+      met:
+        description: "Relleu a les zones urbanes: no (només MDT 5 m IGN), 2008 (MET 2 m ICGC, LiDAR 2008-2011) o 2021 (MET 1 m ICGC 2021-2023 a 2 m). Amb MET, convé un pas petit (2-5 m)"
+        default: "no"
 
 permissions:
   contents: write
@@ -62,7 +65,13 @@ jobs:
           python-version: "3.12"
       - run: pip install requests numpy rasterio pyproj shapely pillow numba scipy
       - name: Relleu
-        run: python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas 10 --nomes-mdt
+        run: |
+          if [ "${{ inputs.met }}" = "2008" ] || [ "${{ inputs.met }}" = "2021" ]; then
+            # reixa directament al pas de la simulació (fins a 10 m), perquè el detall de 2 m no es perdi abans
+            python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas "$(python3 -c 'print(min(10, float("${{ inputs.pas }}")))')" --nomes-mdt --met "${{ inputs.met }}"
+          else
+            python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas 10 --nomes-mdt
+          fi
       - name: Simulació
         env:
           PLANTA_BAIXA: ${{ inputs.planta_baixa }}
