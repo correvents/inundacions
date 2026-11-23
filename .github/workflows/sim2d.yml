@@ -39,6 +39,9 @@ on:
       clavegueram_ofegat:
         description: "Calat al desguàs (m) a partir del qual la xarxa no desguassa (0 = mai)"
         default: "0"
+      opcions:
+        description: "Opcions a provar, separades per espais: diposit (edificis com a dipòsit), velocitat (velocitat i perill H1-H6)"
+        default: ""
 
 permissions:
   contents: write
@@ -63,7 +66,16 @@ jobs:
       - name: Simulació
         env:
           PLANTA_BAIXA: ${{ inputs.planta_baixa }}
+          OPCIONS: ${{ inputs.opcions }}
         run: |
+          OPC=""
+          for o in $OPCIONS; do
+            case "$o" in
+              diposit) OPC="$OPC --edificis-diposit" ;;
+              velocitat) OPC="$OPC --velocitat" ;;
+              *) echo "Opció desconeguda: $o"; exit 1 ;;
+            esac
+          done
           rm -rf "data/${{ inputs.conca }}/sim2d/${{ matrix.ep.id }}"
           EP=""; [ -n "${{ matrix.ep.episodi }}" ] && EP="--episodi data/${{ inputs.conca }}/episodis/${{ matrix.ep.episodi }}"
           ED="data/${{ inputs.conca }}/cadastre/edificis.json.gz"; [ -f "$ED" ] && [ "${{ inputs.edificis }}" != "no" ] && EP="$EP --edificis $ED"
@@ -75,7 +87,7 @@ jobs:
             --radar "data/${{ inputs.conca }}/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ inputs.pas }}" \
             --ia-natural "${{ matrix.ep.ia }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}" \
             --perdua-natural "${{ inputs.perdua_natural }}" --clavegueram "${{ inputs.clavegueram }}" \
-            --escenari-clavegueram "${{ inputs.escenari_clavegueram }}" --clavegueram-ofegat "${{ inputs.clavegueram_ofegat }}" --extra-hores "${{ inputs.extra_hores }}"
+            --escenari-clavegueram "${{ inputs.escenari_clavegueram }}" --clavegueram-ofegat "${{ inputs.clavegueram_ofegat }}" --extra-hores "${{ inputs.extra_hores }}" $OPC
       - name: Desa
         run: |
           git config user.name "github-actions[bot]"

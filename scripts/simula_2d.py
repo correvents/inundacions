@@ -23,6 +23,10 @@ amb el pendent de la superfície de l'aigua i la fricció de Manning, i la làmi
 Sortides (data/<conca>/sim2d/<id>/): un PNG de calat cada --cada minuts en lat/lon, calat màxim, l'hidrograma simulat a
 l'aforador (per validar-lo amb l'observat), index.json i, per al model d'inundació, dues graelles numèriques en UTM:
 calat màxim (cm) i minut en què cada cel·la supera 15 cm d'aigua.
+Opcions activables (per provar amb episodis quines ajuden):
+  --edificis-diposit  els edificis són dipòsits: l'aigua hi entra per portals i rampes de garatge (abocador) i omple
+                      soterranis i plantes baixes (scripts/diposit.py); surt edificis_diposit.json i el volum retingut.
+  --velocitat         velocitat màxima de l'aigua i classe de perill AIDR H1-H6 (calat, velocitat, calat × velocitat).
 
 Ús:  python3 scripts/simula_2d.py --config config/ridaura.json --mdt /tmp/relleu/mdt.tif \\
          --radar data/ridaura/episodis/2026-10-03_radar.json --episodi data/ridaura/episodis/2026-10-04.json"""
@@ -84,6 +88,31 @@ def pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi):
             if i > 0: ent += psy[i - 1, j] * qy[i - 1, j]
             if i < nf - 1: ent -= psy[i, j] * qy[i, j]
             h[i, j] = max(h[i, j] + dt * ent / (dx * phi[i, j]), 0.0)
+
+
+@njit(cache=True)
+def velocitat(h, qx, qy, actiu, vmax, hvmax, perill, hmin):
+    """Velocitat a cada cel·la (mitjana dels cabals unitaris de les quatre cares / calat) i classe de perill AIDR H1-H6
+    (Australian Disaster Resilience Handbook 7, Smith et al. 2014) segons calat, velocitat i calat × velocitat. Desa els màxims."""
+    nf, nc = h.shape
+    for i in range(nf):
+        for j in range(nc):
+            hh = h[i, j]
+            if not actiu[i, j] or hh < hmin:
+                continue
+            ux = 0.5 * ((qx[i, j - 1] if j > 0 else 0.0) + qx[i, j]) / hh
+            uy = 0.5 * ((qy[i - 1, j] if i > 0 else 0.0) + qy[i, j]) / hh
+            v = np.sqrt(ux * ux + uy * uy)
+            hv = hh * v
+            if v > vmax[i, j]: vmax[i, j] = v
+            if hv > hvmax[i, j]: hvmax[i, j] = hv
+            if hh <= 0.3 and v <= 2.0 and hv <= 0.3: c = 1
+            elif hh <= 0.5 and v <= 2.0 and hv <= 0.6: c = 2
+            elif hh <= 1.2 and v <= 2.0 and hv <= 0.6: c = 3
+            elif hh <= 2.0 and v <= 2.0 and hv <= 1.0: c = 4
+            elif hh <= 4.0 and v <= 4.0 and hv <= 4.0: c = 5
+            else: c = 6
+            if c > perill[i, j]: perill[i, j] = c
 
 
 @njit(cache=True)
@@ -222,6 +251,10 @@ def main():
                     "com feta amb grup B a tot arreu, i el mapa també en canvia la mitjana")
     ap.add_argument("--planta-baixa", nargs="+", help="OPCIÓ: ús de la planta baixa (planta_baixa.py: data/catalunya/planta_baixa/cNNN.json, una o més conques); amb --edificis, compta les plantes baixes amb aigua a tocar per ús")
     ap.add_argument("--edificis", help="edificis del Cadastre (cadastre.py: data/<conca>/cadastre/edificis.json.gz): obstacles i soterranis")
+    ap.add_argument("--edificis-diposit", action="store_true", help="OPCIÓ: els edificis són dipòsits; l'aigua hi entra per portals i "
+                    "rampes i omple soterranis i plantes baixes (diposit.py). Cal --edificis")
+    ap.add_argument("--diposits", help="dipòsits precalculats (diposit.py: diposits.json.gz o Release diposits-cat); sense, es calculen de --edificis")
+    ap.add_argument("--velocitat", action="store_true", help="OPCIÓ: calcula i desa la velocitat màxima de l'aigua i el perill AIDR H1-H6")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
     rad = json.loads(Path(a.radar).read_text())
@@ -305,6 +338,17 @@ def main():
             print(f"Clavegueram «{a.escenari_clavegueram}»: {np.nanmean(cap[amb]):.0f} mm/h de mitjana a les zones urbanes, "
                   f"{len(clav['cel'])} cel·les desguassen a dins el domini")
     phi, psx, psy, desti, edif = obstacles(a.edificis, tr, nf, nc, dx) if a.edificis else (np.ones((nf, nc)), np.ones((nf, nc)), np.ones((nf, nc)), None, None)
+    dip = None
+    if a.edificis_diposit:
+        if not a.edificis:
+            sys.exit("--edificis-diposit necessita --edificis")
+        sys.path.insert(0, str(Path(__file__).parent))
+        import diposit as D
+        if a.diposits:
+            files = D.llegeix(a.diposits)
+        else:
+            files = D.per_edifici(edif["parts"])
+        dip = D.Diposits(files, tr, nf, nc, phi, desti, z0, tr_mdt)
 
     # pluja: graella del radar a la reixa, amb correcció horària amb el pluviòmetre
     to_ll = Transformer.from_crs(crs, 4326, always_xy=True)
@@ -342,6 +386,8 @@ def main():
     hmax = np.zeros((nf, nc))
     t15 = np.full((nf, nc), np.inf)                               # primer moment amb més de 15 cm d'aigua (min des de l'inici)
     t_mullat = np.zeros((nf, nc))                                 # darrer moment amb més de 5 cm d'aigua (min des de l'inici)
+    if a.velocitat:
+        vmax = np.zeros((nf, nc)); hvmax = np.zeros((nf, nc)); perill = np.zeros((nf, nc), dtype=np.uint8)
     ini = temps_rad[0] - timedelta(minutes=rad["interval_min"])
     fi_radar = temps_rad[-1]; fi = fi_radar + timedelta(hours=a.extra_hores)
     dest = Path("data") / cfg["conca"] / "sim2d" / (a.id or fi.strftime("%Y-%m-%d")); dest.mkdir(parents=True, exist_ok=True)
@@ -393,7 +439,11 @@ def main():
             h.ravel()[:] += np.bincount(clav["desg"], weights=v, minlength=nf * nc) / phi.ravel()
         else:
             h -= perd
+        if dip is not None:                                       # entrada i sortida d'aigua dels edificis
+            dip.pas(z, h, phi, dx, dt, t_seg / 60)
         pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi)
+        if a.velocitat:
+            velocitat(h, qx, qy, actiu, vmax, hvmax, perill, 0.05)
         np.maximum(hmax, h, out=hmax)
         t15[(h > 0.15) & ~np.isfinite(t15)] = t_seg / 60
         mullat = h > 0.05
@@ -441,17 +491,54 @@ def main():
     if edif is not None and a.planta_baixa:
         pb_resum = plantes_baixes(a.planta_baixa, edif, dest, ini, tr, nf, nc, dx, hmax, t15, durada, z, z0, tr_mdt)
     np.minimum(np.rint(hmax * 100), 65534).astype("<u2").tofile(dest / "calat_max_cm.u2")
+    fitxers_ext, vel_info, dip_info = {}, None, None
+    if a.velocitat:
+        def png_classes(v, llindars, colors, nom):
+            out = np.zeros((lnf, lnc), dtype=np.float32)
+            reproject(v.astype(np.float32), out, src_transform=tr, src_crs=crs, dst_transform=ll_tr, dst_crs="EPSG:4326", resampling=Resampling.nearest)
+            rgba = np.zeros((lnf, lnc, 4), dtype=np.uint8)
+            for ll, c in zip(llindars, colors):
+                rgba[out >= ll] = c
+            Image.fromarray(rgba, "RGBA").save(dest / nom, optimize=True)
+        png_classes(vmax, [0.25, 0.5, 1, 2, 3], [(255, 255, 204, 170), (161, 218, 180, 190), (65, 182, 196, 210), (34, 94, 168, 225), (37, 52, 148, 240)], "velocitat.png")
+        png_classes(perill, [1, 2, 3, 4, 5, 6], [(255, 255, 178, 150), (254, 217, 118, 180), (254, 178, 76, 200), (253, 141, 60, 215), (240, 59, 32, 230), (177, 0, 38, 240)], "perill.png")
+        np.minimum(np.rint(vmax * 100), 65534).astype("<u2").tofile(dest / "velocitat_max_cms.u2")
+        np.minimum(np.rint(hvmax * 100), 65534).astype("<u2").tofile(dest / "hv_max_cm2s.u2")
+        perill.astype("u1").tofile(dest / "perill_max.u1")
+        fitxers_ext = {"velocitat_max_cms.u2": "uint16 velocitat màxima (cm/s) on el calat passa de 5 cm",
+                       "hv_max_cm2s.u2": "uint16 màxim de calat × velocitat (m²/s × 100)",
+                       "perill_max.u1": "uint8 classe de perill AIDR H1-H6 màxima (0 = sec)"}
+        moll = hmax > 0.05
+        vel_info = {"png": "velocitat.png", "perill_png": "perill.png", "llegenda_velocitat_ms": [0.25, 0.5, 1, 2, 3],
+                    "perill": "AIDR Handbook 7 (Smith et al. 2014): H1 ≤0,3 m i hv ≤0,3; H2 ≤0,5 m, hv ≤0,6 (cotxes petits); H3 ≤1,2 m (vehicles, infants); H4 ≤2 m, hv ≤1 (persones); H5 ≤4 m, v ≤4, hv ≤4 (edificis vulnerables); H6 la resta",
+                    "km2_per_classe": {f"H{c}": round(float((perill == c).sum()) * dx * dx / 1e6, 3) for c in range(1, 7)},
+                    "velocitat_p99_ms": round(float(np.percentile(vmax[moll], 99)), 2) if moll.any() else 0}
+        print(f"Velocitat: p99 {vel_info['velocitat_p99_ms']} m/s; perill km² {vel_info['km2_per_classe']}")
+    if dip is not None:
+        res = dip.resultat()
+        (dest / "edificis_diposit.json").write_text(json.dumps({"inici_utc": ini.strftime("%Y-%m-%dT%H:%M"),
+            "camps": ["calat màxim a la planta baixa (cm)", "% del soterrani ple (null = no en té)", "minut des de inici_utc en què hi comença a entrar aigua", "m³ màxims dins l'edifici"],
+            "edificis": res}, separators=(",", ":")))
+        dip_info = {"fitxer": "edificis_diposit.json", "hipotesis": D.hipotesis(), "edificis_amb_aigua": len(res),
+                    "soterranis_plens_50pct": sum(1 for v in res.values() if v[1] is not None and v[1] >= 50),
+                    "plantes_baixes_15cm": sum(1 for v in res.values() if v[0] >= 15),
+                    "entrat_hm3": round(dip.entrat / 1e6, 4), "tornat_al_carrer_hm3": round(dip.sortit / 1e6, 4),
+                    "retingut_final_hm3": round(float(dip.V.sum()) / 1e6, 4)}
+        print(f"Dipòsit: aigua a {len(res)} edificis; entra {dip_info['entrat_hm3']} hm³, en torna {dip_info['tornat_al_carrer_hm3']}, "
+              f"queda {dip_info['retingut_final_hm3']}; {dip_info['soterranis_plens_50pct']} soterranis ≥50 % plens, {dip_info['plantes_baixes_15cm']} plantes baixes ≥15 cm")
     np.where(np.isfinite(t15), np.minimum(t15, 65534), 65535).astype("<u2").tofile(dest / "minut_15cm.u2")
     (dest / "index.json").write_text(json.dumps({
         "limits": [[s, w], [nn, e]], "pas_m": dx, "inici_utc": ini.strftime("%Y-%m-%dT%H:%M"),
         "graella_utm": {"crs": str(crs), "x0": tr.c, "y0": tr.f, "nf": nf, "nc": nc, "fitxers": {"calat_max_cm.u2": "uint16 cm",
-                        "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai", "durada_min.u2": "uint16 minuts entre superar 15 cm i l'últim moment amb més de 5 cm; 65535 = mai superat"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png", "assecat": "assecat.png", "assecat_final_mullat_km2": round(float(mullat_final.sum()) * dx * dx / 1e6, 3), "llegenda_assecat_h": [0, 1, 3, 6, 12],
+                        "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai", "durada_min.u2": "uint16 minuts entre superar 15 cm i l'últim moment amb més de 5 cm; 65535 = mai superat", **fitxers_ext}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png", "assecat": "assecat.png", "assecat_final_mullat_km2": round(float(mullat_final.sum()) * dx * dx / 1e6, 3), "llegenda_assecat_h": [0, 1, 3, 6, 12],
         "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "clavegueram_escenari": a.escenari_clavegueram if clav is not None else "fix",
                       "clavegueram_factor_collapsat": a.factor_collapsat if a.escenari_clavegueram == "collapsat" else None, "clavegueram_ofegat_m": a.clavegueram_ofegat or None, "h_llera_m": a.h_llera, "manning": ({"natural": a.n_natural, "construit": a.n_urba} if cob is None else "per coberta (config/cobertes_parametres.json, Chow 1959)"),
                       "cobertes": None if cob is None else {"font": "Mapa de cobertes del sòl de Catalunya, ICGC (CC BY 4.0)", "absorcio": "ia_natural × S/S̄ (número de corba TR-55)", "grup_sol": a.grup_sol or json.loads(Path("config/cobertes_parametres.json").read_text())["grup_hidrologic_sol"],
                                                     "sol_referencia": a.sol_referencia},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2],
+        "opcions": {"edificis_diposit": dip is not None, "velocitat": bool(a.velocitat)},
+        "velocitat": vel_info, "diposit": dip_info,
         "edificis": None if edif is None else {"font": "Cadastre (INSPIRE Buildings)", "metode": "porositat: els edificis treuen espai i amplada de pas a cada cel·la; la pluja de les teulades va al carrer",
                                                "ocupacio_pct": edif["ocupacio_pct"], "soterranis": "soterranis.json",
                                                "soterranis_risc": sum(1 for v in sot.values() if v[0] >= 15)},
