@@ -1,0 +1,138 @@
+name: Ús de la planta baixa (Cadastre)
+
+# 1) INSPIRE: ús principal, habitatges i unitats de cada edifici de tot Catalunya → Release `planta-baixa-cat` (us_MMMMM.json.gz).
+# 2) Consulta per parcel·la (OVC Consulta_DNPRC): ús real de cada immoble i planta, per a les conques triades
+#    → Release `planta-baixa-cat` (pb_ovc_cNNN.json.gz). Continua on ho va deixar: es pot rellançar fins que estigui complet.
+# 3) Capa per conca: data/catalunya/planta_baixa/cNNN.json (opció --planta-baixa de simula_2d.py).
+
+on:
+  workflow_dispatch:
+    inputs:
+      fases:
+        description: "Fases: inspire, ovc, conca (separades per comes)"
+        default: "inspire,ovc,conca"
+      conques:
+        description: "Conques (tall de 100 km²) per a la consulta per parcel·la i la capa"
+        default: "124,125,188,199"
+      max:
+        description: "Màxim de parcel·les noves per conca en aquesta passada (0 = totes)"
+        default: "0"
+  schedule:
+    - cron: "17 1 * * *"     # cada nit continua la consulta per parcel·la on es va quedar (treure-ho quan estigui completa)
+  push:
+    branches: [claude/project-thread-4fpmsl]
+    paths: [scripts/planta_baixa.py, .github/workflows/planta_baixa.yml]
+
+permissions:
+  contents: write
+
+env:
+  ETIQUETA: planta-baixa-cat
+  LOTS: 16
+  FASES: ${{ inputs.fases || (github.event_name == 'schedule' && 'ovc,conca') || 'inspire,ovc,conca' }}
+  CONQUES: ${{ inputs.conques || '124,125,188,199' }}
+  MAX: ${{ inputs.max || (github.event_name == 'schedule' && '0') || '200' }}
+
+jobs:
+  prepara:
+    runs-on: ubuntu-latest
+    outputs:
+      lots: ${{ steps.m.outputs.lots }}
+      conques: ${{ steps.m.outputs.conques }}
+    steps:
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$ETIQUETA" -R "${{ github.repository }}" >/dev/null 2>&1 || \
+          gh release create "$ETIQUETA" -R "${{ github.repository }}" --target main --title "Ús de la planta baixa (Cadastre)" \
+            --notes "us_MMMMM.json.gz: ús principal, habitatges i unitats de cada edifici (INSPIRE Buildings). pb_ovc_cNNN.json.gz: planta i ús de cada immoble per parcel·la (Cadastre, Consulta_DNPRC) de la conca NNN. Fet amb scripts/planta_baixa.py."
+      - id: m
+        run: |
+          echo "lots=$(python3 -c "import json;print(json.dumps(list(range($LOTS))))")" >> "$GITHUB_OUTPUT"
+          echo "conques=$(python3 -c "import json;print(json.dumps([int(x) for x in '$CONQUES'.split(',') if x.strip()]))")" >> "$GITHUB_OUTPUT"
+
+  inspire:
+    needs: prepara
+    if: contains(github.event.inputs.fases || (github.event_name == 'schedule' && 'ovc,conca') || 'inspire,ovc,conca', 'inspire')
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        lot: ${{ fromJson(needs.prepara.outputs.lots) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy rasterio pyproj shapely pillow lxml
+      - name: Lot ${{ matrix.lot }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/planta_baixa
+          gh api "repos/${{ github.repository }}/releases/tags/$ETIQUETA" --paginate -q '.assets[].name' > /tmp/ja.txt 2>/dev/null || true
+          python3 scripts/planta_baixa.py inspire --lot ${{ matrix.lot }} --lots $LOTS --salta /tmp/ja.txt
+          ls /tmp/planta_baixa/us_*.json.gz >/dev/null 2>&1 && \
+            gh release upload "$ETIQUETA" /tmp/planta_baixa/us_*.json.gz -R "${{ github.repository }}" --clobber || true
+
+  ovc:
+    needs: prepara
+    if: contains(github.event.inputs.fases || 'inspire,ovc,conca', 'ovc')
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      max-parallel: 2                    # el Cadastre talla si hi ha massa peticions alhora
+      matrix:
+        conca: ${{ fromJson(needs.prepara.outputs.conques) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy rasterio pyproj shapely pillow lxml
+      - name: Conca ${{ matrix.conca }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/planta_baixa
+          F=$(printf "pb_ovc_c%03d.json.gz" ${{ matrix.conca }})
+          gh release download "$ETIQUETA" -R "${{ github.repository }}" -p "$F" -D /tmp/previ 2>/dev/null || true
+          python3 scripts/planta_baixa.py ovc --conca ${{ matrix.conca }} --max "$MAX" --previ "/tmp/previ/$F" --minuts 300
+          for i in 1 2 3 4 5 6; do gh release upload "$ETIQUETA" "/tmp/planta_baixa/$F" -R "${{ github.repository }}" --clobber && exit 0; sleep $((i*120)); done; exit 1
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pb-ovc-${{ matrix.conca }}
+          path: /tmp/planta_baixa/pb_ovc_*.json.gz
+          if-no-files-found: ignore
+
+  conca:
+    needs: [prepara, inspire, ovc]
+    if: always() && contains(github.event.inputs.fases || 'inspire,ovc,conca', 'conca')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests numpy rasterio pyproj shapely pillow lxml
+      - name: Capes
+        run: for c in $(echo "$CONQUES" | tr ',' ' '); do python3 scripts/planta_baixa.py conca --conca "$c"; done
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p /tmp/nous && cp data/catalunya/planta_baixa/c*.json /tmp/nous/
+          for i in 1 2 3 4 5; do
+            git fetch -q origin "${{ github.ref_name }}" && git reset -q --hard FETCH_HEAD
+            mkdir -p data/catalunya/planta_baixa && cp /tmp/nous/* data/catalunya/planta_baixa/
+            python3 scripts/planta_baixa.py index
+            git add data/catalunya/planta_baixa
+            git diff --cached --quiet && exit 0
+            git commit -q -m "Ús de la planta baixa per conca [skip ci]"
+            git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5))
+          done; exit 1

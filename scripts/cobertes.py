@@ -201,15 +201,21 @@ def web(nom, cob, tr, crs):
 
 def parametres(cob, par=None, grup_sol=None):
     """Per a cada cel·la: n de Manning, número de corba (TR-55, grup hidrològic de sòl) i tipus (0 natural, 1 urbà, 2 aigua).
-    Les cel·les sense codi prenen el valor de «sense_dades» del fitxer de paràmetres."""
+    Les cel·les sense codi prenen el valor de «sense_dades» del fitxer de paràmetres.
+    grup_sol pot ser una lletra (A-D, tota la conca igual) o una matriu com cob amb el grup per cel·la (0=A … 3=D;
+    -1 = sense dades → el grup per defecte del fitxer de paràmetres), p. ex. de sols.a_reixa()."""
     par = par or json.loads(PARAM.read_text())
-    gs = "ABCD".index(grup_sol or par["grup_hidrologic_sol"])
-    tn, tc, tt = np.zeros(256), np.zeros(256), np.zeros(256, np.uint8)
+    gdef = "ABCD".index(par["grup_hidrologic_sol"])
+    if isinstance(grup_sol, np.ndarray):
+        gs = np.where(grup_sol < 0, gdef, grup_sol).astype(np.intp)
+    else:
+        gs = "ABCD".index(grup_sol) if grup_sol else gdef
+    tn, tc, tt = np.zeros(256), np.zeros((256, 4)), np.zeros(256, np.uint8)
     sd = par["classes"][str(par["sense_dades"])]
-    tn[:], tc[:], tt[:] = sd["n"], sd["cn"][gs], {"natural": 0, "urba": 1, "aigua": 2}[sd["tipus"]]
+    tn[:], tc[:], tt[:] = sd["n"], sd["cn"], {"natural": 0, "urba": 1, "aigua": 2}[sd["tipus"]]
     for c, e in par["classes"].items():
-        tn[int(c)], tc[int(c)], tt[int(c)] = e["n"], e["cn"][gs], {"natural": 0, "urba": 1, "aigua": 2}[e["tipus"]]
-    return tn[cob], tc[cob], tt[cob]
+        tn[int(c)], tc[int(c)], tt[int(c)] = e["n"], e["cn"], {"natural": 0, "urba": 1, "aigua": 2}[e["tipus"]]
+    return tn[cob], tc[cob, gs], tt[cob]
 
 
 def a_reixa(tr, forma, crs):

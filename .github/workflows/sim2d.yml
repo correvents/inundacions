@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       episodis:
-        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150}]'
+        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150, "sol": "B|mapa|mapa-sup|litologia" (opcional), "sol_ref": "mitjana|B" (opcional)}]'
         required: true
       conca:
         description: "Conca (config/<conca>.json)"
@@ -30,6 +30,9 @@ on:
       clavegueram:
         description: "Capacitat dels embornals a les zones construïdes (mm/h), escenari fix"
         default: "30"
+      planta_baixa:
+        description: "OPCIÓ: ús de la planta baixa (ids de conca del tall de 100 km², p. ex. 124,125; buit = no)"
+        default: ""
       escenari_clavegueram:
         description: "Clavegueram: fix (el de dalt), funciona (estimat T10), antic (T2) o collapsat (T10 × 0,25)"
         default: "fix"
@@ -58,10 +61,16 @@ jobs:
       - name: Relleu
         run: python3 scripts/relleu.py --config config/${{ inputs.conca }}.json --pas 10 --nomes-mdt
       - name: Simulació
+        env:
+          PLANTA_BAIXA: ${{ inputs.planta_baixa }}
         run: |
           rm -rf "data/${{ inputs.conca }}/sim2d/${{ matrix.ep.id }}"
           EP=""; [ -n "${{ matrix.ep.episodi }}" ] && EP="--episodi data/${{ inputs.conca }}/episodis/${{ matrix.ep.episodi }}"
           ED="data/${{ inputs.conca }}/cadastre/edificis.json.gz"; [ -f "$ED" ] && [ "${{ inputs.edificis }}" != "no" ] && EP="$EP --edificis $ED"
+          [ -n "${{ matrix.ep.sol }}" ] && EP="$EP --grup-sol ${{ matrix.ep.sol }}"
+          [ -n "${{ matrix.ep.sol_ref }}" ] && EP="$EP --sol-referencia ${{ matrix.ep.sol_ref }}"
+          PB=""; for c in $(echo "$PLANTA_BAIXA" | tr ',' ' '); do f=$(printf "data/catalunya/planta_baixa/c%03d.json" "$c"); [ -f "$f" ] && PB="$PB $f"; done
+          [ -n "$PB" ] && EP="$EP --planta-baixa $PB"
           python3 scripts/simula_2d.py --config config/${{ inputs.conca }}.json --mdt /tmp/relleu/mdt.tif --id "${{ matrix.ep.id }}" \
             --radar "data/${{ inputs.conca }}/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ inputs.pas }}" \
             --ia-natural "${{ matrix.ep.ia }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}" \
