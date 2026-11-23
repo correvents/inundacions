@@ -3,7 +3,8 @@ name: Clavegueram estimat (tot Catalunya)
 # Capacitat estimada del clavegueram pluvial per subconca de xarxa, conca per conca (tall de 100 km²), com a opció de
 # simula_2d.py (--escenari-clavegueram funciona/antic/collapsat). Pluja de disseny de la XEMA, cobertes de l'ICGC,
 # MDT 5 m i, per comprovar, embornals i col·lectors d'OSM. Vegeu scripts/clavegueram_cat.py.
-# Resultat: Release `clavegueram-cat` (clav10_cNNN.tif) + data/catalunya/clavegueram/.
+# Resultat: Release `clavegueram-cat` (clav10_cNNN.tif i taula_cNNN.json.gz) + data/catalunya/clavegueram/index.json i
+# idf_estacions.json al repo (les taules per conca pesen ~200 MB i la web no les fa servir: només a la Release).
 
 on:
   workflow_dispatch:
@@ -66,7 +67,7 @@ jobs:
         run: |
           gh release view "$ETIQUETA" -R "${{ github.repository }}" >/dev/null 2>&1 || \
           gh release create "$ETIQUETA" -R "${{ github.repository }}" --target main --title "Clavegueram estimat de Catalunya per conques" \
-            --notes "Capacitat estimada del clavegueram pluvial per subconca de xarxa (scripts/clavegueram_cat.py). GeoTIFF uint32 a 10 m, EPSG de l'MDT de la conca (Release mdt5-cat): banda 1 capacitat amb la pluja de 10 anys (dècimes de mm/h), banda 2 amb la de 2 anys, banda 3 número de desguàs (taula a data/catalunya/clavegueram/cNNN.json; 0 = no urbà). Estimació, no plànols reals."
+            --notes "Capacitat estimada del clavegueram pluvial per subconca de xarxa (scripts/clavegueram_cat.py). GeoTIFF uint32 a 10 m, EPSG de l'MDT de la conca (Release mdt5-cat): banda 1 capacitat amb la pluja de 10 anys (dècimes de mm/h), banda 2 amb la de 2 anys, banda 3 número de desguàs (taula a taula_cNNN.json.gz; 0 = no urbà). Estimació, no plànols reals."
 
   calcula:
     needs: prepara
@@ -99,6 +100,10 @@ jobs:
                timeout 3000 python3 scripts/clavegueram_cat.py conca --id "$id" --mdt "/tmp/mdt/mdt5_$nom.tif" \
                  --cobertes "/tmp/mdt/cobertes5_$nom.tif" --osm /tmp/prep/clav_osm.json.gz; then
               [ -f "/tmp/clavegueram/clav10_$nom.tif" ] && { gh release upload "$ETIQUETA" "/tmp/clavegueram/clav10_$nom.tif" -R "${{ github.repository }}" --clobber || fallades="$fallades $id"; }
+              if [ -f "data/catalunya/clavegueram/$nom.json" ]; then
+                gzip -9 -n -c "data/catalunya/clavegueram/$nom.json" > "/tmp/clavegueram/taula_$nom.json.gz"
+                gh release upload "$ETIQUETA" "/tmp/clavegueram/taula_$nom.json.gz" -R "${{ github.repository }}" --clobber || fallades="$fallades $id"
+              fi
             else fallades="$fallades $id"; fi
             rm -f /tmp/mdt/*.tif /tmp/clavegueram/*.tif
           done
@@ -140,7 +145,8 @@ jobs:
           echo "### Clavegueram: conques fallades: ${f:-cap}" >> "$GITHUB_STEP_SUMMARY"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/catalunya/clavegueram
+          # les taules per conca (cNNN.json) ja són a la Release: al repo només l'índex i la pluja de disseny
+          git add data/catalunya/clavegueram/index.json data/catalunya/clavegueram/idf_estacions.json
           git diff --cached --quiet && exit 0
           git commit -m "Clavegueram estimat per conca (XEMA + cobertes + MDT 5 m)"
           for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1

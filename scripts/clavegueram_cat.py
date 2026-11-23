@@ -24,8 +24,9 @@ cada zona urbana amb el mateix criteri amb què es dimensiona una xarxa (mètode
 
 Sortides:  /tmp/clavegueram/clav10_cNNN.tif (Release clavegueram-cat; EPSG de l'MDT, 10 m, uint32):
                banda 1 capacitat T10 (dècimes de mm/h), banda 2 capacitat T2, banda 3 número de sortida (0 = no urbà)
-           data/catalunya/clavegueram/cNNN.json (sortides: x, y, tipus, ha, tc, capacitats, embornals OSM)
-           data/catalunya/clavegueram/index.json, idf_estacions.json
+           data/catalunya/clavegueram/cNNN.json (sortides: x, y, tipus, ha, tc, capacitats, embornals OSM); el workflow el
+               puja comprimit a la Release clavegueram-cat (taula_cNNN.json.gz) i no es desa al repo (pesa ~200 MB en total)
+           data/catalunya/clavegueram/index.json, idf_estacions.json (al repo)
 
 Ús:  python3 scripts/clavegueram_cat.py idf
      python3 scripts/clavegueram_cat.py osm --pbf cataluna-latest.osm.pbf --sortida /tmp/clav_osm.json.gz
@@ -41,6 +42,7 @@ TMP = Path("/tmp/clavegueram")
 PARAM = Path("config/cobertes_parametres.json")
 API = "https://analisi.transparenciacatalunya.cat/resource/"
 URL = "https://github.com/correvents/inundacions/releases/download/clavegueram-cat/clav10_{}.tif"
+URL_TAULA = "https://github.com/correvents/inundacions/releases/download/clavegueram-cat/taula_{}.json.gz"
 RETORNS = (2, 5, 10, 25)
 # coeficient d'escorrentiu del mètode racional per coberta urbana (ASCE/WEF 1992, Design and construction of urban stormwater
 # management systems, taula 5.5: valor central de cada interval). La xarxa es dimensiona per a Q = C·I·A.
@@ -309,6 +311,29 @@ def index():
 
 
 # ---------- per a simula_2d.py ----------
+def taula(nom):
+    """Taula de sortides d'una conca: data/catalunya/clavegueram/cNNN.json si s'acaba de calcular en aquesta màquina; si no,
+    la de la Release clavegueram-cat (taula_cNNN.json.gz), desada a /tmp/clavegueram. None si no n'hi ha."""
+    loc = SORT / f"{nom}.json"
+    if loc.exists():
+        return json.loads(loc.read_text())
+    gz = TMP / f"taula_{nom}.json.gz"
+    if not gz.exists():
+        import requests
+        for i in range(4):
+            try:
+                r = requests.get(URL_TAULA.format(nom), timeout=120)
+                if r.status_code == 404:
+                    return None
+                r.raise_for_status()
+                TMP.mkdir(parents=True, exist_ok=True); gz.write_bytes(r.content); break
+            except requests.RequestException as e:
+                print(f"Clavegueram {nom}: {type(e).__name__} {e}"); time.sleep(5 * (i + 1))
+        else:
+            return None
+    return json.loads(gzip.open(gz, "rt").read())
+
+
 def a_reixa(tr, forma, crs, urba):
     """Capacitats T10 i T2 (mm/h) i índex lineal de la cel·la de sortida a una reixa qualsevol, a partir dels fitxers de la
     Release clavegueram-cat de les conques que hi toquen. Sortida -1 = l'aigua del clavegueram surt del domini.
@@ -319,15 +344,18 @@ def a_reixa(tr, forma, crs, urba):
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     import cobertes as COB
     nf, nc = forma; dx = tr.a
+    fi = SORT / "index.json"
+    fetes = json.loads(fi.read_text())["conques"] if fi.exists() else None   # conques calculades (per no demanar-ne de buides)
     b = box(*transform_bounds(crs, "EPSG:4326", tr.c, tr.f + nf * tr.e, tr.c + nc * dx, tr.f))
     c10 = np.full(forma, np.nan); c2 = np.full(forma, np.nan); so = np.full(forma, -1, np.int64); n = 0
     for i, f in COB.conques().items():
         if not shape(f["geometry"]).intersects(b):
             continue
-        nom = f"c{i:03d}"; taula = SORT / f"{nom}.json"
-        if not taula.exists():
+        nom = f"c{i:03d}"
+        if fetes is not None and not (SORT / f"{nom}.json").exists() and not fetes.get(nom, {}).get("subconques"):
             continue
-        t = json.loads(taula.read_text())["sortides"]
+        tj = taula(nom)
+        t = tj["sortides"] if tj else None
         if not t:
             continue
         try:
@@ -344,7 +372,7 @@ def a_reixa(tr, forma, crs, urba):
         c10[nou] = bs[0][nou] / 10; c2[nou] = bs[1][nou] / 10
         # sortida de cada subconca a la reixa de la simulació (des de la CRS de la conca)
         from pyproj import Transformer
-        a_sim = Transformer.from_crs(json.loads(taula.read_text())["crs"], crs, always_xy=True).transform
+        a_sim = Transformer.from_crs(tj["crs"], crs, always_xy=True).transform
         lin = np.full(len(t) + 1, -1, np.int64)
         for fila in t:
             if fila["tipus"] == "fora":

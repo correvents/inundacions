@@ -1,3 +1,6 @@
 dem/
 __pycache__/
 *.tif
+# taules del clavegueram per conca: van a la Release clavegueram-cat (taula_cNNN.json.gz)
+data/catalunya/clavegueram/c[0-9][0-9][0-9].json
+data/catalunya/clavegueram/fallades_*.txt
