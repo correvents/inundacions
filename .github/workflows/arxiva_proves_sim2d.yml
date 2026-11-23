@@ -1,0 +1,28 @@
+# Desa a la Release `sim2d-proves-ridaura-1004` els resultats de proves de la simulació 2D de la Ridaura del 4/10/2026
+# (data/ridaura/sim2d/prova-1004-*, PR #20), un .tar.gz per prova, perquè no engreixin main. S'executa en fer push a aquesta branca.
+name: Arxiva proves sim2d (PR 20)
+on:
+  push:
+    branches: [claude/project-thread-fpzc15]
+    paths: [.github/workflows/arxiva_proves_sim2d.yml]
+permissions:
+  contents: write
+jobs:
+  arxiva:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: claude/project-thread-rgykfu
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ET=sim2d-proves-ridaura-1004
+          gh release view "$ET" -R "${{ github.repository }}" >/dev/null 2>&1 || \
+          gh release create "$ET" -R "${{ github.repository }}" --target main --title "Proves sim2d Ridaura 4/10/2026 (PR #20)" \
+            --notes "Resultats de les proves de diagnosi de la simulació 2D de la Ridaura del 4/10/2026 (PR #20): un .tar.gz per prova amb el contingut de data/ridaura/sim2d/<prova>/ (fotogrames, calat màxim, assecat, index.json amb hipòtesis i balanç)."
+          mkdir -p /tmp/arx
+          for d in data/ridaura/sim2d/prova-1004-*/; do n=$(basename "$d"); tar -czf "/tmp/arx/$n.tar.gz" -C data/ridaura/sim2d "$n"; done
+          ls -la /tmp/arx; du -sh /tmp/arx
+          gh release upload "$ET" /tmp/arx/*.tar.gz -R "${{ github.repository }}" --clobber
+          gh release view "$ET" -R "${{ github.repository }}" --json assets --jq '.assets[] | "\(.name) \(.size)"'
