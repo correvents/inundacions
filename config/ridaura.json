@@ -82,6 +82,17 @@
       "DO",
       "DF",
       "UN"
-    ]
+    ],
+    "calibratge": {
+      "t0": "2026-10-03T12:00",
+      "fi": "2026-10-05T00:00",
+      "font": "pluviòmetre i cabal ACA de Santa Cristina d'Aro (observacions)",
+      "independent": {
+        "t0": "2026-01-17T18:00",
+        "fi": "2026-01-22T00:00",
+        "pic_m3s": 28.6,
+        "font": "pic ACA a Santa Cristina d'Aro, 17-21/1/2026 (llindars_riu.py)"
+      }
+    }
   }
 }

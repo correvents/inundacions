@@ -43,7 +43,7 @@ Tres vies d'inundació: **desbordament de riu**, **xàfec amb clavegueram satura
 
 ### 1.2 Infiltració i cabal
 
-- **Absorció inicial** segons la pluja dels **60 dies anteriors** (índex de pluja antecedent amb l'estació més propera), després una pèrdua contínua (~12 mm/h a la Ridaura; 65 mm i 10 mm/h al Congost).
+- **Absorció inicial** segons la pluja dels **60 dies anteriors** (`humitat.py`): dipòsit d'humitat del sòl que la pluja omple i l'evapotranspiració (climatologia ERA5 via Open-Meteo, precalculada) buida; Ia = el dèficit en començar l'episodi. Un sol paràmetre per conca (Smax), calibrat amb el cabal observat. Després, una pèrdua contínua (7 mm/h a la Ridaura, calibrada amb el 4/10/2026 i el gener del 2026). Ho fa servir la previsió en directe. Els episodis de la web (`premsa.py`, `index_episodis.py`) encara fan servir l'índex de pluja antecedent antic.
 - **Model agregat** a pas de 5 min (`model_cabal.py`): llindar Ia + fracció d'escolament + dipòsits no lineals. Ridaura 4/10/2026: amb pluviòmetre NSE 0,87; amb radar sense corregir 0,63.
 - **Validació amb aforadors** (API Sentilo de l'ACA, sense clau, només ~100 dies → cal arxivar-ho cada mes: `aca_arxiu.py`).
 - **Període de retorn**: el cabal es compara amb els Q10/Q50/Q100/Q500 oficials del tram (`config/<conca>.json`).

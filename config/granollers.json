@@ -86,6 +86,11 @@
   "sensor_aca": [
    "AFORAMENT-EST",
    "CALC001212"
-  ]
+  ],
+  "calibratge": {
+   "t0": "2026-10-03T18:15",
+   "ia_mm": 65,
+   "font": "Ia calibrat amb el cabal de La Garriga el 3-5/10/2026 (evolucio.html, NSE 0,72)"
+  }
  }
 }
