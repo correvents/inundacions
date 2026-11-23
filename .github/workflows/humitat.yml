@@ -27,7 +27,7 @@ jobs:
           SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         run: |
-          python3 scripts/humitat_dades.py --config config/ridaura.json --sense-aca
+          python3 scripts/humitat_dades.py --config config/ridaura.json --sense-aca --observacions
           python3 scripts/humitat_dades.py --config config/granollers.json
       - name: Desa
         run: |

@@ -7,7 +7,9 @@
      de l'any): en directe no cal cap dada nova d'evapotranspiració.
   2. Pluja de 30 min de les estacions XEMA de cfg["humitat"]["estacions"] (sèrie llarga; s'afegeix al final del CSV que ja hi ha)
      → data/<conca>/xema/<codi>.csv.
-  3. Cabal de l'aforador de cfg["humitat"]["sensor_aca"] dels arxius de l'ACA al bucket privat de Supabase
+  3. --observacions: pluja (pluviòmetre ACA, mm/h) i cabal de l'aforador que la previsió desa a Supabase cada 5 min
+     → data/<conca>/humitat/observacions.csv.
+  4. Cabal de l'aforador de cfg["humitat"]["sensor_aca"] dels arxius de l'ACA al bucket privat de Supabase
      (aca/<dia>/<provider>.tar, aca_arxiu.yml) → data/<conca>/humitat/aforador.csv.
 
 Ús:  python3 scripts/humitat_dades.py --config config/granollers.json [--sense-xema] [--sense-aca]"""
@@ -89,15 +91,35 @@ def aca(cfg, d):
         for t in sorted(mesures): w.writerow([t, mesures[t]])
 
 
+def observacions(cfg, d):
+    sys.path.insert(0, str(Path(__file__).parent))
+    from sb import llegeix
+    files = {}
+    for var in ("pluja_mmh", "cabal_m3s"):
+        off = 0
+        while True:
+            r = llegeix("observacions", {"select": "temps,valor", "conca": f"eq.{cfg['conca']}", "var": f"eq.{var}",
+                                          "order": "temps", "offset": off, "limit": 1000})
+            for x in r: files.setdefault(x["temps"][:16], {})[var] = x["valor"]
+            off += len(r)
+            if len(r) < 1000: break
+    with open(d / "observacions.csv", "w", newline="") as f:
+        w = csv.writer(f); w.writerow(["temps", "pluja_mmh", "cabal_m3s"])
+        for t in sorted(files): w.writerow([t, files[t].get("pluja_mmh", ""), files[t].get("cabal_m3s", "")])
+    print(f"observacions: {len(files)} instants")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
     ap.add_argument("--sense-xema", action="store_true"); ap.add_argument("--sense-aca", action="store_true")
+    ap.add_argument("--observacions", action="store_true")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
     d = Path("data") / cfg["conca"] / "humitat"; d.mkdir(parents=True, exist_ok=True)
     et0(cfg, d)
     if not a.sense_xema: xema(cfg, cfg["conca"])
+    if a.observacions: observacions(cfg, d)
     if not a.sense_aca and cfg["humitat"].get("sensor_aca"): aca(cfg, d)
     return 0
 
