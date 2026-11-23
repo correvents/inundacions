@@ -13,6 +13,11 @@ amb el pendent de la superfície de l'aigua i la fricció de Manning, i la làmi
     Zones construïdes: --ia-urba mm.
     Després del llindar, la làmina d'aigua de cada cel·la perd --perdua-natural mm/h (infiltració) al terreny natural i
     --clavegueram mm/h a les zones construïdes (embornals), excepte on el calat supera --h-llera (llera saturada). Així l'aigua embassada també es buida quan para de ploure.
+  - Clavegueram (--escenari-clavegueram): «fix» = --clavegueram mm/h a tot arreu i l'aigua desapareix (com fins ara).
+    «funciona» / «antic» / «collapsat»: capacitat estimada per subconca de clavegueram (scripts/clavegueram_cat.py,
+    Release clavegueram-cat: C·I de la pluja de 10 anys, de 2 anys, o la de 10 anys × --factor-collapsat si els
+    embornals es tapen). L'aigua que entra a la xarxa surt al seu punt de desguàs (llera, mar o terreny) i hi segueix
+    corrent. Amb --clavegueram-ofegat M, una subconca deixa de desguassar mentre el calat al desguàs passa de M metres.
   - Fricció: n de Manning per coberta (o --n-natural, --n-urba amb --sense-cobertes).
   - Mar i vores del domini: l'aigua surt.
 Sortides (data/<conca>/sim2d/<id>/): un PNG de calat cada --cada minuts en lat/lon, calat màxim, l'hidrograma simulat a
@@ -150,15 +155,16 @@ def obstacles(fitxer, tr, nf, nc, dx, fi=2.0):
     return phi, psx, psy, desti, ed
 
 
-def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, toca=5.0):
+def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, toca=5.0, tria=None):
     """Edificis amb plantes sota rasant que tenen aigua a tocar: a les cel·les a menys de `toca` m de la planta de les parts amb
     soterrani, l'alçada màxima de l'aigua per sobre del terra de l'edifici (mediana del MDT sota la planta), sense passar del
     calat. Així l'aigua d'una riera encaixada al costat, més baixa que l'edifici, no compta. I minut en què hi passa de 15 cm."""
     from shapely.geometry import Polygon, box
     from shapely.ops import unary_union
+    tria = tria or (lambda ref, sobre, sota: sota > 0)       # per defecte, les parts amb soterrani
     per_ref = {}
     for ref, sobre, sota, an in ed["parts"]:
-        if sota > 0 and len(an[0]) >= 4:
+        if tria(ref, sobre, sota) and len(an[0]) >= 4:
             p = Polygon(an[0], an[1:]).buffer(0)
             if not p.is_empty:
                 per_ref.setdefault(ref, []).append(p)
@@ -194,6 +200,28 @@ def soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, toca=5.0
     return len(per_ref), out
 
 
+def plantes_baixes(fitxers, ed, dest, ini, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt, llindar=15):
+    """OPCIÓ --planta-baixa: plantes baixes amb aigua a tocar (mateix criteri que els soterranis) i de quin ús són."""
+    pb, classes = {}, None
+    for f in fitxers:
+        j = json.loads(Path(f).read_text())
+        classes = j["classes"]; pb.update(j["edificis"])
+    _, aigua = soterranis(ed, tr, nf, nc, dx, hmax, t15, durada, z, z_mdt, tr_mdt,
+                          tria=lambda ref, sobre, sota: sobre >= 1 and ref in pb and pb[ref][1] >= 0)
+    out = {ref: v + [pb[ref][1], pb[ref][2], pb[ref][0]] for ref, v in aigua.items()}
+    risc = {ref: v for ref, v in out.items() if v[0] >= llindar}
+    per = {c: sum(1 for v in risc.values() if v[3] == i) for i, c in enumerate(classes)}
+    resum = {"fitxer": "plantes_baixes.json", "llindar_cm": llindar, "edificis_amb_us": len(pb), "amb_aigua_a_tocar": len(out),
+             "risc": len(risc), "risc_per_classe": per, "habitatges_planta_baixa_risc": sum(v[4] for v in risc.values()),
+             "risc_amb_us_de_consulta_parcela": sum(1 for v in risc.values() if v[5] == 0)}
+    (dest / "plantes_baixes.json").write_text(json.dumps({"inici_utc": ini.strftime("%Y-%m-%dT%H:%M"), "toca_m": 5, "llindar_cm": llindar,
+        "classes": classes, "camps": ["aigua a tocar per sobre del terra (cm)", "minut en què passa de 15 cm", "minuts fins que baixa de 5 cm",
+                                      "classe planta baixa", "habitatges a planta baixa", "font de l'ús (0 consulta per parcel·la, 1 estimat)"],
+        "edificis": out}, ensure_ascii=False, separators=(",", ":")))
+    print(f"Plantes baixes: {len(risc)} amb ≥{llindar} cm a tocar: {per}")
+    return resum
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
@@ -207,12 +235,21 @@ def main():
     ap.add_argument("--perdua-natural", type=float, default=12, help="infiltració un cop superat el llindar (mm/h)")
     ap.add_argument("--h-llera", type=float, default=0.1, help="calat a partir del qual la cel·la és llera saturada i no infiltra (m)")
     ap.add_argument("--clavegueram", type=float, default=30, help="capacitat dels embornals a les zones construïdes (mm/h)")
+    ap.add_argument("--escenari-clavegueram", default="fix", choices=["fix", "funciona", "antic", "collapsat"],
+                    help="fix: --clavegueram a tot arreu; funciona/antic/collapsat: xarxa estimada (clavegueram_cat.py) amb T10, T2 o T10 × --factor-collapsat")
+    ap.add_argument("--factor-collapsat", type=float, default=0.25, help="fracció de la capacitat T10 que queda amb els embornals tapats")
+    ap.add_argument("--clavegueram-ofegat", type=float, default=0, help="calat al punt de desguàs (m) a partir del qual la xarxa no desguassa (0 = mai)")
     ap.add_argument("--n-natural", type=float, default=0.06, help="n de Manning del terreny natural (només amb --sense-cobertes)")
     ap.add_argument("--n-urba", type=float, default=0.02, help="n de Manning de les zones construïdes (només amb --sense-cobertes)")
     ap.add_argument("--extra-hores", type=float, default=0, help="hores addicionals sense pluja després de l'última dada de radar, per veure com es buida l'aigua")
     ap.add_argument("--cada", type=int, default=10, help="minuts entre fotogrames")
     ap.add_argument("--sense-cobertes", action="store_true", help="sense el mapa de cobertes de l'ICGC: WorldCover i --n-natural/--n-urba únics")
-    ap.add_argument("--grup-sol", help="grup hidrològic de sòl (A-D) per al número de corba; per defecte el de config/cobertes_parametres.json")
+    ap.add_argument("--grup-sol", help="grup hidrològic de sòl per al número de corba: A-D (tota la conca igual), «mapa» "
+                    "(scripts/sols.py, SoilGrids NEH-630 0-60 cm + roca), «mapa-sup» (SoilGrids 0-30 cm) o «litologia» (permeabilitat IGME); per defecte el de config/cobertes_parametres.json")
+    ap.add_argument("--sol-referencia", choices=["mitjana", "B"], default="mitjana",
+                    help="amb el mapa de sòls: «mitjana» conserva la mitjana calibrada (només reparteix); «B» pren la calibració "
+                    "com feta amb grup B a tot arreu, i el mapa també en canvia la mitjana")
+    ap.add_argument("--planta-baixa", nargs="+", help="OPCIÓ: ús de la planta baixa (planta_baixa.py: data/catalunya/planta_baixa/cNNN.json, una o més conques); amb --edificis, compta les plantes baixes amb aigua a tocar per ús")
     ap.add_argument("--edificis", help="edificis del Cadastre (cadastre.py: data/<conca>/cadastre/edificis.json.gz): obstacles i soterranis")
     ap.add_argument("--edificis-diposit", action="store_true", help="OPCIÓ: els edificis són dipòsits; l'aigua hi entra per portals i "
                     "rampes i omple soterranis i plantes baixes (diposit.py). Cal --edificis")
@@ -247,12 +284,21 @@ def main():
         import cobertes as C
         cob = C.a_reixa(tr, (nf, nc), crs)
     if cob is not None:
-        n, cn, tipus = C.parametres(cob, grup_sol=a.grup_sol)
+        grup = a.grup_sol
+        if grup in ("mapa", "mapa-sup", "litologia"):
+            import sols
+            grup = sols.a_reixa(tr, (nf, nc), crs, variant=a.grup_sol)
+            if grup is None:
+                sys.exit("No es pot llegir el mapa de grups hidrològics de sòl (Release sols-cat)")
+            v = grup[grup >= 0]
+            print("Grups de sòl (" + a.grup_sol + "): " + ", ".join(f"{'ABCD'[k]} {(v == k).mean() * 100:.0f} %" for k in range(4)))
+        n, cn, tipus = C.parametres(cob, grup_sol=grup)
         urba = tipus == 1
         aigua = tipus == 2
         S = 25400 / cn - 254                                     # retenció potencial màxima (mm), SCS
         nat = ~urba & ~aigua & ~mar
-        rel = S / S[nat].mean() if nat.any() else np.ones_like(S)   # la mitjana del terreny natural conserva el valor calibrat
+        Sref = S if a.sol_referencia == "mitjana" else 25400 / C.parametres(cob, grup_sol="B")[1] - 254
+        rel = S / Sref[nat].mean() if nat.any() else np.ones_like(S)   # la mitjana de referència conserva el valor calibrat
         ia = np.where(urba, a.ia_urba, a.ia_natural * rel)
         sorti = np.where(urba, a.clavegueram, a.perdua_natural * rel) / 1000 / 3600
         ia[aigua] = 0; sorti[aigua] = 0                          # sobre l'aigua la pluja no s'infiltra
@@ -272,6 +318,25 @@ def main():
         ia = np.where(urba, a.ia_urba, a.ia_natural)
         sorti = np.where(urba, a.clavegueram, a.perdua_natural) / 1000 / 3600     # m/s que perd la làmina un cop superat el llindar
         n = np.where(urba, a.n_urba, a.n_natural)
+    # clavegueram estimat per subconca (opció): capacitat per cel·la i cel·la de desguàs
+    clav = None
+    if a.escenari_clavegueram != "fix":
+        sys.path.insert(0, str(Path(__file__).parent))
+        import clavegueram_cat as CL
+        r = CL.a_reixa(tr, (nf, nc), crs, urba)
+        if r is None:
+            print("Clavegueram estimat: cap conca precalculada al domini; es fa servir el fix")
+        else:
+            c10, c2, desg = r
+            cap = {"funciona": c10, "antic": c2, "collapsat": c10 * a.factor_collapsat}[a.escenari_clavegueram]
+            amb = urba & np.isfinite(cap)
+            sorti = np.where(amb, np.nan_to_num(cap) / 1000 / 3600, sorti)
+            ok = amb & (desg >= 0) & (desg != np.arange(nf * nc).reshape(nf, nc))
+            clav = {"cel": np.flatnonzero(ok), "desg": desg[ok]}
+            clav["ofeg"] = np.flatnonzero(amb)
+            clav["ofeg_desg"] = desg[amb]
+            print(f"Clavegueram «{a.escenari_clavegueram}»: {np.nanmean(cap[amb]):.0f} mm/h de mitjana a les zones urbanes, "
+                  f"{len(clav['cel'])} cel·les desguassen a dins el domini")
     phi, psx, psy, desti, edif = obstacles(a.edificis, tr, nf, nc, dx) if a.edificis else (np.ones((nf, nc)), np.ones((nf, nc)), np.ones((nf, nc)), None, None)
     dip = None
     if a.edificis_diposit:
@@ -364,7 +429,16 @@ def main():
         h += (neta - neta_ant) / 1000 / phi                       # la pluja de tota la cel·la (teulades incloses) va al carrer
         neta_ant = neta
         # al terreny natural, les lleres on ja corre aigua (> --h-llera m) tenen el fons saturat i no hi infiltren; el clavegueram sí que drena
-        np.maximum(h - np.where((pluja_acum >= ia) & (urba | (h < a.h_llera)), sorti * dt / np.where(urba, phi, 1.0), 0.0), 0.0, out=h)
+        perd = np.minimum(h, np.where((pluja_acum >= ia) & (urba | (h < a.h_llera)), sorti * dt / np.where(urba, phi, 1.0), 0.0))
+        if clav is not None:
+            if a.clavegueram_ofegat > 0:                          # desguàs sota l'aigua: la subconca no buida
+                hd = np.where(clav["ofeg_desg"] >= 0, h.ravel()[np.maximum(clav["ofeg_desg"], 0)], 0.0)
+                perd.ravel()[clav["ofeg"][hd > a.clavegueram_ofegat]] = 0.0
+            h -= perd
+            v = perd.ravel()[clav["cel"]] * phi.ravel()[clav["cel"]]      # m³/m² de cel·la que entra a la xarxa
+            h.ravel()[:] += np.bincount(clav["desg"], weights=v, minlength=nf * nc) / phi.ravel()
+        else:
+            h -= perd
         if dip is not None:                                       # entrada i sortida d'aigua dels edificis
             dip.pas(z, h, phi, dx, dt, t_seg / 60)
         pas_temps(z, h, qx, qy, n, dx, dt, actiu, psx, psy, phi)
@@ -413,6 +487,9 @@ def main():
         (dest / "soterranis.json").write_text(json.dumps({"inici_utc": ini.strftime("%Y-%m-%dT%H:%M"), "toca_m": 5, "llindar_cm": 15,
             "camps": ["aigua a tocar per sobre del terra de l'edifici, màxim (cm)", "minut des de inici_utc en què passa de 15 cm (null = mai)", "minuts des que passa de 15 cm fins que l'aigua del voltant baixa de 5 cm"], "edificis": sot}, separators=(",", ":")))
         print(f"Soterranis: {sum(1 for v in sot.values() if v[0] >= 15)} de {n_sot} edificis amb soterrani tenen ≥15 cm d'aigua a tocar")
+    pb_resum = None
+    if edif is not None and a.planta_baixa:
+        pb_resum = plantes_baixes(a.planta_baixa, edif, dest, ini, tr, nf, nc, dx, hmax, t15, durada, z, z0, tr_mdt)
     np.minimum(np.rint(hmax * 100), 65534).astype("<u2").tofile(dest / "calat_max_cm.u2")
     fitxers_ext, vel_info, dip_info = {}, None, None
     if a.velocitat:
@@ -454,15 +531,18 @@ def main():
         "limits": [[s, w], [nn, e]], "pas_m": dx, "inici_utc": ini.strftime("%Y-%m-%dT%H:%M"),
         "graella_utm": {"crs": str(crs), "x0": tr.c, "y0": tr.f, "nf": nf, "nc": nc, "fitxers": {"calat_max_cm.u2": "uint16 cm",
                         "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai", "durada_min.u2": "uint16 minuts entre superar 15 cm i l'últim moment amb més de 5 cm; 65535 = mai superat", **fitxers_ext}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png", "assecat": "assecat.png", "assecat_final_mullat_km2": round(float(mullat_final.sum()) * dx * dx / 1e6, 3), "llegenda_assecat_h": [0, 1, 3, 6, 12],
-        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "h_llera_m": a.h_llera, "manning": ({"natural": a.n_natural, "construit": a.n_urba} if cob is None else "per coberta (config/cobertes_parametres.json, Chow 1959)"),
-                      "cobertes": None if cob is None else {"font": "Mapa de cobertes del sòl de Catalunya, ICGC (CC BY 4.0)", "absorcio": "ia_natural × S/S̄ (número de corba TR-55)", "grup_sol": a.grup_sol or json.loads(Path("config/cobertes_parametres.json").read_text())["grup_hidrologic_sol"]},
+        "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "clavegueram_escenari": a.escenari_clavegueram if clav is not None else "fix",
+                      "clavegueram_factor_collapsat": a.factor_collapsat if a.escenari_clavegueram == "collapsat" else None, "clavegueram_ofegat_m": a.clavegueram_ofegat or None, "h_llera_m": a.h_llera, "manning": ({"natural": a.n_natural, "construit": a.n_urba} if cob is None else "per coberta (config/cobertes_parametres.json, Chow 1959)"),
+                      "cobertes": None if cob is None else {"font": "Mapa de cobertes del sòl de Catalunya, ICGC (CC BY 4.0)", "absorcio": "ia_natural × S/S̄ (número de corba TR-55)", "grup_sol": a.grup_sol or json.loads(Path("config/cobertes_parametres.json").read_text())["grup_hidrologic_sol"],
+                                                    "sol_referencia": a.sol_referencia},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2],
         "opcions": {"edificis_diposit": dip is not None, "velocitat": bool(a.velocitat)},
         "velocitat": vel_info, "diposit": dip_info,
         "edificis": None if edif is None else {"font": "Cadastre (INSPIRE Buildings)", "metode": "porositat: els edificis treuen espai i amplada de pas a cada cel·la; la pluja de les teulades va al carrer",
                                                "ocupacio_pct": edif["ocupacio_pct"], "soterranis": "soterranis.json",
-                                               "soterranis_risc": sum(1 for v in sot.values() if v[0] >= 15)}}, ensure_ascii=False))
+                                               "soterranis_risc": sum(1 for v in sot.values() if v[0] >= 15)},
+        "plantes_baixes": pb_resum}, ensure_ascii=False))
     print(f"Fet en {time.time() - rellotge:.0f} s: {len(fotos)} fotogrames")
     return 0
 

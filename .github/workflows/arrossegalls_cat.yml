@@ -1,0 +1,122 @@
+name: Arrossegalls a passos i ponts (tot Catalunya)
+
+# Opció del model: risc d'arrossegalls (boscos, canyars, zones cremades, residus urbans) que poden tapar els passos
+# de torrentets (passos_cat.yml) i els ponts. Mètode ARR 2019 (llibre 6, cap. 6). Fa servir l'MDT (Release mdt5-cat),
+# les cobertes (Release cobertes-cat), els ponts d'OSM i perímetres d'incendis de dades obertes.
+# Resultat: data/catalunya/arrossegalls/cNNN.geojson + index.json. Vegeu scripts/arrossegalls.py.
+
+on:
+  workflow_dispatch:
+    inputs:
+      conques:
+        description: "Conques: ids separats per comes o «totes»"
+        default: "124,125,188,199"
+      lots:
+        description: "Feines (lots de conques)"
+        default: "20"
+  push:
+    branches: [claude/project-thread-1zxk6n]
+    paths: [scripts/arrossegalls.py, .github/workflows/arrossegalls_cat.yml]
+
+permissions:
+  contents: write
+
+env:
+  CONQUES: ${{ inputs.conques || '124,125,188,199' }}
+
+jobs:
+  prepara:
+    runs-on: ubuntu-latest
+    outputs:
+      matriu: ${{ steps.m.outputs.matriu }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q numpy scipy shapely pyproj rasterio requests osmium pyshp
+      - id: m
+        run: echo "matriu=$(python3 scripts/mdt_cat.py lots --lots '${{ inputs.lots || '20' }}' --conques '${{ env.CONQUES }}')" >> "$GITHUB_OUTPUT"
+      - name: Vies d'OSM (Geofabrik, Catalunya)
+        run: |
+          # l'URL de l'extracte de Catalunya surt de l'índex de Geofabrik (no l'endevinem)
+          url=$(curl -sSfL https://download.geofabrik.de/index-v1-nogeom.json | python3 -c "import json,sys; f=[x['properties'] for x in json.load(sys.stdin)['features'] if 'catal' in x['properties']['id'].lower() or 'catal' in x['properties']['name'].lower()]; print(f[0]['urls']['pbf'])")
+          echo "Extracte: $url"
+          for i in 1 2 3; do curl -sSfL -o /tmp/cat.osm.pbf "$url" && break; sleep 30; done
+          ls -la /tmp/cat.osm.pbf
+          python3 scripts/passos_cat.py osm --pbf /tmp/cat.osm.pbf --sortida /tmp/vies.json.gz
+      - name: Perímetres d'incendis (dades obertes)
+        run: python3 scripts/arrossegalls.py incendis --sortida /tmp/incendis.geojson
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vies
+          path: |
+            /tmp/vies.json.gz
+            /tmp/incendis.geojson
+
+  calcula:
+    needs: prepara
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix: ${{ fromJson(needs.prepara.outputs.matriu) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q numpy pandas scipy rasterio pyproj shapely pysheds numba
+      - uses: actions/download-artifact@v4
+        with:
+          name: vies
+          path: /tmp
+      - name: Conques ${{ matrix.lot }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/mdt; fallades=""
+          for id in ${{ matrix.lot }}; do
+            nom=$(printf "c%03d" "$id")
+            if gh release download mdt5-cat -R "${{ github.repository }}" -p "mdt5_$nom.tif" -D /tmp/mdt --clobber && \
+               gh release download cobertes-cat -R "${{ github.repository }}" -p "cobertes5_$nom.tif" -D /tmp/mdt --clobber && \
+               timeout 3600 python3 scripts/arrossegalls.py conca --id "$id" --mdt "/tmp/mdt/mdt5_$nom.tif" \
+                 --cobertes "/tmp/mdt/cobertes5_$nom.tif" --vies /tmp/vies.json.gz --incendis /tmp/incendis.geojson; then :
+            else fallades="$fallades $id"; fi
+            rm -f /tmp/mdt/*.tif
+          done
+          echo "Fallades:$fallades"; mkdir -p data/catalunya/arrossegalls
+          echo "$fallades" > data/catalunya/arrossegalls/fallades_${{ strategy.job-index }}.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arrossegalls-${{ strategy.job-index }}
+          path: data/catalunya/arrossegalls/
+          if-no-files-found: ignore
+
+  desa:
+    needs: calcula
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: arrossegalls-*
+          merge-multiple: true
+          path: /tmp/art
+      - run: pip install -q numpy shapely pyproj rasterio scipy
+      - name: Desa
+        run: |
+          mkdir -p data/catalunya/arrossegalls
+          f=$(cat /tmp/art/fallades_*.txt 2>/dev/null | tr -s ' \n' ' '); rm -f /tmp/art/fallades_*.txt
+          cp -r /tmp/art/. data/catalunya/arrossegalls/ 2>/dev/null || true
+          python3 scripts/arrossegalls.py index
+          echo "### Arrossegalls: conques fallades: ${f:-cap}" >> "$GITHUB_STEP_SUMMARY"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalunya/arrossegalls
+          git diff --cached --quiet && exit 0
+          git commit -m "Arrossegalls a passos i ponts (ARR 2019)"
+          for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1

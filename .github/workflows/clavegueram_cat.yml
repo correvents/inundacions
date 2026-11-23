@@ -1,0 +1,146 @@
+name: Clavegueram estimat (tot Catalunya)
+
+# Capacitat estimada del clavegueram pluvial per subconca de xarxa, conca per conca (tall de 100 km²), com a opció de
+# simula_2d.py (--escenari-clavegueram funciona/antic/collapsat). Pluja de disseny de la XEMA, cobertes de l'ICGC,
+# MDT 5 m i, per comprovar, embornals i col·lectors d'OSM. Vegeu scripts/clavegueram_cat.py.
+# Resultat: Release `clavegueram-cat` (clav10_cNNN.tif) + data/catalunya/clavegueram/.
+
+on:
+  workflow_dispatch:
+    inputs:
+      conques:
+        description: "Conques: ids separats per comes o «totes»"
+        default: "totes"
+      lots:
+        description: "Feines (lots de conques)"
+        default: "20"
+      refa_idf:
+        description: "Tornar a calcular la pluja de disseny amb la XEMA (si/no)"
+        default: "no"
+  push:
+    branches: [claude/project-thread-lxqcyz]
+    paths: [scripts/clavegueram_cat.py, .github/workflows/clavegueram_cat.yml]
+
+permissions:
+  contents: write
+
+env:
+  CONQUES: ${{ inputs.conques || 'totes' }}
+  ETIQUETA: clavegueram-cat
+
+jobs:
+  prepara:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    outputs:
+      matriu: ${{ steps.m.outputs.matriu }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q numpy scipy shapely pyproj rasterio requests osmium
+      - id: m
+        run: echo "matriu=$(python3 scripts/mdt_cat.py lots --lots '${{ inputs.lots || '20' }}' --conques '${{ env.CONQUES }}')" >> "$GITHUB_OUTPUT"
+      - name: Pluja de disseny (XEMA)
+        run: |
+          if [ ! -f data/catalunya/clavegueram/idf_estacions.json ] || [ "${{ inputs.refa_idf }}" = "si" ]; then
+            python3 scripts/clavegueram_cat.py idf
+          fi
+          mkdir -p /tmp/prep && cp data/catalunya/clavegueram/idf_estacions.json /tmp/prep/
+      - name: Embornals i col·lectors d'OSM (Geofabrik, Catalunya)
+        # opcional: només serveix per comprovar; si Geofabrik no respon, es continua sense
+        continue-on-error: true
+        run: |
+          for i in 1 2 3 4; do curl -sSfL -o /tmp/gf.json https://download.geofabrik.de/index-v1-nogeom.json && break; sleep 60; done
+          url=$(cat /tmp/gf.json | python3 -c "import json,sys; f=[x['properties'] for x in json.load(sys.stdin)['features'] if 'catal' in x['properties']['id'].lower() or 'catal' in x['properties']['name'].lower()]; print(f[0]['urls']['pbf'])")
+          for i in 1 2 3; do curl -sSfL -o /tmp/cat.osm.pbf "$url" && break; sleep 30; done
+          python3 scripts/clavegueram_cat.py osm --pbf /tmp/cat.osm.pbf --sortida /tmp/prep/clav_osm.json.gz
+      - uses: actions/upload-artifact@v4
+        with:
+          name: prep
+          path: /tmp/prep/
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$ETIQUETA" -R "${{ github.repository }}" >/dev/null 2>&1 || \
+          gh release create "$ETIQUETA" -R "${{ github.repository }}" --target main --title "Clavegueram estimat de Catalunya per conques" \
+            --notes "Capacitat estimada del clavegueram pluvial per subconca de xarxa (scripts/clavegueram_cat.py). GeoTIFF uint32 a 10 m, EPSG de l'MDT de la conca (Release mdt5-cat): banda 1 capacitat amb la pluja de 10 anys (dècimes de mm/h), banda 2 amb la de 2 anys, banda 3 número de desguàs (taula a data/catalunya/clavegueram/cNNN.json; 0 = no urbà). Estimació, no plànols reals."
+
+  calcula:
+    needs: prepara
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix: ${{ fromJson(needs.prepara.outputs.matriu) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q numpy scipy rasterio pyproj shapely pysheds numba requests
+      - uses: actions/download-artifact@v4
+        with:
+          name: prep
+          path: /tmp/prep
+      - name: Conques ${{ matrix.lot }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p data/catalunya/clavegueram /tmp/mdt; cp /tmp/prep/idf_estacions.json data/catalunya/clavegueram/
+          fallades=""
+          for id in ${{ matrix.lot }}; do
+            nom=$(printf "c%03d" "$id")
+            if gh release download mdt5-cat -R "${{ github.repository }}" -p "mdt5_$nom.tif" -D /tmp/mdt --clobber && \
+               gh release download cobertes-cat -R "${{ github.repository }}" -p "cobertes5_$nom.tif" -D /tmp/mdt --clobber && \
+               timeout 3000 python3 scripts/clavegueram_cat.py conca --id "$id" --mdt "/tmp/mdt/mdt5_$nom.tif" \
+                 --cobertes "/tmp/mdt/cobertes5_$nom.tif" --osm /tmp/prep/clav_osm.json.gz; then
+              [ -f "/tmp/clavegueram/clav10_$nom.tif" ] && { gh release upload "$ETIQUETA" "/tmp/clavegueram/clav10_$nom.tif" -R "${{ github.repository }}" --clobber || fallades="$fallades $id"; }
+            else fallades="$fallades $id"; fi
+            rm -f /tmp/mdt/*.tif /tmp/clavegueram/*.tif
+          done
+          echo "Fallades:$fallades"; echo "$fallades" > data/catalunya/clavegueram/fallades_${{ strategy.job-index }}.txt
+          rm data/catalunya/clavegueram/idf_estacions.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: clav-${{ strategy.job-index }}
+          path: data/catalunya/clavegueram/
+          if-no-files-found: ignore
+
+  desa:
+    needs: [prepara, calcula]
+    if: always() && needs.prepara.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q numpy
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: clav-*
+          merge-multiple: true
+          path: /tmp/art
+      - uses: actions/download-artifact@v4
+        with:
+          name: prep
+          path: /tmp/prep
+      - name: Desa
+        run: |
+          mkdir -p data/catalunya/clavegueram
+          f=$(cat /tmp/art/fallades_*.txt 2>/dev/null | tr -s ' \n' ' '); rm -f /tmp/art/fallades_*.txt
+          cp -r /tmp/art/. data/catalunya/clavegueram/ 2>/dev/null || true
+          cp /tmp/prep/idf_estacions.json data/catalunya/clavegueram/
+          python3 scripts/clavegueram_cat.py index
+          echo "### Clavegueram: conques fallades: ${f:-cap}" >> "$GITHUB_STEP_SUMMARY"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalunya/clavegueram
+          git diff --cached --quiet && exit 0
+          git commit -m "Clavegueram estimat per conca (XEMA + cobertes + MDT 5 m)"
+          for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1
