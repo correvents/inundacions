@@ -1,0 +1,7544 @@
+{
+"conques": {
+"c001": {
+"urba_km2": 4.263,
+"subconques": 4751,
+"cap_t10_mm_h_mitjana": 52.5,
+"cap_t2_mm_h_mitjana": 33.0,
+"cap_t10_mm_h_rang": [
+18.2,
+73.4
+],
+"sortides": {
+"llera": 2929,
+"terreny": 1822,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 22
+}
+},
+"c002": {
+"urba_km2": 0
+},
+"c003": {
+"urba_km2": 0.023,
+"subconques": 43,
+"cap_t10_mm_h_mitjana": 61.3,
+"cap_t2_mm_h_mitjana": 38.6,
+"cap_t10_mm_h_rang": [
+21.3,
+72.5
+],
+"sortides": {
+"llera": 21,
+"terreny": 22,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c004": {
+"urba_km2": 0.635,
+"subconques": 1330,
+"cap_t10_mm_h_mitjana": 67.3,
+"cap_t2_mm_h_mitjana": 42.3,
+"cap_t10_mm_h_rang": [
+18.2,
+84.5
+],
+"sortides": {
+"llera": 754,
+"terreny": 576,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 7
+}
+},
+"c005": {
+"urba_km2": 0.396,
+"subconques": 923,
+"cap_t10_mm_h_mitjana": 70.6,
+"cap_t2_mm_h_mitjana": 44.4,
+"cap_t10_mm_h_rang": [
+22.9,
+84.4
+],
+"sortides": {
+"llera": 681,
+"terreny": 242,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c006": {
+"urba_km2": 0
+},
+"c007": {
+"urba_km2": 1.92,
+"subconques": 3665,
+"cap_t10_mm_h_mitjana": 60.8,
+"cap_t2_mm_h_mitjana": 38.2,
+"cap_t10_mm_h_rang": [
+18.0,
+86.1
+],
+"sortides": {
+"llera": 2366,
+"terreny": 1299,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 26
+}
+},
+"c008": {
+"urba_km2": 0.298,
+"subconques": 667,
+"cap_t10_mm_h_mitjana": 71.9,
+"cap_t2_mm_h_mitjana": 45.2,
+"cap_t10_mm_h_rang": [
+24.4,
+85.8
+],
+"sortides": {
+"llera": 293,
+"terreny": 374,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c009": {
+"urba_km2": 0
+},
+"c010": {
+"urba_km2": 0.155,
+"subconques": 263,
+"cap_t10_mm_h_mitjana": 71.7,
+"cap_t2_mm_h_mitjana": 45.0,
+"cap_t10_mm_h_rang": [
+24.7,
+88.2
+],
+"sortides": {
+"llera": 255,
+"terreny": 8,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c011": {
+"urba_km2": 0.053,
+"subconques": 136,
+"cap_t10_mm_h_mitjana": 75.2,
+"cap_t2_mm_h_mitjana": 47.2,
+"cap_t10_mm_h_rang": [
+24.7,
+88.3
+],
+"sortides": {
+"llera": 77,
+"terreny": 59,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c012": {
+"urba_km2": 0.386,
+"subconques": 591,
+"cap_t10_mm_h_mitjana": 70.2,
+"cap_t2_mm_h_mitjana": 44.1,
+"cap_t10_mm_h_rang": [
+28.3,
+105.9
+],
+"sortides": {
+"llera": 350,
+"terreny": 241,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c013": {
+"urba_km2": 0.002,
+"subconques": 9,
+"cap_t10_mm_h_mitjana": 94.3,
+"cap_t2_mm_h_mitjana": 59.2,
+"cap_t10_mm_h_rang": [
+93.8,
+95.2
+],
+"sortides": {
+"llera": 0,
+"terreny": 9,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c014": {
+"urba_km2": 0
+},
+"c015": {
+"urba_km2": 1.021,
+"subconques": 1827,
+"cap_t10_mm_h_mitjana": 75.7,
+"cap_t2_mm_h_mitjana": 47.6,
+"cap_t10_mm_h_rang": [
+24.0,
+106.6
+],
+"sortides": {
+"llera": 1011,
+"terreny": 816,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+},
+"c016": {
+"urba_km2": 0.41,
+"subconques": 323,
+"cap_t10_mm_h_mitjana": 74.8,
+"cap_t2_mm_h_mitjana": 47.0,
+"cap_t10_mm_h_rang": [
+30.8,
+105.8
+],
+"sortides": {
+"llera": 59,
+"terreny": 264,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c017": {
+"urba_km2": 0
+},
+"c018": {
+"urba_km2": 0.338,
+"subconques": 261,
+"cap_t10_mm_h_mitjana": 70.4,
+"cap_t2_mm_h_mitjana": 44.2,
+"cap_t10_mm_h_rang": [
+30.8,
+105.4
+],
+"sortides": {
+"llera": 97,
+"terreny": 164,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c019": {
+"urba_km2": 0.303,
+"subconques": 221,
+"cap_t10_mm_h_mitjana": 68.9,
+"cap_t2_mm_h_mitjana": 43.2,
+"cap_t10_mm_h_rang": [
+30.8,
+105.3
+],
+"sortides": {
+"llera": 23,
+"terreny": 198,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c020": {
+"urba_km2": 0
+},
+"c021": {
+"urba_km2": 0
+},
+"c022": {
+"urba_km2": 0.656,
+"subconques": 355,
+"cap_t10_mm_h_mitjana": 75.2,
+"cap_t2_mm_h_mitjana": 47.2,
+"cap_t10_mm_h_rang": [
+30.1,
+104.7
+],
+"sortides": {
+"llera": 92,
+"terreny": 263,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c023": {
+"urba_km2": 1.703,
+"subconques": 963,
+"cap_t10_mm_h_mitjana": 70.7,
+"cap_t2_mm_h_mitjana": 44.4,
+"cap_t10_mm_h_rang": [
+29.6,
+104.5
+],
+"sortides": {
+"llera": 365,
+"terreny": 598,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 10
+}
+},
+"c024": {
+"urba_km2": 1.689,
+"subconques": 1564,
+"cap_t10_mm_h_mitjana": 65.2,
+"cap_t2_mm_h_mitjana": 41.0,
+"cap_t10_mm_h_rang": [
+24.1,
+96.2
+],
+"sortides": {
+"llera": 987,
+"terreny": 577,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 12
+}
+},
+"c025": {
+"urba_km2": 13.12,
+"subconques": 18706,
+"cap_t10_mm_h_mitjana": 62.3,
+"cap_t2_mm_h_mitjana": 39.1,
+"cap_t10_mm_h_rang": [
+22.3,
+128.3
+],
+"sortides": {
+"llera": 4571,
+"terreny": 14135,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 115
+}
+},
+"c026": {
+"urba_km2": 0.34,
+"subconques": 94,
+"cap_t10_mm_h_mitjana": 63.3,
+"cap_t2_mm_h_mitjana": 39.7,
+"cap_t10_mm_h_rang": [
+37.4,
+100.8
+],
+"sortides": {
+"llera": 1,
+"terreny": 93,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c027": {
+"urba_km2": 0.411,
+"subconques": 1034,
+"cap_t10_mm_h_mitjana": 91.3,
+"cap_t2_mm_h_mitjana": 57.3,
+"cap_t10_mm_h_rang": [
+28.6,
+115.2
+],
+"sortides": {
+"llera": 558,
+"terreny": 476,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c028": {
+"urba_km2": 0.826,
+"subconques": 2022,
+"cap_t10_mm_h_mitjana": 85.1,
+"cap_t2_mm_h_mitjana": 53.4,
+"cap_t10_mm_h_rang": [
+25.2,
+114.9
+],
+"sortides": {
+"llera": 1014,
+"terreny": 1008,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 14
+}
+},
+"c029": {
+"urba_km2": 0.336,
+"subconques": 262,
+"cap_t10_mm_h_mitjana": 49.3,
+"cap_t2_mm_h_mitjana": 30.9,
+"cap_t10_mm_h_rang": [
+29.7,
+102.5
+],
+"sortides": {
+"llera": 47,
+"terreny": 215,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c030": {
+"urba_km2": 0.005,
+"subconques": 9,
+"cap_t10_mm_h_mitjana": 85.6,
+"cap_t2_mm_h_mitjana": 53.7,
+"cap_t10_mm_h_rang": [
+29.7,
+100.8
+],
+"sortides": {
+"llera": 2,
+"terreny": 7,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c031": {
+"urba_km2": 0.939,
+"subconques": 1289,
+"cap_t10_mm_h_mitjana": 66.7,
+"cap_t2_mm_h_mitjana": 41.8,
+"cap_t10_mm_h_rang": [
+27.4,
+101.3
+],
+"sortides": {
+"llera": 318,
+"terreny": 971,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c032": {
+"urba_km2": 0.001,
+"subconques": 7,
+"cap_t10_mm_h_mitjana": 89.6,
+"cap_t2_mm_h_mitjana": 56.2,
+"cap_t10_mm_h_rang": [
+89.2,
+89.9
+],
+"sortides": {
+"llera": 0,
+"terreny": 7,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c033": {
+"urba_km2": 0.002,
+"subconques": 9,
+"cap_t10_mm_h_mitjana": 91.1,
+"cap_t2_mm_h_mitjana": 57.1,
+"cap_t10_mm_h_rang": [
+85.0,
+92.2
+],
+"sortides": {
+"llera": 1,
+"terreny": 8,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c034": {
+"urba_km2": 5.152,
+"subconques": 6760,
+"cap_t10_mm_h_mitjana": 79.1,
+"cap_t2_mm_h_mitjana": 49.7,
+"cap_t10_mm_h_rang": [
+25.8,
+110.2
+],
+"sortides": {
+"llera": 2093,
+"terreny": 4667,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 14
+}
+},
+"c035": {
+"urba_km2": 3.165,
+"subconques": 4978,
+"cap_t10_mm_h_mitjana": 75.4,
+"cap_t2_mm_h_mitjana": 47.4,
+"cap_t10_mm_h_rang": [
+26.7,
+117.7
+],
+"sortides": {
+"llera": 1179,
+"terreny": 3799,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c036": {
+"urba_km2": 1.91,
+"subconques": 2385,
+"cap_t10_mm_h_mitjana": 73.2,
+"cap_t2_mm_h_mitjana": 46.0,
+"cap_t10_mm_h_rang": [
+27.8,
+105.3
+],
+"sortides": {
+"llera": 760,
+"terreny": 1625,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 10
+}
+},
+"c037": {
+"urba_km2": 0.33,
+"subconques": 514,
+"cap_t10_mm_h_mitjana": 78.4,
+"cap_t2_mm_h_mitjana": 49.2,
+"cap_t10_mm_h_rang": [
+27.3,
+96.9
+],
+"sortides": {
+"llera": 33,
+"terreny": 481,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c038": {
+"urba_km2": 0.619,
+"subconques": 2951,
+"cap_t10_mm_h_mitjana": 89.4,
+"cap_t2_mm_h_mitjana": 56.1,
+"cap_t10_mm_h_rang": [
+26.5,
+112.0
+],
+"sortides": {
+"llera": 445,
+"terreny": 2506,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c039": {
+"urba_km2": 2.07,
+"subconques": 3239,
+"cap_t10_mm_h_mitjana": 71.7,
+"cap_t2_mm_h_mitjana": 45.0,
+"cap_t10_mm_h_rang": [
+27.3,
+111.1
+],
+"sortides": {
+"llera": 732,
+"terreny": 2507,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 11
+}
+},
+"c040": {
+"urba_km2": 0.698,
+"subconques": 251,
+"cap_t10_mm_h_mitjana": 57.4,
+"cap_t2_mm_h_mitjana": 36.0,
+"cap_t10_mm_h_rang": [
+30.1,
+103.7
+],
+"sortides": {
+"llera": 46,
+"terreny": 205,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c041": {
+"urba_km2": 1.024,
+"subconques": 706,
+"cap_t10_mm_h_mitjana": 65.1,
+"cap_t2_mm_h_mitjana": 40.8,
+"cap_t10_mm_h_rang": [
+28.0,
+103.6
+],
+"sortides": {
+"llera": 415,
+"terreny": 291,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c042": {
+"urba_km2": 1.113,
+"subconques": 1176,
+"cap_t10_mm_h_mitjana": 62.6,
+"cap_t2_mm_h_mitjana": 39.3,
+"cap_t10_mm_h_rang": [
+28.1,
+108.5
+],
+"sortides": {
+"llera": 126,
+"terreny": 1050,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c043": {
+"urba_km2": 0.639,
+"subconques": 586,
+"cap_t10_mm_h_mitjana": 64.2,
+"cap_t2_mm_h_mitjana": 40.3,
+"cap_t10_mm_h_rang": [
+28.9,
+108.7
+],
+"sortides": {
+"llera": 137,
+"terreny": 449,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c044": {
+"urba_km2": 13.809,
+"subconques": 11898,
+"cap_t10_mm_h_mitjana": 68.2,
+"cap_t2_mm_h_mitjana": 42.8,
+"cap_t10_mm_h_rang": [
+26.2,
+110.0
+],
+"sortides": {
+"llera": 2370,
+"terreny": 9528,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 12
+}
+},
+"c045": {
+"urba_km2": 0.91,
+"subconques": 1504,
+"cap_t10_mm_h_mitjana": 93.3,
+"cap_t2_mm_h_mitjana": 58.6,
+"cap_t10_mm_h_rang": [
+33.7,
+122.2
+],
+"sortides": {
+"llera": 414,
+"terreny": 1090,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c046": {
+"urba_km2": 2.911,
+"subconques": 6996,
+"cap_t10_mm_h_mitjana": 83.2,
+"cap_t2_mm_h_mitjana": 52.2,
+"cap_t10_mm_h_rang": [
+26.7,
+123.6
+],
+"sortides": {
+"llera": 1726,
+"terreny": 5270,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 9
+}
+},
+"c047": {
+"urba_km2": 0.269,
+"subconques": 685,
+"cap_t10_mm_h_mitjana": 84.3,
+"cap_t2_mm_h_mitjana": 52.9,
+"cap_t10_mm_h_rang": [
+31.6,
+114.9
+],
+"sortides": {
+"llera": 157,
+"terreny": 528,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c048": {
+"urba_km2": 0.942,
+"subconques": 3336,
+"cap_t10_mm_h_mitjana": 95.0,
+"cap_t2_mm_h_mitjana": 59.6,
+"cap_t10_mm_h_rang": [
+30.1,
+120.7
+],
+"sortides": {
+"llera": 1006,
+"terreny": 2330,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 9
+}
+},
+"c049": {
+"urba_km2": 13.728,
+"subconques": 10599,
+"cap_t10_mm_h_mitjana": 59.5,
+"cap_t2_mm_h_mitjana": 37.3,
+"cap_t10_mm_h_rang": [
+28.2,
+111.5
+],
+"sortides": {
+"llera": 1688,
+"terreny": 8911,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 41
+}
+},
+"c050": {
+"urba_km2": 0.053,
+"subconques": 149,
+"cap_t10_mm_h_mitjana": 81.0,
+"cap_t2_mm_h_mitjana": 50.8,
+"cap_t10_mm_h_rang": [
+29.4,
+99.6
+],
+"sortides": {
+"llera": 0,
+"terreny": 149,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c051": {
+"urba_km2": 0.077,
+"subconques": 26,
+"cap_t10_mm_h_mitjana": 69.0,
+"cap_t2_mm_h_mitjana": 43.2,
+"cap_t10_mm_h_rang": [
+29.4,
+88.7
+],
+"sortides": {
+"llera": 22,
+"terreny": 4,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c052": {
+"urba_km2": 0.525,
+"subconques": 148,
+"cap_t10_mm_h_mitjana": 68.5,
+"cap_t2_mm_h_mitjana": 42.9,
+"cap_t10_mm_h_rang": [
+28.8,
+100.6
+],
+"sortides": {
+"llera": 35,
+"terreny": 113,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c053": {
+"urba_km2": 3.168,
+"subconques": 2136,
+"cap_t10_mm_h_mitjana": 58.0,
+"cap_t2_mm_h_mitjana": 36.4,
+"cap_t10_mm_h_rang": [
+30.0,
+117.9
+],
+"sortides": {
+"llera": 164,
+"terreny": 1972,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c054": {
+"urba_km2": 0.546,
+"subconques": 1809,
+"cap_t10_mm_h_mitjana": 93.6,
+"cap_t2_mm_h_mitjana": 58.8,
+"cap_t10_mm_h_rang": [
+30.9,
+117.6
+],
+"sortides": {
+"llera": 379,
+"terreny": 1430,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c055": {
+"urba_km2": 1.969,
+"subconques": 3970,
+"cap_t10_mm_h_mitjana": 100.3,
+"cap_t2_mm_h_mitjana": 63.0,
+"cap_t10_mm_h_rang": [
+33.1,
+157.7
+],
+"sortides": {
+"llera": 1982,
+"terreny": 1988,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 32
+}
+},
+"c056": {
+"urba_km2": 4.454,
+"subconques": 4235,
+"cap_t10_mm_h_mitjana": 95.6,
+"cap_t2_mm_h_mitjana": 60.0,
+"cap_t10_mm_h_rang": [
+32.0,
+151.0
+],
+"sortides": {
+"llera": 935,
+"terreny": 3300,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+},
+"c057": {
+"urba_km2": 8.184,
+"subconques": 5395,
+"cap_t10_mm_h_mitjana": 89.7,
+"cap_t2_mm_h_mitjana": 56.3,
+"cap_t10_mm_h_rang": [
+35.1,
+150.9
+],
+"sortides": {
+"llera": 1799,
+"terreny": 3596,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 22
+}
+},
+"c058": {
+"urba_km2": 1.955,
+"subconques": 2879,
+"cap_t10_mm_h_mitjana": 87.9,
+"cap_t2_mm_h_mitjana": 55.2,
+"cap_t10_mm_h_rang": [
+29.9,
+139.9
+],
+"sortides": {
+"llera": 662,
+"terreny": 2217,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 14
+}
+},
+"c059": {
+"urba_km2": 2.726,
+"subconques": 2062,
+"cap_t10_mm_h_mitjana": 93.2,
+"cap_t2_mm_h_mitjana": 58.5,
+"cap_t10_mm_h_rang": [
+39.8,
+145.9
+],
+"sortides": {
+"llera": 739,
+"terreny": 1323,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c060": {
+"urba_km2": 7.747,
+"subconques": 8464,
+"cap_t10_mm_h_mitjana": 77.4,
+"cap_t2_mm_h_mitjana": 48.5,
+"cap_t10_mm_h_rang": [
+28.4,
+125.3
+],
+"sortides": {
+"llera": 1394,
+"terreny": 7070,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c061": {
+"urba_km2": 3.934,
+"subconques": 7243,
+"cap_t10_mm_h_mitjana": 92.6,
+"cap_t2_mm_h_mitjana": 58.1,
+"cap_t10_mm_h_rang": [
+27.7,
+149.7
+],
+"sortides": {
+"llera": 3074,
+"terreny": 4169,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 82
+}
+},
+"c062": {
+"urba_km2": 4.326,
+"subconques": 5234,
+"cap_t10_mm_h_mitjana": 84.9,
+"cap_t2_mm_h_mitjana": 53.3,
+"cap_t10_mm_h_rang": [
+29.7,
+121.8
+],
+"sortides": {
+"llera": 2947,
+"terreny": 2287,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 28
+}
+},
+"c063": {
+"urba_km2": 6.461,
+"subconques": 9739,
+"cap_t10_mm_h_mitjana": 81.2,
+"cap_t2_mm_h_mitjana": 51.0,
+"cap_t10_mm_h_rang": [
+28.5,
+131.8
+],
+"sortides": {
+"llera": 1489,
+"terreny": 8250,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c064": {
+"urba_km2": 2.958,
+"subconques": 3120,
+"cap_t10_mm_h_mitjana": 89.0,
+"cap_t2_mm_h_mitjana": 55.9,
+"cap_t10_mm_h_rang": [
+31.5,
+139.1
+],
+"sortides": {
+"llera": 981,
+"terreny": 2139,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 14
+}
+},
+"c065": {
+"urba_km2": 2.337,
+"subconques": 4070,
+"cap_t10_mm_h_mitjana": 87.8,
+"cap_t2_mm_h_mitjana": 55.1,
+"cap_t10_mm_h_rang": [
+33.6,
+138.4
+],
+"sortides": {
+"llera": 1072,
+"terreny": 2998,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c066": {
+"urba_km2": 0.824,
+"subconques": 909,
+"cap_t10_mm_h_mitjana": 81.4,
+"cap_t2_mm_h_mitjana": 51.0,
+"cap_t10_mm_h_rang": [
+32.8,
+132.1
+],
+"sortides": {
+"llera": 93,
+"terreny": 816,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c067": {
+"urba_km2": 3.84,
+"subconques": 5274,
+"cap_t10_mm_h_mitjana": 82.7,
+"cap_t2_mm_h_mitjana": 51.9,
+"cap_t10_mm_h_rang": [
+31.3,
+130.8
+],
+"sortides": {
+"llera": 949,
+"terreny": 4325,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c068": {
+"urba_km2": 2.85,
+"subconques": 4663,
+"cap_t10_mm_h_mitjana": 83.7,
+"cap_t2_mm_h_mitjana": 52.5,
+"cap_t10_mm_h_rang": [
+28.7,
+121.5
+],
+"sortides": {
+"llera": 660,
+"terreny": 4003,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 18
+}
+},
+"c069": {
+"urba_km2": 2.654,
+"subconques": 6245,
+"cap_t10_mm_h_mitjana": 94.5,
+"cap_t2_mm_h_mitjana": 59.3,
+"cap_t10_mm_h_rang": [
+30.8,
+121.0
+],
+"sortides": {
+"llera": 1100,
+"terreny": 5145,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 25
+}
+},
+"c070": {
+"urba_km2": 0.654,
+"subconques": 1657,
+"cap_t10_mm_h_mitjana": 102.2,
+"cap_t2_mm_h_mitjana": 64.1,
+"cap_t10_mm_h_rang": [
+37.9,
+139.8
+],
+"sortides": {
+"llera": 565,
+"terreny": 1092,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c071": {
+"urba_km2": 3.721,
+"subconques": 1582,
+"cap_t10_mm_h_mitjana": 66.3,
+"cap_t2_mm_h_mitjana": 41.6,
+"cap_t10_mm_h_rang": [
+30.8,
+119.9
+],
+"sortides": {
+"llera": 279,
+"terreny": 1303,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c072": {
+"urba_km2": 3.978,
+"subconques": 602,
+"cap_t10_mm_h_mitjana": 65.2,
+"cap_t2_mm_h_mitjana": 40.9,
+"cap_t10_mm_h_rang": [
+33.8,
+118.8
+],
+"sortides": {
+"llera": 174,
+"terreny": 428,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c073": {
+"urba_km2": 1.174,
+"subconques": 183,
+"cap_t10_mm_h_mitjana": 55.3,
+"cap_t2_mm_h_mitjana": 34.6,
+"cap_t10_mm_h_rang": [
+32.7,
+116.2
+],
+"sortides": {
+"llera": 35,
+"terreny": 148,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c074": {
+"urba_km2": 0.27,
+"subconques": 356,
+"cap_t10_mm_h_mitjana": 76.6,
+"cap_t2_mm_h_mitjana": 48.1,
+"cap_t10_mm_h_rang": [
+32.3,
+110.5
+],
+"sortides": {
+"llera": 39,
+"terreny": 317,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c075": {
+"urba_km2": 1.032,
+"subconques": 651,
+"cap_t10_mm_h_mitjana": 74.4,
+"cap_t2_mm_h_mitjana": 46.7,
+"cap_t10_mm_h_rang": [
+30.1,
+105.9
+],
+"sortides": {
+"llera": 30,
+"terreny": 621,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c076": {
+"urba_km2": 1.631,
+"subconques": 784,
+"cap_t10_mm_h_mitjana": 55.6,
+"cap_t2_mm_h_mitjana": 34.8,
+"cap_t10_mm_h_rang": [
+30.1,
+105.1
+],
+"sortides": {
+"llera": 116,
+"terreny": 668,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c077": {
+"urba_km2": 8.828,
+"subconques": 7537,
+"cap_t10_mm_h_mitjana": 77.3,
+"cap_t2_mm_h_mitjana": 48.5,
+"cap_t10_mm_h_rang": [
+33.9,
+123.7
+],
+"sortides": {
+"llera": 2280,
+"terreny": 5257,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 107
+}
+},
+"c078": {
+"urba_km2": 5.372,
+"subconques": 3699,
+"cap_t10_mm_h_mitjana": 84.6,
+"cap_t2_mm_h_mitjana": 53.2,
+"cap_t10_mm_h_rang": [
+35.2,
+130.0
+],
+"sortides": {
+"llera": 1030,
+"terreny": 2669,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 15
+}
+},
+"c079": {
+"urba_km2": 0.141,
+"subconques": 178,
+"cap_t10_mm_h_mitjana": 77.8,
+"cap_t2_mm_h_mitjana": 48.8,
+"cap_t10_mm_h_rang": [
+30.2,
+92.3
+],
+"sortides": {
+"llera": 18,
+"terreny": 160,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c080": {
+"urba_km2": 11.035,
+"subconques": 13055,
+"cap_t10_mm_h_mitjana": 81.2,
+"cap_t2_mm_h_mitjana": 51.0,
+"cap_t10_mm_h_rang": [
+30.0,
+124.9
+],
+"sortides": {
+"llera": 2446,
+"terreny": 10609,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 23
+}
+},
+"c081": {
+"urba_km2": 2.732,
+"subconques": 5957,
+"cap_t10_mm_h_mitjana": 83.3,
+"cap_t2_mm_h_mitjana": 52.3,
+"cap_t10_mm_h_rang": [
+27.6,
+115.8
+],
+"sortides": {
+"llera": 1427,
+"terreny": 4530,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+},
+"c082": {
+"urba_km2": 0.86,
+"subconques": 3518,
+"cap_t10_mm_h_mitjana": 95.2,
+"cap_t2_mm_h_mitjana": 59.8,
+"cap_t10_mm_h_rang": [
+29.7,
+118.9
+],
+"sortides": {
+"llera": 479,
+"terreny": 3039,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c083": {
+"urba_km2": 1.114,
+"subconques": 3093,
+"cap_t10_mm_h_mitjana": 87.4,
+"cap_t2_mm_h_mitjana": 54.9,
+"cap_t10_mm_h_rang": [
+29.1,
+113.1
+],
+"sortides": {
+"llera": 858,
+"terreny": 2235,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c084": {
+"urba_km2": 15.635,
+"subconques": 15451,
+"cap_t10_mm_h_mitjana": 68.7,
+"cap_t2_mm_h_mitjana": 43.1,
+"cap_t10_mm_h_rang": [
+29.1,
+129.3
+],
+"sortides": {
+"llera": 2828,
+"terreny": 12623,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 62
+}
+},
+"c085": {
+"urba_km2": 8.512,
+"subconques": 4023,
+"cap_t10_mm_h_mitjana": 83.3,
+"cap_t2_mm_h_mitjana": 52.3,
+"cap_t10_mm_h_rang": [
+34.5,
+130.1
+],
+"sortides": {
+"llera": 1413,
+"terreny": 2610,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 27
+}
+},
+"c086": {
+"urba_km2": 27.341,
+"subconques": 19701,
+"cap_t10_mm_h_mitjana": 80.9,
+"cap_t2_mm_h_mitjana": 50.8,
+"cap_t10_mm_h_rang": [
+33.5,
+143.7
+],
+"sortides": {
+"llera": 4298,
+"terreny": 15403,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 55
+}
+},
+"c087": {
+"urba_km2": 2.044,
+"subconques": 2412,
+"cap_t10_mm_h_mitjana": 86.5,
+"cap_t2_mm_h_mitjana": 54.3,
+"cap_t10_mm_h_rang": [
+32.6,
+130.8
+],
+"sortides": {
+"llera": 1128,
+"terreny": 1284,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 19
+}
+},
+"c088": {
+"urba_km2": 0.672,
+"subconques": 1578,
+"cap_t10_mm_h_mitjana": 88.5,
+"cap_t2_mm_h_mitjana": 55.6,
+"cap_t10_mm_h_rang": [
+32.6,
+126.8
+],
+"sortides": {
+"llera": 393,
+"terreny": 1185,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c089": {
+"urba_km2": 16.286,
+"subconques": 17451,
+"cap_t10_mm_h_mitjana": 91.2,
+"cap_t2_mm_h_mitjana": 57.3,
+"cap_t10_mm_h_rang": [
+31.9,
+146.2
+],
+"sortides": {
+"llera": 4805,
+"terreny": 12646,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 77
+}
+},
+"c090": {
+"urba_km2": 22.245,
+"subconques": 18351,
+"cap_t10_mm_h_mitjana": 88.7,
+"cap_t2_mm_h_mitjana": 55.7,
+"cap_t10_mm_h_rang": [
+30.0,
+148.8
+],
+"sortides": {
+"llera": 4943,
+"terreny": 13408,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 61
+}
+},
+"c091": {
+"urba_km2": 2.098,
+"subconques": 2862,
+"cap_t10_mm_h_mitjana": 76.9,
+"cap_t2_mm_h_mitjana": 48.3,
+"cap_t10_mm_h_rang": [
+33.0,
+131.0
+],
+"sortides": {
+"llera": 1040,
+"terreny": 1822,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+},
+"c092": {
+"urba_km2": 5.554,
+"subconques": 6275,
+"cap_t10_mm_h_mitjana": 77.5,
+"cap_t2_mm_h_mitjana": 48.6,
+"cap_t10_mm_h_rang": [
+30.0,
+128.4
+],
+"sortides": {
+"llera": 2438,
+"terreny": 3837,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 57
+}
+},
+"c093": {
+"urba_km2": 1.971,
+"subconques": 861,
+"cap_t10_mm_h_mitjana": 51.7,
+"cap_t2_mm_h_mitjana": 32.4,
+"cap_t10_mm_h_rang": [
+30.2,
+104.5
+],
+"sortides": {
+"llera": 122,
+"terreny": 739,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c094": {
+"urba_km2": 4.68,
+"subconques": 6407,
+"cap_t10_mm_h_mitjana": 90.0,
+"cap_t2_mm_h_mitjana": 56.5,
+"cap_t10_mm_h_rang": [
+30.9,
+140.2
+],
+"sortides": {
+"llera": 1349,
+"terreny": 5058,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 16
+}
+},
+"c095": {
+"urba_km2": 2.161,
+"subconques": 3792,
+"cap_t10_mm_h_mitjana": 76.6,
+"cap_t2_mm_h_mitjana": 48.0,
+"cap_t10_mm_h_rang": [
+29.3,
+127.9
+],
+"sortides": {
+"llera": 1199,
+"terreny": 2593,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 20
+}
+},
+"c096": {
+"urba_km2": 0.435,
+"subconques": 1837,
+"cap_t10_mm_h_mitjana": 99.3,
+"cap_t2_mm_h_mitjana": 62.3,
+"cap_t10_mm_h_rang": [
+28.6,
+116.3
+],
+"sortides": {
+"llera": 154,
+"terreny": 1683,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c097": {
+"urba_km2": 0.691,
+"subconques": 2518,
+"cap_t10_mm_h_mitjana": 89.9,
+"cap_t2_mm_h_mitjana": 56.4,
+"cap_t10_mm_h_rang": [
+30.2,
+110.2
+],
+"sortides": {
+"llera": 160,
+"terreny": 2358,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c098": {
+"urba_km2": 4.566,
+"subconques": 8469,
+"cap_t10_mm_h_mitjana": 75.9,
+"cap_t2_mm_h_mitjana": 47.7,
+"cap_t10_mm_h_rang": [
+27.3,
+134.4
+],
+"sortides": {
+"llera": 2101,
+"terreny": 6368,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 23
+}
+},
+"c099": {
+"urba_km2": 3.915,
+"subconques": 5703,
+"cap_t10_mm_h_mitjana": 73.8,
+"cap_t2_mm_h_mitjana": 46.4,
+"cap_t10_mm_h_rang": [
+28.7,
+115.2
+],
+"sortides": {
+"llera": 750,
+"terreny": 4953,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c100": {
+"urba_km2": 0.224,
+"subconques": 583,
+"cap_t10_mm_h_mitjana": 92.0,
+"cap_t2_mm_h_mitjana": 57.8,
+"cap_t10_mm_h_rang": [
+29.0,
+126.8
+],
+"sortides": {
+"llera": 158,
+"terreny": 425,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c101": {
+"urba_km2": 1.067,
+"subconques": 3279,
+"cap_t10_mm_h_mitjana": 98.0,
+"cap_t2_mm_h_mitjana": 61.5,
+"cap_t10_mm_h_rang": [
+29.9,
+137.7
+],
+"sortides": {
+"llera": 839,
+"terreny": 2440,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c102": {
+"urba_km2": 1.107,
+"subconques": 1675,
+"cap_t10_mm_h_mitjana": 83.7,
+"cap_t2_mm_h_mitjana": 52.5,
+"cap_t10_mm_h_rang": [
+31.2,
+110.8
+],
+"sortides": {
+"llera": 287,
+"terreny": 1388,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 14
+}
+},
+"c103": {
+"urba_km2": 1.818,
+"subconques": 3418,
+"cap_t10_mm_h_mitjana": 84.8,
+"cap_t2_mm_h_mitjana": 53.2,
+"cap_t10_mm_h_rang": [
+29.3,
+110.9
+],
+"sortides": {
+"llera": 777,
+"terreny": 2641,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c104": {
+"urba_km2": 9.702,
+"subconques": 12442,
+"cap_t10_mm_h_mitjana": 90.3,
+"cap_t2_mm_h_mitjana": 56.7,
+"cap_t10_mm_h_rang": [
+31.4,
+132.7
+],
+"sortides": {
+"llera": 3838,
+"terreny": 8604,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 27
+}
+},
+"c105": {
+"urba_km2": 1.021,
+"subconques": 3343,
+"cap_t10_mm_h_mitjana": 106.8,
+"cap_t2_mm_h_mitjana": 67.0,
+"cap_t10_mm_h_rang": [
+31.4,
+139.8
+],
+"sortides": {
+"llera": 504,
+"terreny": 2839,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c106": {
+"urba_km2": 2.518,
+"subconques": 6855,
+"cap_t10_mm_h_mitjana": 88.2,
+"cap_t2_mm_h_mitjana": 55.4,
+"cap_t10_mm_h_rang": [
+28.0,
+116.7
+],
+"sortides": {
+"llera": 1226,
+"terreny": 5629,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 26
+}
+},
+"c107": {
+"urba_km2": 4.554,
+"subconques": 9984,
+"cap_t10_mm_h_mitjana": 90.6,
+"cap_t2_mm_h_mitjana": 56.8,
+"cap_t10_mm_h_rang": [
+31.1,
+122.9
+],
+"sortides": {
+"llera": 2011,
+"terreny": 7973,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 13
+}
+},
+"c108": {
+"urba_km2": 1.396,
+"subconques": 2076,
+"cap_t10_mm_h_mitjana": 73.3,
+"cap_t2_mm_h_mitjana": 46.1,
+"cap_t10_mm_h_rang": [
+26.6,
+108.1
+],
+"sortides": {
+"llera": 445,
+"terreny": 1631,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c109": {
+"urba_km2": 0.89,
+"subconques": 2723,
+"cap_t10_mm_h_mitjana": 99.5,
+"cap_t2_mm_h_mitjana": 62.5,
+"cap_t10_mm_h_rang": [
+29.1,
+129.4
+],
+"sortides": {
+"llera": 289,
+"terreny": 2434,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c110": {
+"urba_km2": 1.243,
+"subconques": 706,
+"cap_t10_mm_h_mitjana": 53.7,
+"cap_t2_mm_h_mitjana": 33.7,
+"cap_t10_mm_h_rang": [
+30.7,
+107.3
+],
+"sortides": {
+"llera": 105,
+"terreny": 601,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c111": {
+"urba_km2": 1.175,
+"subconques": 565,
+"cap_t10_mm_h_mitjana": 69.5,
+"cap_t2_mm_h_mitjana": 43.6,
+"cap_t10_mm_h_rang": [
+29.2,
+108.7
+],
+"sortides": {
+"llera": 118,
+"terreny": 447,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c112": {
+"urba_km2": 0.976,
+"subconques": 2993,
+"cap_t10_mm_h_mitjana": 87.3,
+"cap_t2_mm_h_mitjana": 54.9,
+"cap_t10_mm_h_rang": [
+28.8,
+108.3
+],
+"sortides": {
+"llera": 348,
+"terreny": 2645,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c113": {
+"urba_km2": 1.359,
+"subconques": 3632,
+"cap_t10_mm_h_mitjana": 82.9,
+"cap_t2_mm_h_mitjana": 52.1,
+"cap_t10_mm_h_rang": [
+28.7,
+105.9
+],
+"sortides": {
+"llera": 620,
+"terreny": 3012,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c114": {
+"urba_km2": 0.78,
+"subconques": 249,
+"cap_t10_mm_h_mitjana": 71.0,
+"cap_t2_mm_h_mitjana": 44.5,
+"cap_t10_mm_h_rang": [
+32.2,
+114.0
+],
+"sortides": {
+"llera": 26,
+"terreny": 223,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c115": {
+"urba_km2": 4.14,
+"subconques": 4179,
+"cap_t10_mm_h_mitjana": 80.5,
+"cap_t2_mm_h_mitjana": 50.5,
+"cap_t10_mm_h_rang": [
+35.6,
+132.1
+],
+"sortides": {
+"llera": 543,
+"terreny": 3636,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c116": {
+"urba_km2": 2.1,
+"subconques": 1064,
+"cap_t10_mm_h_mitjana": 83.6,
+"cap_t2_mm_h_mitjana": 52.4,
+"cap_t10_mm_h_rang": [
+34.5,
+120.5
+],
+"sortides": {
+"llera": 248,
+"terreny": 816,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c117": {
+"urba_km2": 7.88,
+"subconques": 3135,
+"cap_t10_mm_h_mitjana": 71.3,
+"cap_t2_mm_h_mitjana": 44.7,
+"cap_t10_mm_h_rang": [
+29.3,
+119.5
+],
+"sortides": {
+"llera": 1081,
+"terreny": 2054,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 24
+}
+},
+"c118": {
+"urba_km2": 6.2,
+"subconques": 3248,
+"cap_t10_mm_h_mitjana": 60.0,
+"cap_t2_mm_h_mitjana": 37.6,
+"cap_t10_mm_h_rang": [
+33.9,
+126.9
+],
+"sortides": {
+"llera": 949,
+"terreny": 2299,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 7
+}
+},
+"c119": {
+"urba_km2": 1.29,
+"subconques": 3707,
+"cap_t10_mm_h_mitjana": 87.7,
+"cap_t2_mm_h_mitjana": 55.1,
+"cap_t10_mm_h_rang": [
+29.6,
+110.0
+],
+"sortides": {
+"llera": 668,
+"terreny": 3039,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c120": {
+"urba_km2": 3.031,
+"subconques": 4471,
+"cap_t10_mm_h_mitjana": 80.1,
+"cap_t2_mm_h_mitjana": 50.3,
+"cap_t10_mm_h_rang": [
+28.4,
+112.9
+],
+"sortides": {
+"llera": 1270,
+"terreny": 3201,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c121": {
+"urba_km2": 2.262,
+"subconques": 4131,
+"cap_t10_mm_h_mitjana": 89.7,
+"cap_t2_mm_h_mitjana": 56.4,
+"cap_t10_mm_h_rang": [
+31.4,
+127.9
+],
+"sortides": {
+"llera": 865,
+"terreny": 3266,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c122": {
+"urba_km2": 13.562,
+"subconques": 20983,
+"cap_t10_mm_h_mitjana": 75.6,
+"cap_t2_mm_h_mitjana": 47.5,
+"cap_t10_mm_h_rang": [
+22.2,
+129.1
+],
+"sortides": {
+"llera": 4110,
+"terreny": 16873,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 9
+}
+},
+"c123": {
+"urba_km2": 2.332,
+"subconques": 1333,
+"cap_t10_mm_h_mitjana": 62.8,
+"cap_t2_mm_h_mitjana": 39.3,
+"cap_t10_mm_h_rang": [
+34.7,
+121.9
+],
+"sortides": {
+"llera": 160,
+"terreny": 1173,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c124": {
+"urba_km2": 2.417,
+"subconques": 913,
+"cap_t10_mm_h_mitjana": 72.8,
+"cap_t2_mm_h_mitjana": 45.6,
+"cap_t10_mm_h_rang": [
+35.5,
+121.7
+],
+"sortides": {
+"llera": 209,
+"terreny": 704,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c125": {
+"urba_km2": 7.399,
+"subconques": 5315,
+"cap_t10_mm_h_mitjana": 64.9,
+"cap_t2_mm_h_mitjana": 40.7,
+"cap_t10_mm_h_rang": [
+35.1,
+131.7
+],
+"sortides": {
+"llera": 1321,
+"terreny": 3994,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 7
+}
+},
+"c126": {
+"urba_km2": 5.905,
+"subconques": 5061,
+"cap_t10_mm_h_mitjana": 76.1,
+"cap_t2_mm_h_mitjana": 47.7,
+"cap_t10_mm_h_rang": [
+30.6,
+124.2
+],
+"sortides": {
+"llera": 1479,
+"terreny": 3582,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 9
+}
+},
+"c127": {
+"urba_km2": 19.157,
+"subconques": 10793,
+"cap_t10_mm_h_mitjana": 61.4,
+"cap_t2_mm_h_mitjana": 38.5,
+"cap_t10_mm_h_rang": [
+33.5,
+141.1
+],
+"sortides": {
+"llera": 2157,
+"terreny": 8636,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 25
+}
+},
+"c128": {
+"urba_km2": 6.426,
+"subconques": 6754,
+"cap_t10_mm_h_mitjana": 77.1,
+"cap_t2_mm_h_mitjana": 48.4,
+"cap_t10_mm_h_rang": [
+27.9,
+127.4
+],
+"sortides": {
+"llera": 1657,
+"terreny": 5097,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 27
+}
+},
+"c129": {
+"urba_km2": 2.343,
+"subconques": 484,
+"cap_t10_mm_h_mitjana": 63.6,
+"cap_t2_mm_h_mitjana": 39.9,
+"cap_t10_mm_h_rang": [
+35.2,
+122.1
+],
+"sortides": {
+"llera": 110,
+"terreny": 374,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c130": {
+"urba_km2": 10.559,
+"subconques": 20065,
+"cap_t10_mm_h_mitjana": 91.2,
+"cap_t2_mm_h_mitjana": 57.3,
+"cap_t10_mm_h_rang": [
+30.9,
+137.9
+],
+"sortides": {
+"llera": 2379,
+"terreny": 17686,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 25
+}
+},
+"c131": {
+"urba_km2": 3.204,
+"subconques": 996,
+"cap_t10_mm_h_mitjana": 73.1,
+"cap_t2_mm_h_mitjana": 45.8,
+"cap_t10_mm_h_rang": [
+33.3,
+122.4
+],
+"sortides": {
+"llera": 294,
+"terreny": 702,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c132": {
+"urba_km2": 2.435,
+"subconques": 1394,
+"cap_t10_mm_h_mitjana": 71.3,
+"cap_t2_mm_h_mitjana": 44.8,
+"cap_t10_mm_h_rang": [
+29.9,
+111.6
+],
+"sortides": {
+"llera": 375,
+"terreny": 1019,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 9
+}
+},
+"c133": {
+"urba_km2": 6.749,
+"subconques": 7875,
+"cap_t10_mm_h_mitjana": 71.5,
+"cap_t2_mm_h_mitjana": 44.9,
+"cap_t10_mm_h_rang": [
+29.3,
+126.0
+],
+"sortides": {
+"llera": 1655,
+"terreny": 6220,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 17
+}
+},
+"c134": {
+"urba_km2": 0.287,
+"subconques": 183,
+"cap_t10_mm_h_mitjana": 58.9,
+"cap_t2_mm_h_mitjana": 37.0,
+"cap_t10_mm_h_rang": [
+35.8,
+123.7
+],
+"sortides": {
+"llera": 97,
+"terreny": 86,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c135": {
+"urba_km2": 1.998,
+"subconques": 2897,
+"cap_t10_mm_h_mitjana": 75.0,
+"cap_t2_mm_h_mitjana": 47.1,
+"cap_t10_mm_h_rang": [
+26.6,
+104.9
+],
+"sortides": {
+"llera": 536,
+"terreny": 2361,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c136": {
+"urba_km2": 5.953,
+"subconques": 5880,
+"cap_t10_mm_h_mitjana": 84.0,
+"cap_t2_mm_h_mitjana": 52.8,
+"cap_t10_mm_h_rang": [
+27.6,
+129.1
+],
+"sortides": {
+"llera": 865,
+"terreny": 5015,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c137": {
+"urba_km2": 0.214,
+"subconques": 527,
+"cap_t10_mm_h_mitjana": 88.1,
+"cap_t2_mm_h_mitjana": 55.3,
+"cap_t10_mm_h_rang": [
+35.2,
+125.1
+],
+"sortides": {
+"llera": 104,
+"terreny": 423,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c138": {
+"urba_km2": 0.222,
+"subconques": 442,
+"cap_t10_mm_h_mitjana": 83.3,
+"cap_t2_mm_h_mitjana": 52.3,
+"cap_t10_mm_h_rang": [
+36.0,
+124.6
+],
+"sortides": {
+"llera": 98,
+"terreny": 344,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c139": {
+"urba_km2": 2.092,
+"subconques": 1987,
+"cap_t10_mm_h_mitjana": 79.1,
+"cap_t2_mm_h_mitjana": 49.6,
+"cap_t10_mm_h_rang": [
+32.5,
+113.7
+],
+"sortides": {
+"llera": 382,
+"terreny": 1605,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c140": {
+"urba_km2": 2.781,
+"subconques": 2744,
+"cap_t10_mm_h_mitjana": 53.0,
+"cap_t2_mm_h_mitjana": 33.3,
+"cap_t10_mm_h_rang": [
+31.3,
+118.8
+],
+"sortides": {
+"llera": 449,
+"terreny": 2295,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c141": {
+"urba_km2": 4.059,
+"subconques": 5940,
+"cap_t10_mm_h_mitjana": 74.0,
+"cap_t2_mm_h_mitjana": 46.4,
+"cap_t10_mm_h_rang": [
+26.1,
+110.3
+],
+"sortides": {
+"llera": 897,
+"terreny": 5043,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+},
+"c142": {
+"urba_km2": 4.534,
+"subconques": 5916,
+"cap_t10_mm_h_mitjana": 74.4,
+"cap_t2_mm_h_mitjana": 46.7,
+"cap_t10_mm_h_rang": [
+28.3,
+110.9
+],
+"sortides": {
+"llera": 1583,
+"terreny": 4333,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 29
+}
+},
+"c143": {
+"urba_km2": 18.928,
+"subconques": 15023,
+"cap_t10_mm_h_mitjana": 58.5,
+"cap_t2_mm_h_mitjana": 36.7,
+"cap_t10_mm_h_rang": [
+28.3,
+110.8
+],
+"sortides": {
+"llera": 4926,
+"terreny": 10097,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 140
+}
+},
+"c144": {
+"urba_km2": 0.12,
+"subconques": 210,
+"cap_t10_mm_h_mitjana": 85.9,
+"cap_t2_mm_h_mitjana": 53.9,
+"cap_t10_mm_h_rang": [
+35.2,
+122.8
+],
+"sortides": {
+"llera": 77,
+"terreny": 133,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c145": {
+"urba_km2": 9.838,
+"subconques": 9872,
+"cap_t10_mm_h_mitjana": 61.4,
+"cap_t2_mm_h_mitjana": 38.5,
+"cap_t10_mm_h_rang": [
+22.1,
+101.8
+],
+"sortides": {
+"llera": 1644,
+"terreny": 8228,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c146": {
+"urba_km2": 11.199,
+"subconques": 13185,
+"cap_t10_mm_h_mitjana": 61.5,
+"cap_t2_mm_h_mitjana": 38.6,
+"cap_t10_mm_h_rang": [
+21.0,
+97.8
+],
+"sortides": {
+"llera": 2190,
+"terreny": 10995,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+},
+"c147": {
+"urba_km2": 2.77,
+"subconques": 1981,
+"cap_t10_mm_h_mitjana": 70.0,
+"cap_t2_mm_h_mitjana": 43.9,
+"cap_t10_mm_h_rang": [
+35.0,
+128.2
+],
+"sortides": {
+"llera": 526,
+"terreny": 1455,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c148": {
+"urba_km2": 3.082,
+"subconques": 3055,
+"cap_t10_mm_h_mitjana": 63.7,
+"cap_t2_mm_h_mitjana": 39.9,
+"cap_t10_mm_h_rang": [
+24.1,
+97.6
+],
+"sortides": {
+"llera": 467,
+"terreny": 2588,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c149": {
+"urba_km2": 7.752,
+"subconques": 7762,
+"cap_t10_mm_h_mitjana": 62.5,
+"cap_t2_mm_h_mitjana": 39.2,
+"cap_t10_mm_h_rang": [
+23.3,
+95.6
+],
+"sortides": {
+"llera": 1508,
+"terreny": 6254,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c150": {
+"urba_km2": 16.225,
+"subconques": 12914,
+"cap_t10_mm_h_mitjana": 69.4,
+"cap_t2_mm_h_mitjana": 43.6,
+"cap_t10_mm_h_rang": [
+27.4,
+113.8
+],
+"sortides": {
+"llera": 4131,
+"terreny": 8783,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 31
+}
+},
+"c151": {
+"urba_km2": 3.103,
+"subconques": 5120,
+"cap_t10_mm_h_mitjana": 88.3,
+"cap_t2_mm_h_mitjana": 55.4,
+"cap_t10_mm_h_rang": [
+29.7,
+122.6
+],
+"sortides": {
+"llera": 1325,
+"terreny": 3795,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c152": {
+"urba_km2": 1.904,
+"subconques": 1106,
+"cap_t10_mm_h_mitjana": 50.0,
+"cap_t2_mm_h_mitjana": 31.4,
+"cap_t10_mm_h_rang": [
+34.3,
+120.8
+],
+"sortides": {
+"llera": 157,
+"terreny": 949,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c153": {
+"urba_km2": 2.78,
+"subconques": 2491,
+"cap_t10_mm_h_mitjana": 62.8,
+"cap_t2_mm_h_mitjana": 39.5,
+"cap_t10_mm_h_rang": [
+22.4,
+99.1
+],
+"sortides": {
+"llera": 286,
+"terreny": 2205,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c154": {
+"urba_km2": 7.377,
+"subconques": 8727,
+"cap_t10_mm_h_mitjana": 70.7,
+"cap_t2_mm_h_mitjana": 44.4,
+"cap_t10_mm_h_rang": [
+22.4,
+126.8
+],
+"sortides": {
+"llera": 944,
+"terreny": 7783,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c155": {
+"urba_km2": 2.39,
+"subconques": 655,
+"cap_t10_mm_h_mitjana": 58.2,
+"cap_t2_mm_h_mitjana": 36.5,
+"cap_t10_mm_h_rang": [
+33.6,
+119.7
+],
+"sortides": {
+"llera": 122,
+"terreny": 533,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c156": {
+"urba_km2": 5.818,
+"subconques": 7130,
+"cap_t10_mm_h_mitjana": 69.6,
+"cap_t2_mm_h_mitjana": 43.7,
+"cap_t10_mm_h_rang": [
+22.3,
+113.7
+],
+"sortides": {
+"llera": 920,
+"terreny": 6210,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 11
+}
+},
+"c157": {
+"urba_km2": 11.191,
+"subconques": 10946,
+"cap_t10_mm_h_mitjana": 62.5,
+"cap_t2_mm_h_mitjana": 39.2,
+"cap_t10_mm_h_rang": [
+22.1,
+95.1
+],
+"sortides": {
+"llera": 1828,
+"terreny": 9118,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 14
+}
+},
+"c158": {
+"urba_km2": 6.503,
+"subconques": 2795,
+"cap_t10_mm_h_mitjana": 59.1,
+"cap_t2_mm_h_mitjana": 37.1,
+"cap_t10_mm_h_rang": [
+33.2,
+121.2
+],
+"sortides": {
+"llera": 543,
+"terreny": 2252,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c159": {
+"urba_km2": 2.235,
+"subconques": 855,
+"cap_t10_mm_h_mitjana": 68.3,
+"cap_t2_mm_h_mitjana": 42.9,
+"cap_t10_mm_h_rang": [
+34.6,
+119.0
+],
+"sortides": {
+"llera": 219,
+"terreny": 636,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c160": {
+"urba_km2": 12.021,
+"subconques": 8473,
+"cap_t10_mm_h_mitjana": 64.1,
+"cap_t2_mm_h_mitjana": 40.2,
+"cap_t10_mm_h_rang": [
+27.4,
+112.1
+],
+"sortides": {
+"llera": 1696,
+"terreny": 6777,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 37
+}
+},
+"c161": {
+"urba_km2": 4.58,
+"subconques": 4503,
+"cap_t10_mm_h_mitjana": 68.3,
+"cap_t2_mm_h_mitjana": 42.8,
+"cap_t10_mm_h_rang": [
+29.7,
+127.8
+],
+"sortides": {
+"llera": 792,
+"terreny": 3711,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 9
+}
+},
+"c162": {
+"urba_km2": 4.913,
+"subconques": 5896,
+"cap_t10_mm_h_mitjana": 63.1,
+"cap_t2_mm_h_mitjana": 39.6,
+"cap_t10_mm_h_rang": [
+22.1,
+95.0
+],
+"sortides": {
+"llera": 943,
+"terreny": 4953,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c163": {
+"urba_km2": 3.249,
+"subconques": 1115,
+"cap_t10_mm_h_mitjana": 75.5,
+"cap_t2_mm_h_mitjana": 47.4,
+"cap_t10_mm_h_rang": [
+34.1,
+118.3
+],
+"sortides": {
+"llera": 316,
+"terreny": 799,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 11
+}
+},
+"c164": {
+"urba_km2": 5.592,
+"subconques": 11467,
+"cap_t10_mm_h_mitjana": 70.9,
+"cap_t2_mm_h_mitjana": 44.5,
+"cap_t10_mm_h_rang": [
+21.4,
+115.7
+],
+"sortides": {
+"llera": 2295,
+"terreny": 9172,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c165": {
+"urba_km2": 16.449,
+"subconques": 10390,
+"cap_t10_mm_h_mitjana": 61.2,
+"cap_t2_mm_h_mitjana": 38.4,
+"cap_t10_mm_h_rang": [
+32.0,
+118.1
+],
+"sortides": {
+"llera": 1936,
+"terreny": 8454,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 42
+}
+},
+"c166": {
+"urba_km2": 1.723,
+"subconques": 898,
+"cap_t10_mm_h_mitjana": 80.4,
+"cap_t2_mm_h_mitjana": 50.5,
+"cap_t10_mm_h_rang": [
+34.1,
+118.1
+],
+"sortides": {
+"llera": 193,
+"terreny": 705,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 18
+}
+},
+"c167": {
+"urba_km2": 12.021,
+"subconques": 10651,
+"cap_t10_mm_h_mitjana": 54.9,
+"cap_t2_mm_h_mitjana": 34.5,
+"cap_t10_mm_h_rang": [
+20.8,
+100.0
+],
+"sortides": {
+"llera": 1527,
+"terreny": 9124,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 18
+}
+},
+"c168": {
+"urba_km2": 13.63,
+"subconques": 12723,
+"cap_t10_mm_h_mitjana": 55.0,
+"cap_t2_mm_h_mitjana": 34.5,
+"cap_t10_mm_h_rang": [
+20.3,
+91.7
+],
+"sortides": {
+"llera": 1585,
+"terreny": 11138,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 13
+}
+},
+"c169": {
+"urba_km2": 3.154,
+"subconques": 2232,
+"cap_t10_mm_h_mitjana": 72.0,
+"cap_t2_mm_h_mitjana": 45.3,
+"cap_t10_mm_h_rang": [
+33.5,
+118.4
+],
+"sortides": {
+"llera": 313,
+"terreny": 1919,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c170": {
+"urba_km2": 1.847,
+"subconques": 1404,
+"cap_t10_mm_h_mitjana": 62.8,
+"cap_t2_mm_h_mitjana": 39.5,
+"cap_t10_mm_h_rang": [
+33.5,
+116.6
+],
+"sortides": {
+"llera": 222,
+"terreny": 1182,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c171": {
+"urba_km2": 2.593,
+"subconques": 1572,
+"cap_t10_mm_h_mitjana": 65.1,
+"cap_t2_mm_h_mitjana": 40.9,
+"cap_t10_mm_h_rang": [
+31.6,
+116.6
+],
+"sortides": {
+"llera": 272,
+"terreny": 1300,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c172": {
+"urba_km2": 15.094,
+"subconques": 6995,
+"cap_t10_mm_h_mitjana": 47.3,
+"cap_t2_mm_h_mitjana": 29.7,
+"cap_t10_mm_h_rang": [
+18.8,
+95.5
+],
+"sortides": {
+"llera": 1999,
+"terreny": 4996,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 24
+}
+},
+"c173": {
+"urba_km2": 13.597,
+"subconques": 16892,
+"cap_t10_mm_h_mitjana": 55.5,
+"cap_t2_mm_h_mitjana": 34.8,
+"cap_t10_mm_h_rang": [
+18.8,
+116.3
+],
+"sortides": {
+"llera": 3145,
+"terreny": 13747,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 7
+}
+},
+"c174": {
+"urba_km2": 1.604,
+"subconques": 1231,
+"cap_t10_mm_h_mitjana": 74.2,
+"cap_t2_mm_h_mitjana": 46.6,
+"cap_t10_mm_h_rang": [
+31.8,
+114.0
+],
+"sortides": {
+"llera": 172,
+"terreny": 1059,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c175": {
+"urba_km2": 3.919,
+"subconques": 6531,
+"cap_t10_mm_h_mitjana": 75.9,
+"cap_t2_mm_h_mitjana": 47.6,
+"cap_t10_mm_h_rang": [
+27.4,
+103.8
+],
+"sortides": {
+"llera": 1084,
+"terreny": 5447,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c176": {
+"urba_km2": 0.606,
+"subconques": 249,
+"cap_t10_mm_h_mitjana": 71.8,
+"cap_t2_mm_h_mitjana": 45.0,
+"cap_t10_mm_h_rang": [
+32.4,
+112.3
+],
+"sortides": {
+"llera": 68,
+"terreny": 181,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c177": {
+"urba_km2": 4.37,
+"subconques": 3898,
+"cap_t10_mm_h_mitjana": 58.7,
+"cap_t2_mm_h_mitjana": 36.8,
+"cap_t10_mm_h_rang": [
+30.2,
+112.2
+],
+"sortides": {
+"llera": 888,
+"terreny": 3010,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 24
+}
+},
+"c178": {
+"urba_km2": 7.089,
+"subconques": 7969,
+"cap_t10_mm_h_mitjana": 53.5,
+"cap_t2_mm_h_mitjana": 33.6,
+"cap_t10_mm_h_rang": [
+18.8,
+98.7
+],
+"sortides": {
+"llera": 1456,
+"terreny": 6513,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 14
+}
+},
+"c179": {
+"urba_km2": 3.815,
+"subconques": 7928,
+"cap_t10_mm_h_mitjana": 63.7,
+"cap_t2_mm_h_mitjana": 40.0,
+"cap_t10_mm_h_rang": [
+20.7,
+95.6
+],
+"sortides": {
+"llera": 1198,
+"terreny": 6730,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c180": {
+"urba_km2": 1.755,
+"subconques": 585,
+"cap_t10_mm_h_mitjana": 72.5,
+"cap_t2_mm_h_mitjana": 45.5,
+"cap_t10_mm_h_rang": [
+31.8,
+117.2
+],
+"sortides": {
+"llera": 340,
+"terreny": 245,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 22
+}
+},
+"c181": {
+"urba_km2": 3.659,
+"subconques": 1880,
+"cap_t10_mm_h_mitjana": 69.3,
+"cap_t2_mm_h_mitjana": 43.5,
+"cap_t10_mm_h_rang": [
+30.7,
+114.2
+],
+"sortides": {
+"llera": 693,
+"terreny": 1187,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 33
+}
+},
+"c182": {
+"urba_km2": 2.035,
+"subconques": 1209,
+"cap_t10_mm_h_mitjana": 62.9,
+"cap_t2_mm_h_mitjana": 39.5,
+"cap_t10_mm_h_rang": [
+31.8,
+115.4
+],
+"sortides": {
+"llera": 339,
+"terreny": 870,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 14
+}
+},
+"c183": {
+"urba_km2": 2.54,
+"subconques": 1139,
+"cap_t10_mm_h_mitjana": 57.7,
+"cap_t2_mm_h_mitjana": 36.2,
+"cap_t10_mm_h_rang": [
+32.2,
+115.1
+],
+"sortides": {
+"llera": 352,
+"terreny": 787,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 9
+}
+},
+"c184": {
+"urba_km2": 18.822,
+"subconques": 18295,
+"cap_t10_mm_h_mitjana": 76.7,
+"cap_t2_mm_h_mitjana": 48.1,
+"cap_t10_mm_h_rang": [
+23.4,
+123.6
+],
+"sortides": {
+"llera": 4742,
+"terreny": 13553,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 1,
+"pous": 0,
+"colectors": 30
+}
+},
+"c185": {
+"urba_km2": 5.181,
+"subconques": 4929,
+"cap_t10_mm_h_mitjana": 57.6,
+"cap_t2_mm_h_mitjana": 36.2,
+"cap_t10_mm_h_rang": [
+26.2,
+118.2
+],
+"sortides": {
+"llera": 1222,
+"terreny": 3707,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c186": {
+"urba_km2": 2.991,
+"subconques": 1738,
+"cap_t10_mm_h_mitjana": 61.7,
+"cap_t2_mm_h_mitjana": 38.7,
+"cap_t10_mm_h_rang": [
+29.6,
+116.0
+],
+"sortides": {
+"llera": 504,
+"terreny": 1234,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+},
+"c187": {
+"urba_km2": 1.497,
+"subconques": 933,
+"cap_t10_mm_h_mitjana": 69.7,
+"cap_t2_mm_h_mitjana": 43.7,
+"cap_t10_mm_h_rang": [
+30.6,
+118.0
+],
+"sortides": {
+"llera": 284,
+"terreny": 649,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c188": {
+"urba_km2": 33.088,
+"subconques": 15117,
+"cap_t10_mm_h_mitjana": 65.6,
+"cap_t2_mm_h_mitjana": 41.1,
+"cap_t10_mm_h_rang": [
+27.5,
+127.3
+],
+"sortides": {
+"llera": 5727,
+"terreny": 9390,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 96
+}
+},
+"c189": {
+"urba_km2": 29.735,
+"subconques": 14287,
+"cap_t10_mm_h_mitjana": 60.3,
+"cap_t2_mm_h_mitjana": 37.8,
+"cap_t10_mm_h_rang": [
+26.0,
+120.1
+],
+"sortides": {
+"llera": 4878,
+"terreny": 9409,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 82
+}
+},
+"c190": {
+"urba_km2": 33.849,
+"subconques": 17003,
+"cap_t10_mm_h_mitjana": 58.2,
+"cap_t2_mm_h_mitjana": 36.5,
+"cap_t10_mm_h_rang": [
+29.5,
+123.3
+],
+"sortides": {
+"llera": 4349,
+"terreny": 12654,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 21
+}
+},
+"c191": {
+"urba_km2": 2.814,
+"subconques": 911,
+"cap_t10_mm_h_mitjana": 68.3,
+"cap_t2_mm_h_mitjana": 42.9,
+"cap_t10_mm_h_rang": [
+29.9,
+107.7
+],
+"sortides": {
+"llera": 137,
+"terreny": 774,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c192": {
+"urba_km2": 2.625,
+"subconques": 918,
+"cap_t10_mm_h_mitjana": 67.7,
+"cap_t2_mm_h_mitjana": 42.5,
+"cap_t10_mm_h_rang": [
+33.9,
+123.4
+],
+"sortides": {
+"llera": 256,
+"terreny": 662,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c193": {
+"urba_km2": 4.454,
+"subconques": 1147,
+"cap_t10_mm_h_mitjana": 75.6,
+"cap_t2_mm_h_mitjana": 47.4,
+"cap_t10_mm_h_rang": [
+32.2,
+125.0
+],
+"sortides": {
+"llera": 562,
+"terreny": 585,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c194": {
+"urba_km2": 11.474,
+"subconques": 14426,
+"cap_t10_mm_h_mitjana": 63.5,
+"cap_t2_mm_h_mitjana": 39.9,
+"cap_t10_mm_h_rang": [
+21.5,
+100.7
+],
+"sortides": {
+"llera": 2500,
+"terreny": 11926,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 9
+}
+},
+"c195": {
+"urba_km2": 2.712,
+"subconques": 6082,
+"cap_t10_mm_h_mitjana": 63.2,
+"cap_t2_mm_h_mitjana": 39.7,
+"cap_t10_mm_h_rang": [
+21.7,
+86.5
+],
+"sortides": {
+"llera": 888,
+"terreny": 5194,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c196": {
+"urba_km2": 11.368,
+"subconques": 6002,
+"cap_t10_mm_h_mitjana": 65.8,
+"cap_t2_mm_h_mitjana": 41.3,
+"cap_t10_mm_h_rang": [
+28.8,
+132.2
+],
+"sortides": {
+"llera": 1868,
+"terreny": 4134,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 52
+}
+},
+"c197": {
+"urba_km2": 26.1,
+"subconques": 11549,
+"cap_t10_mm_h_mitjana": 63.9,
+"cap_t2_mm_h_mitjana": 40.1,
+"cap_t10_mm_h_rang": [
+29.4,
+117.2
+],
+"sortides": {
+"llera": 3219,
+"terreny": 8330,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 28
+}
+},
+"c198": {
+"urba_km2": 18.071,
+"subconques": 6125,
+"cap_t10_mm_h_mitjana": 56.1,
+"cap_t2_mm_h_mitjana": 35.3,
+"cap_t10_mm_h_rang": [
+29.4,
+115.4
+],
+"sortides": {
+"llera": 1962,
+"terreny": 4163,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 18
+}
+},
+"c199": {
+"urba_km2": 3.767,
+"subconques": 1119,
+"cap_t10_mm_h_mitjana": 74.2,
+"cap_t2_mm_h_mitjana": 46.6,
+"cap_t10_mm_h_rang": [
+36.8,
+134.5
+],
+"sortides": {
+"llera": 406,
+"terreny": 713,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 24
+}
+},
+"c200": {
+"urba_km2": 1.548,
+"subconques": 2336,
+"cap_t10_mm_h_mitjana": 57.4,
+"cap_t2_mm_h_mitjana": 36.1,
+"cap_t10_mm_h_rang": [
+20.9,
+98.6
+],
+"sortides": {
+"llera": 269,
+"terreny": 2067,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c201": {
+"urba_km2": 4.625,
+"subconques": 1171,
+"cap_t10_mm_h_mitjana": 78.7,
+"cap_t2_mm_h_mitjana": 49.4,
+"cap_t10_mm_h_rang": [
+36.9,
+138.1
+],
+"sortides": {
+"llera": 662,
+"terreny": 509,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 17
+}
+},
+"c202": {
+"urba_km2": 1.733,
+"subconques": 3942,
+"cap_t10_mm_h_mitjana": 64.8,
+"cap_t2_mm_h_mitjana": 40.7,
+"cap_t10_mm_h_rang": [
+20.9,
+80.1
+],
+"sortides": {
+"llera": 299,
+"terreny": 3643,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c203": {
+"urba_km2": 3.8,
+"subconques": 1289,
+"cap_t10_mm_h_mitjana": 84.6,
+"cap_t2_mm_h_mitjana": 53.1,
+"cap_t10_mm_h_rang": [
+37.0,
+137.5
+],
+"sortides": {
+"llera": 699,
+"terreny": 590,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 11
+}
+},
+"c204": {
+"urba_km2": 3.701,
+"subconques": 1091,
+"cap_t10_mm_h_mitjana": 78.5,
+"cap_t2_mm_h_mitjana": 49.3,
+"cap_t10_mm_h_rang": [
+37.4,
+136.6
+],
+"sortides": {
+"llera": 417,
+"terreny": 674,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+},
+"c205": {
+"urba_km2": 63.087,
+"subconques": 20457,
+"cap_t10_mm_h_mitjana": 66.8,
+"cap_t2_mm_h_mitjana": 41.9,
+"cap_t10_mm_h_rang": [
+27.2,
+124.6
+],
+"sortides": {
+"llera": 8234,
+"terreny": 12223,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 84
+}
+},
+"c206": {
+"urba_km2": 14.635,
+"subconques": 5717,
+"cap_t10_mm_h_mitjana": 69.1,
+"cap_t2_mm_h_mitjana": 43.4,
+"cap_t10_mm_h_rang": [
+30.0,
+116.0
+],
+"sortides": {
+"llera": 1976,
+"terreny": 3741,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 19
+}
+},
+"c207": {
+"urba_km2": 3.403,
+"subconques": 857,
+"cap_t10_mm_h_mitjana": 74.5,
+"cap_t2_mm_h_mitjana": 46.7,
+"cap_t10_mm_h_rang": [
+37.7,
+131.1
+],
+"sortides": {
+"llera": 394,
+"terreny": 463,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 7
+}
+},
+"c208": {
+"urba_km2": 49.923,
+"subconques": 32163,
+"cap_t10_mm_h_mitjana": 65.8,
+"cap_t2_mm_h_mitjana": 41.3,
+"cap_t10_mm_h_rang": [
+29.2,
+129.1
+],
+"sortides": {
+"llera": 8468,
+"terreny": 23695,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 112
+}
+},
+"c209": {
+"urba_km2": 1.882,
+"subconques": 820,
+"cap_t10_mm_h_mitjana": 79.0,
+"cap_t2_mm_h_mitjana": 49.6,
+"cap_t10_mm_h_rang": [
+35.2,
+127.7
+],
+"sortides": {
+"llera": 236,
+"terreny": 584,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 10
+}
+},
+"c210": {
+"urba_km2": 35.609,
+"subconques": 27093,
+"cap_t10_mm_h_mitjana": 60.8,
+"cap_t2_mm_h_mitjana": 38.1,
+"cap_t10_mm_h_rang": [
+24.8,
+120.4
+],
+"sortides": {
+"llera": 6004,
+"terreny": 21089,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 24
+}
+},
+"c211": {
+"urba_km2": 4.506,
+"subconques": 1641,
+"cap_t10_mm_h_mitjana": 67.9,
+"cap_t2_mm_h_mitjana": 42.6,
+"cap_t10_mm_h_rang": [
+34.3,
+124.3
+],
+"sortides": {
+"llera": 618,
+"terreny": 1023,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 20
+}
+},
+"c212": {
+"urba_km2": 2.386,
+"subconques": 944,
+"cap_t10_mm_h_mitjana": 69.8,
+"cap_t2_mm_h_mitjana": 43.8,
+"cap_t10_mm_h_rang": [
+33.4,
+117.6
+],
+"sortides": {
+"llera": 363,
+"terreny": 581,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c213": {
+"urba_km2": 2.71,
+"subconques": 983,
+"cap_t10_mm_h_mitjana": 72.9,
+"cap_t2_mm_h_mitjana": 45.7,
+"cap_t10_mm_h_rang": [
+33.3,
+117.1
+],
+"sortides": {
+"llera": 423,
+"terreny": 560,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 7
+}
+},
+"c214": {
+"urba_km2": 0.348,
+"subconques": 738,
+"cap_t10_mm_h_mitjana": 61.0,
+"cap_t2_mm_h_mitjana": 38.3,
+"cap_t10_mm_h_rang": [
+23.1,
+80.9
+],
+"sortides": {
+"llera": 91,
+"terreny": 647,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c215": {
+"urba_km2": 1.731,
+"subconques": 3054,
+"cap_t10_mm_h_mitjana": 62.8,
+"cap_t2_mm_h_mitjana": 39.5,
+"cap_t10_mm_h_rang": [
+20.9,
+83.5
+],
+"sortides": {
+"llera": 515,
+"terreny": 2539,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+},
+"c216": {
+"urba_km2": 5.221,
+"subconques": 1691,
+"cap_t10_mm_h_mitjana": 74.0,
+"cap_t2_mm_h_mitjana": 46.4,
+"cap_t10_mm_h_rang": [
+32.3,
+115.9
+],
+"sortides": {
+"llera": 830,
+"terreny": 861,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 12
+}
+},
+"c217": {
+"urba_km2": 3.442,
+"subconques": 1110,
+"cap_t10_mm_h_mitjana": 80.3,
+"cap_t2_mm_h_mitjana": 50.4,
+"cap_t10_mm_h_rang": [
+32.3,
+115.4
+],
+"sortides": {
+"llera": 577,
+"terreny": 533,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c218": {
+"urba_km2": 17.818,
+"subconques": 8682,
+"cap_t10_mm_h_mitjana": 60.2,
+"cap_t2_mm_h_mitjana": 37.8,
+"cap_t10_mm_h_rang": [
+28.5,
+126.6
+],
+"sortides": {
+"llera": 1813,
+"terreny": 6869,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 10
+}
+},
+"c219": {
+"urba_km2": 50.538,
+"subconques": 17244,
+"cap_t10_mm_h_mitjana": 67.2,
+"cap_t2_mm_h_mitjana": 42.1,
+"cap_t10_mm_h_rang": [
+27.3,
+129.1
+],
+"sortides": {
+"llera": 6956,
+"terreny": 10288,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 85
+}
+},
+"c220": {
+"urba_km2": 5.686,
+"subconques": 1294,
+"cap_t10_mm_h_mitjana": 74.7,
+"cap_t2_mm_h_mitjana": 46.8,
+"cap_t10_mm_h_rang": [
+32.9,
+116.8
+],
+"sortides": {
+"llera": 590,
+"terreny": 704,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c221": {
+"urba_km2": 5.163,
+"subconques": 618,
+"cap_t10_mm_h_mitjana": 74.8,
+"cap_t2_mm_h_mitjana": 46.9,
+"cap_t10_mm_h_rang": [
+34.2,
+121.4
+],
+"sortides": {
+"llera": 225,
+"terreny": 393,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c222": {
+"urba_km2": 0.274,
+"subconques": 502,
+"cap_t10_mm_h_mitjana": 65.6,
+"cap_t2_mm_h_mitjana": 41.2,
+"cap_t10_mm_h_rang": [
+23.1,
+79.6
+],
+"sortides": {
+"llera": 151,
+"terreny": 351,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c223": {
+"urba_km2": 18.67,
+"subconques": 3773,
+"cap_t10_mm_h_mitjana": 76.9,
+"cap_t2_mm_h_mitjana": 48.2,
+"cap_t10_mm_h_rang": [
+31.5,
+124.7
+],
+"sortides": {
+"llera": 1914,
+"terreny": 1859,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 38
+}
+},
+"c224": {
+"urba_km2": 27.63,
+"subconques": 5387,
+"cap_t10_mm_h_mitjana": 81.9,
+"cap_t2_mm_h_mitjana": 51.3,
+"cap_t10_mm_h_rang": [
+33.7,
+145.4
+],
+"sortides": {
+"llera": 3056,
+"terreny": 2331,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 47
+}
+},
+"c225": {
+"urba_km2": 5.012,
+"subconques": 5705,
+"cap_t10_mm_h_mitjana": 70.1,
+"cap_t2_mm_h_mitjana": 44.0,
+"cap_t10_mm_h_rang": [
+26.0,
+112.7
+],
+"sortides": {
+"llera": 1608,
+"terreny": 4097,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 9
+}
+},
+"c226": {
+"urba_km2": 5.59,
+"subconques": 9607,
+"cap_t10_mm_h_mitjana": 82.0,
+"cap_t2_mm_h_mitjana": 51.4,
+"cap_t10_mm_h_rang": [
+26.7,
+126.0
+],
+"sortides": {
+"llera": 2300,
+"terreny": 7307,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c227": {
+"urba_km2": 25.626,
+"subconques": 4969,
+"cap_t10_mm_h_mitjana": 81.5,
+"cap_t2_mm_h_mitjana": 51.1,
+"cap_t10_mm_h_rang": [
+33.5,
+145.9
+],
+"sortides": {
+"llera": 3241,
+"terreny": 1728,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 28
+}
+},
+"c228": {
+"urba_km2": 57.475,
+"subconques": 16244,
+"cap_t10_mm_h_mitjana": 71.7,
+"cap_t2_mm_h_mitjana": 44.9,
+"cap_t10_mm_h_rang": [
+27.8,
+142.3
+],
+"sortides": {
+"llera": 7528,
+"terreny": 8716,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 135,
+"pous": 5,
+"colectors": 44
+}
+},
+"c229": {
+"urba_km2": 0.589,
+"subconques": 1500,
+"cap_t10_mm_h_mitjana": 63.4,
+"cap_t2_mm_h_mitjana": 39.8,
+"cap_t10_mm_h_rang": [
+21.0,
+79.3
+],
+"sortides": {
+"llera": 85,
+"terreny": 1415,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c230": {
+"urba_km2": 37.811,
+"subconques": 15504,
+"cap_t10_mm_h_mitjana": 61.7,
+"cap_t2_mm_h_mitjana": 38.7,
+"cap_t10_mm_h_rang": [
+27.6,
+116.0
+],
+"sortides": {
+"llera": 4757,
+"terreny": 10747,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 84
+}
+},
+"c231": {
+"urba_km2": 3.361,
+"subconques": 788,
+"cap_t10_mm_h_mitjana": 80.3,
+"cap_t2_mm_h_mitjana": 50.4,
+"cap_t10_mm_h_rang": [
+34.4,
+107.5
+],
+"sortides": {
+"llera": 112,
+"terreny": 676,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c232": {
+"urba_km2": 10.875,
+"subconques": 3485,
+"cap_t10_mm_h_mitjana": 75.6,
+"cap_t2_mm_h_mitjana": 47.4,
+"cap_t10_mm_h_rang": [
+32.9,
+117.2
+],
+"sortides": {
+"llera": 788,
+"terreny": 2697,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 42
+}
+},
+"c233": {
+"urba_km2": 32.163,
+"subconques": 10796,
+"cap_t10_mm_h_mitjana": 70.3,
+"cap_t2_mm_h_mitjana": 44.1,
+"cap_t10_mm_h_rang": [
+30.5,
+117.2
+],
+"sortides": {
+"llera": 3587,
+"terreny": 7209,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 72
+}
+},
+"c234": {
+"urba_km2": 0.041,
+"subconques": 126,
+"cap_t10_mm_h_mitjana": 59.1,
+"cap_t2_mm_h_mitjana": 37.1,
+"cap_t10_mm_h_rang": [
+55.6,
+61.4
+],
+"sortides": {
+"llera": 0,
+"terreny": 126,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c235": {
+"urba_km2": 2.437,
+"subconques": 707,
+"cap_t10_mm_h_mitjana": 71.2,
+"cap_t2_mm_h_mitjana": 44.7,
+"cap_t10_mm_h_rang": [
+33.3,
+115.4
+],
+"sortides": {
+"llera": 261,
+"terreny": 446,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c236": {
+"urba_km2": 1.684,
+"subconques": 4079,
+"cap_t10_mm_h_mitjana": 85.2,
+"cap_t2_mm_h_mitjana": 53.5,
+"cap_t10_mm_h_rang": [
+20.7,
+119.3
+],
+"sortides": {
+"llera": 521,
+"terreny": 3558,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c237": {
+"urba_km2": 0.989,
+"subconques": 3625,
+"cap_t10_mm_h_mitjana": 81.2,
+"cap_t2_mm_h_mitjana": 51.0,
+"cap_t10_mm_h_rang": [
+19.2,
+117.1
+],
+"sortides": {
+"llera": 170,
+"terreny": 3455,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c238": {
+"urba_km2": 0.578,
+"subconques": 506,
+"cap_t10_mm_h_mitjana": 75.5,
+"cap_t2_mm_h_mitjana": 47.5,
+"cap_t10_mm_h_rang": [
+33.7,
+115.4
+],
+"sortides": {
+"llera": 126,
+"terreny": 380,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c239": {
+"urba_km2": 3.057,
+"subconques": 5220,
+"cap_t10_mm_h_mitjana": 64.1,
+"cap_t2_mm_h_mitjana": 40.2,
+"cap_t10_mm_h_rang": [
+22.5,
+84.9
+],
+"sortides": {
+"llera": 769,
+"terreny": 4451,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c240": {
+"urba_km2": 1.72,
+"subconques": 5054,
+"cap_t10_mm_h_mitjana": 63.8,
+"cap_t2_mm_h_mitjana": 40.1,
+"cap_t10_mm_h_rang": [
+18.4,
+93.5
+],
+"sortides": {
+"llera": 330,
+"terreny": 4724,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c241": {
+"urba_km2": 0.243,
+"subconques": 250,
+"cap_t10_mm_h_mitjana": 88.1,
+"cap_t2_mm_h_mitjana": 55.4,
+"cap_t10_mm_h_rang": [
+33.4,
+115.1
+],
+"sortides": {
+"llera": 35,
+"terreny": 215,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c242": {
+"urba_km2": 0.026,
+"subconques": 49,
+"cap_t10_mm_h_mitjana": 57.1,
+"cap_t2_mm_h_mitjana": 35.8,
+"cap_t10_mm_h_rang": [
+36.1,
+108.6
+],
+"sortides": {
+"llera": 1,
+"terreny": 48,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c243": {
+"urba_km2": 1.347,
+"subconques": 3756,
+"cap_t10_mm_h_mitjana": 80.7,
+"cap_t2_mm_h_mitjana": 50.7,
+"cap_t10_mm_h_rang": [
+23.5,
+113.9
+],
+"sortides": {
+"llera": 504,
+"terreny": 3252,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c244": {
+"urba_km2": 0.37,
+"subconques": 317,
+"cap_t10_mm_h_mitjana": 87.3,
+"cap_t2_mm_h_mitjana": 54.8,
+"cap_t10_mm_h_rang": [
+32.8,
+114.2
+],
+"sortides": {
+"llera": 133,
+"terreny": 184,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c245": {
+"urba_km2": 2.425,
+"subconques": 692,
+"cap_t10_mm_h_mitjana": 61.0,
+"cap_t2_mm_h_mitjana": 38.3,
+"cap_t10_mm_h_rang": [
+33.1,
+115.3
+],
+"sortides": {
+"llera": 237,
+"terreny": 455,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c246": {
+"urba_km2": 27.902,
+"subconques": 15547,
+"cap_t10_mm_h_mitjana": 55.1,
+"cap_t2_mm_h_mitjana": 34.6,
+"cap_t10_mm_h_rang": [
+26.2,
+115.1
+],
+"sortides": {
+"llera": 5019,
+"terreny": 10528,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 37
+}
+},
+"c247": {
+"urba_km2": 9.586,
+"subconques": 3621,
+"cap_t10_mm_h_mitjana": 63.8,
+"cap_t2_mm_h_mitjana": 40.0,
+"cap_t10_mm_h_rang": [
+30.0,
+120.2
+],
+"sortides": {
+"llera": 1280,
+"terreny": 2341,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 19
+}
+},
+"c248": {
+"urba_km2": 5.495,
+"subconques": 1912,
+"cap_t10_mm_h_mitjana": 69.3,
+"cap_t2_mm_h_mitjana": 43.5,
+"cap_t10_mm_h_rang": [
+32.8,
+123.1
+],
+"sortides": {
+"llera": 833,
+"terreny": 1079,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c249": {
+"urba_km2": 2.709,
+"subconques": 1063,
+"cap_t10_mm_h_mitjana": 73.7,
+"cap_t2_mm_h_mitjana": 46.3,
+"cap_t10_mm_h_rang": [
+35.0,
+127.3
+],
+"sortides": {
+"llera": 104,
+"terreny": 959,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c250": {
+"urba_km2": 22.905,
+"subconques": 18003,
+"cap_t10_mm_h_mitjana": 67.9,
+"cap_t2_mm_h_mitjana": 42.6,
+"cap_t10_mm_h_rang": [
+28.1,
+130.4
+],
+"sortides": {
+"llera": 5217,
+"terreny": 12786,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 23
+}
+},
+"c251": {
+"urba_km2": 4.494,
+"subconques": 1676,
+"cap_t10_mm_h_mitjana": 57.3,
+"cap_t2_mm_h_mitjana": 36.0,
+"cap_t10_mm_h_rang": [
+32.4,
+131.6
+],
+"sortides": {
+"llera": 404,
+"terreny": 1272,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 13
+}
+},
+"c252": {
+"urba_km2": 1.466,
+"subconques": 678,
+"cap_t10_mm_h_mitjana": 84.2,
+"cap_t2_mm_h_mitjana": 52.9,
+"cap_t10_mm_h_rang": [
+38.3,
+131.2
+],
+"sortides": {
+"llera": 211,
+"terreny": 467,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c253": {
+"urba_km2": 4.428,
+"subconques": 1227,
+"cap_t10_mm_h_mitjana": 71.4,
+"cap_t2_mm_h_mitjana": 44.8,
+"cap_t10_mm_h_rang": [
+37.1,
+131.2
+],
+"sortides": {
+"llera": 507,
+"terreny": 720,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 4,
+"pous": 22,
+"colectors": 35
+}
+},
+"c254": {
+"urba_km2": 4.648,
+"subconques": 997,
+"cap_t10_mm_h_mitjana": 68.0,
+"cap_t2_mm_h_mitjana": 42.7,
+"cap_t10_mm_h_rang": [
+37.3,
+131.0
+],
+"sortides": {
+"llera": 523,
+"terreny": 474,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 4,
+"pous": 12,
+"colectors": 33
+}
+},
+"c255": {
+"urba_km2": 7.282,
+"subconques": 2711,
+"cap_t10_mm_h_mitjana": 67.1,
+"cap_t2_mm_h_mitjana": 42.2,
+"cap_t10_mm_h_rang": [
+34.1,
+134.2
+],
+"sortides": {
+"llera": 505,
+"terreny": 2206,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 5,
+"colectors": 19
+}
+},
+"c256": {
+"urba_km2": 2.594,
+"subconques": 8060,
+"cap_t10_mm_h_mitjana": 71.4,
+"cap_t2_mm_h_mitjana": 44.8,
+"cap_t10_mm_h_rang": [
+23.7,
+92.9
+],
+"sortides": {
+"llera": 1751,
+"terreny": 6309,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 18
+}
+},
+"c257": {
+"urba_km2": 2.613,
+"subconques": 8699,
+"cap_t10_mm_h_mitjana": 80.9,
+"cap_t2_mm_h_mitjana": 50.8,
+"cap_t10_mm_h_rang": [
+23.8,
+112.0
+],
+"sortides": {
+"llera": 1878,
+"terreny": 6821,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 72
+}
+},
+"c258": {
+"urba_km2": 24.51,
+"subconques": 15308,
+"cap_t10_mm_h_mitjana": 71.2,
+"cap_t2_mm_h_mitjana": 44.7,
+"cap_t10_mm_h_rang": [
+31.0,
+136.0
+],
+"sortides": {
+"llera": 4761,
+"terreny": 10547,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 21
+}
+},
+"c259": {
+"urba_km2": 2.473,
+"subconques": 1005,
+"cap_t10_mm_h_mitjana": 74.5,
+"cap_t2_mm_h_mitjana": 46.8,
+"cap_t10_mm_h_rang": [
+36.9,
+136.4
+],
+"sortides": {
+"llera": 268,
+"terreny": 737,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c260": {
+"urba_km2": 2.272,
+"subconques": 651,
+"cap_t10_mm_h_mitjana": 62.0,
+"cap_t2_mm_h_mitjana": 38.9,
+"cap_t10_mm_h_rang": [
+38.1,
+135.5
+],
+"sortides": {
+"llera": 120,
+"terreny": 531,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c261": {
+"urba_km2": 1.941,
+"subconques": 614,
+"cap_t10_mm_h_mitjana": 68.9,
+"cap_t2_mm_h_mitjana": 43.2,
+"cap_t10_mm_h_rang": [
+38.7,
+135.3
+],
+"sortides": {
+"llera": 237,
+"terreny": 377,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c262": {
+"urba_km2": 2.645,
+"subconques": 1016,
+"cap_t10_mm_h_mitjana": 73.1,
+"cap_t2_mm_h_mitjana": 45.9,
+"cap_t10_mm_h_rang": [
+39.3,
+138.2
+],
+"sortides": {
+"llera": 353,
+"terreny": 663,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 10
+}
+},
+"c263": {
+"urba_km2": 2.48,
+"subconques": 1549,
+"cap_t10_mm_h_mitjana": 77.3,
+"cap_t2_mm_h_mitjana": 48.6,
+"cap_t10_mm_h_rang": [
+36.0,
+140.8
+],
+"sortides": {
+"llera": 558,
+"terreny": 991,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c264": {
+"urba_km2": 2.028,
+"subconques": 919,
+"cap_t10_mm_h_mitjana": 82.0,
+"cap_t2_mm_h_mitjana": 51.5,
+"cap_t10_mm_h_rang": [
+40.5,
+143.1
+],
+"sortides": {
+"llera": 229,
+"terreny": 690,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c265": {
+"urba_km2": 2.213,
+"subconques": 1232,
+"cap_t10_mm_h_mitjana": 73.5,
+"cap_t2_mm_h_mitjana": 46.2,
+"cap_t10_mm_h_rang": [
+39.9,
+143.7
+],
+"sortides": {
+"llera": 415,
+"terreny": 817,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 7
+}
+},
+"c266": {
+"urba_km2": 5.815,
+"subconques": 10060,
+"cap_t10_mm_h_mitjana": 64.4,
+"cap_t2_mm_h_mitjana": 40.4,
+"cap_t10_mm_h_rang": [
+22.8,
+100.1
+],
+"sortides": {
+"llera": 2150,
+"terreny": 7910,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 7
+}
+},
+"c267": {
+"urba_km2": 1.972,
+"subconques": 4401,
+"cap_t10_mm_h_mitjana": 80.8,
+"cap_t2_mm_h_mitjana": 50.7,
+"cap_t10_mm_h_rang": [
+25.9,
+105.6
+],
+"sortides": {
+"llera": 531,
+"terreny": 3870,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 20
+}
+},
+"c268": {
+"urba_km2": 0.272,
+"subconques": 521,
+"cap_t10_mm_h_mitjana": 82.4,
+"cap_t2_mm_h_mitjana": 51.8,
+"cap_t10_mm_h_rang": [
+25.8,
+104.6
+],
+"sortides": {
+"llera": 100,
+"terreny": 421,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c269": {
+"urba_km2": 1.752,
+"subconques": 4443,
+"cap_t10_mm_h_mitjana": 88.6,
+"cap_t2_mm_h_mitjana": 55.6,
+"cap_t10_mm_h_rang": [
+29.2,
+132.9
+],
+"sortides": {
+"llera": 680,
+"terreny": 3763,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 37
+}
+},
+"c270": {
+"urba_km2": 2.187,
+"subconques": 913,
+"cap_t10_mm_h_mitjana": 81.6,
+"cap_t2_mm_h_mitjana": 51.3,
+"cap_t10_mm_h_rang": [
+40.3,
+143.4
+],
+"sortides": {
+"llera": 128,
+"terreny": 785,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 11
+}
+},
+"c271": {
+"urba_km2": 2.279,
+"subconques": 870,
+"cap_t10_mm_h_mitjana": 90.1,
+"cap_t2_mm_h_mitjana": 56.6,
+"cap_t10_mm_h_rang": [
+40.8,
+143.7
+],
+"sortides": {
+"llera": 172,
+"terreny": 698,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c272": {
+"urba_km2": 13.36,
+"subconques": 17540,
+"cap_t10_mm_h_mitjana": 76.3,
+"cap_t2_mm_h_mitjana": 47.9,
+"cap_t10_mm_h_rang": [
+24.4,
+143.1
+],
+"sortides": {
+"llera": 4088,
+"terreny": 13452,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 16
+}
+},
+"c273": {
+"urba_km2": 1.762,
+"subconques": 1011,
+"cap_t10_mm_h_mitjana": 66.4,
+"cap_t2_mm_h_mitjana": 41.7,
+"cap_t10_mm_h_rang": [
+40.6,
+140.3
+],
+"sortides": {
+"llera": 132,
+"terreny": 879,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c274": {
+"urba_km2": 1.318,
+"subconques": 664,
+"cap_t10_mm_h_mitjana": 64.1,
+"cap_t2_mm_h_mitjana": 40.3,
+"cap_t10_mm_h_rang": [
+40.2,
+139.9
+],
+"sortides": {
+"llera": 24,
+"terreny": 640,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c275": {
+"urba_km2": 5.328,
+"subconques": 3225,
+"cap_t10_mm_h_mitjana": 67.8,
+"cap_t2_mm_h_mitjana": 42.6,
+"cap_t10_mm_h_rang": [
+37.5,
+141.8
+],
+"sortides": {
+"llera": 368,
+"terreny": 2857,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c276": {
+"urba_km2": 1.017,
+"subconques": 556,
+"cap_t10_mm_h_mitjana": 84.6,
+"cap_t2_mm_h_mitjana": 53.1,
+"cap_t10_mm_h_rang": [
+39.7,
+140.4
+],
+"sortides": {
+"llera": 82,
+"terreny": 474,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c277": {
+"urba_km2": 3.61,
+"subconques": 1462,
+"cap_t10_mm_h_mitjana": 85.3,
+"cap_t2_mm_h_mitjana": 53.6,
+"cap_t10_mm_h_rang": [
+39.7,
+141.4
+],
+"sortides": {
+"llera": 207,
+"terreny": 1255,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c278": {
+"urba_km2": 49.185,
+"subconques": 32996,
+"cap_t10_mm_h_mitjana": 84.7,
+"cap_t2_mm_h_mitjana": 53.2,
+"cap_t10_mm_h_rang": [
+25.9,
+145.9
+],
+"sortides": {
+"llera": 8731,
+"terreny": 24265,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 4,
+"pous": 0,
+"colectors": 137
+}
+},
+"c279": {
+"urba_km2": 2.86,
+"subconques": 3082,
+"cap_t10_mm_h_mitjana": 76.4,
+"cap_t2_mm_h_mitjana": 47.9,
+"cap_t10_mm_h_rang": [
+26.3,
+123.0
+],
+"sortides": {
+"llera": 620,
+"terreny": 2462,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c280": {
+"urba_km2": 20.76,
+"subconques": 9191,
+"cap_t10_mm_h_mitjana": 86.9,
+"cap_t2_mm_h_mitjana": 54.5,
+"cap_t10_mm_h_rang": [
+34.9,
+146.0
+],
+"sortides": {
+"llera": 3751,
+"terreny": 5440,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 91
+}
+},
+"c281": {
+"urba_km2": 2.805,
+"subconques": 5151,
+"cap_t10_mm_h_mitjana": 76.8,
+"cap_t2_mm_h_mitjana": 48.2,
+"cap_t10_mm_h_rang": [
+24.9,
+109.1
+],
+"sortides": {
+"llera": 1049,
+"terreny": 4102,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c282": {
+"urba_km2": 2.621,
+"subconques": 743,
+"cap_t10_mm_h_mitjana": 90.6,
+"cap_t2_mm_h_mitjana": 56.9,
+"cap_t10_mm_h_rang": [
+42.3,
+145.8
+],
+"sortides": {
+"llera": 111,
+"terreny": 632,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 16
+}
+},
+"c283": {
+"urba_km2": 13.172,
+"subconques": 6205,
+"cap_t10_mm_h_mitjana": 87.0,
+"cap_t2_mm_h_mitjana": 54.6,
+"cap_t10_mm_h_rang": [
+36.5,
+143.4
+],
+"sortides": {
+"llera": 2099,
+"terreny": 4106,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 31
+}
+},
+"c284": {
+"urba_km2": 4.385,
+"subconques": 2021,
+"cap_t10_mm_h_mitjana": 93.7,
+"cap_t2_mm_h_mitjana": 58.8,
+"cap_t10_mm_h_rang": [
+40.8,
+142.6
+],
+"sortides": {
+"llera": 496,
+"terreny": 1525,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c285": {
+"urba_km2": 2.321,
+"subconques": 766,
+"cap_t10_mm_h_mitjana": 88.9,
+"cap_t2_mm_h_mitjana": 55.8,
+"cap_t10_mm_h_rang": [
+40.3,
+142.8
+],
+"sortides": {
+"llera": 203,
+"terreny": 563,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c286": {
+"urba_km2": 8.301,
+"subconques": 3624,
+"cap_t10_mm_h_mitjana": 92.1,
+"cap_t2_mm_h_mitjana": 57.8,
+"cap_t10_mm_h_rang": [
+38.5,
+145.3
+],
+"sortides": {
+"llera": 1152,
+"terreny": 2472,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 12
+}
+},
+"c287": {
+"urba_km2": 2.281,
+"subconques": 1514,
+"cap_t10_mm_h_mitjana": 97.4,
+"cap_t2_mm_h_mitjana": 61.1,
+"cap_t10_mm_h_rang": [
+38.4,
+144.2
+],
+"sortides": {
+"llera": 410,
+"terreny": 1104,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 8
+}
+},
+"c288": {
+"urba_km2": 2.292,
+"subconques": 1299,
+"cap_t10_mm_h_mitjana": 102.1,
+"cap_t2_mm_h_mitjana": 64.0,
+"cap_t10_mm_h_rang": [
+41.1,
+144.9
+],
+"sortides": {
+"llera": 503,
+"terreny": 796,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c289": {
+"urba_km2": 6.546,
+"subconques": 6713,
+"cap_t10_mm_h_mitjana": 89.2,
+"cap_t2_mm_h_mitjana": 55.9,
+"cap_t10_mm_h_rang": [
+28.2,
+144.8
+],
+"sortides": {
+"llera": 1421,
+"terreny": 5292,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 39
+}
+},
+"c290": {
+"urba_km2": 5.902,
+"subconques": 5091,
+"cap_t10_mm_h_mitjana": 90.1,
+"cap_t2_mm_h_mitjana": 56.6,
+"cap_t10_mm_h_rang": [
+28.6,
+144.7
+],
+"sortides": {
+"llera": 1454,
+"terreny": 3637,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 47
+}
+},
+"c291": {
+"urba_km2": 2.748,
+"subconques": 2446,
+"cap_t10_mm_h_mitjana": 96.0,
+"cap_t2_mm_h_mitjana": 60.2,
+"cap_t10_mm_h_rang": [
+40.5,
+145.9
+],
+"sortides": {
+"llera": 524,
+"terreny": 1922,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 12
+}
+},
+"c292": {
+"urba_km2": 3.436,
+"subconques": 5493,
+"cap_t10_mm_h_mitjana": 98.2,
+"cap_t2_mm_h_mitjana": 61.6,
+"cap_t10_mm_h_rang": [
+32.0,
+149.3
+],
+"sortides": {
+"llera": 1095,
+"terreny": 4398,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 43
+}
+},
+"c293": {
+"urba_km2": 1.431,
+"subconques": 1993,
+"cap_t10_mm_h_mitjana": 100.3,
+"cap_t2_mm_h_mitjana": 63.0,
+"cap_t10_mm_h_rang": [
+41.3,
+152.7
+],
+"sortides": {
+"llera": 493,
+"terreny": 1500,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 9
+}
+},
+"c294": {
+"urba_km2": 0.925,
+"subconques": 1652,
+"cap_t10_mm_h_mitjana": 94.0,
+"cap_t2_mm_h_mitjana": 59.0,
+"cap_t10_mm_h_rang": [
+35.2,
+153.8
+],
+"sortides": {
+"llera": 363,
+"terreny": 1289,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 10
+}
+},
+"c295": {
+"urba_km2": 0.756,
+"subconques": 2464,
+"cap_t10_mm_h_mitjana": 100.7,
+"cap_t2_mm_h_mitjana": 63.2,
+"cap_t10_mm_h_rang": [
+31.6,
+128.9
+],
+"sortides": {
+"llera": 226,
+"terreny": 2238,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c296": {
+"urba_km2": 1.758,
+"subconques": 2998,
+"cap_t10_mm_h_mitjana": 90.0,
+"cap_t2_mm_h_mitjana": 56.5,
+"cap_t10_mm_h_rang": [
+31.3,
+124.0
+],
+"sortides": {
+"llera": 718,
+"terreny": 2280,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c297": {
+"urba_km2": 0.282,
+"subconques": 671,
+"cap_t10_mm_h_mitjana": 125.6,
+"cap_t2_mm_h_mitjana": 78.9,
+"cap_t10_mm_h_rang": [
+60.2,
+157.9
+],
+"sortides": {
+"llera": 87,
+"terreny": 584,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c298": {
+"urba_km2": 0.69,
+"subconques": 1235,
+"cap_t10_mm_h_mitjana": 103.2,
+"cap_t2_mm_h_mitjana": 64.8,
+"cap_t10_mm_h_rang": [
+43.6,
+162.7
+],
+"sortides": {
+"llera": 251,
+"terreny": 984,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c299": {
+"urba_km2": 0.955,
+"subconques": 987,
+"cap_t10_mm_h_mitjana": 77.0,
+"cap_t2_mm_h_mitjana": 48.3,
+"cap_t10_mm_h_rang": [
+46.6,
+163.3
+],
+"sortides": {
+"llera": 177,
+"terreny": 810,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c300": {
+"urba_km2": 3.127,
+"subconques": 2215,
+"cap_t10_mm_h_mitjana": 81.4,
+"cap_t2_mm_h_mitjana": 51.1,
+"cap_t10_mm_h_rang": [
+45.9,
+165.1
+],
+"sortides": {
+"llera": 409,
+"terreny": 1806,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 17
+}
+},
+"c301": {
+"urba_km2": 4.367,
+"subconques": 3663,
+"cap_t10_mm_h_mitjana": 97.2,
+"cap_t2_mm_h_mitjana": 61.0,
+"cap_t10_mm_h_rang": [
+36.1,
+165.6
+],
+"sortides": {
+"llera": 1208,
+"terreny": 2455,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 31
+}
+},
+"c302": {
+"urba_km2": 1.904,
+"subconques": 1019,
+"cap_t10_mm_h_mitjana": 104.8,
+"cap_t2_mm_h_mitjana": 65.8,
+"cap_t10_mm_h_rang": [
+46.3,
+163.3
+],
+"sortides": {
+"llera": 410,
+"terreny": 609,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 13
+}
+},
+"c303": {
+"urba_km2": 0.858,
+"subconques": 705,
+"cap_t10_mm_h_mitjana": 107.3,
+"cap_t2_mm_h_mitjana": 67.4,
+"cap_t10_mm_h_rang": [
+44.9,
+161.8
+],
+"sortides": {
+"llera": 216,
+"terreny": 489,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 12
+}
+},
+"c304": {
+"urba_km2": 0.577,
+"subconques": 639,
+"cap_t10_mm_h_mitjana": 112.8,
+"cap_t2_mm_h_mitjana": 70.8,
+"cap_t10_mm_h_rang": [
+43.6,
+157.3
+],
+"sortides": {
+"llera": 359,
+"terreny": 280,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 7
+}
+},
+"c305": {
+"urba_km2": 0.977,
+"subconques": 3435,
+"cap_t10_mm_h_mitjana": 85.5,
+"cap_t2_mm_h_mitjana": 53.7,
+"cap_t10_mm_h_rang": [
+24.9,
+109.2
+],
+"sortides": {
+"llera": 434,
+"terreny": 3001,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c306": {
+"urba_km2": 1.459,
+"subconques": 3272,
+"cap_t10_mm_h_mitjana": 87.9,
+"cap_t2_mm_h_mitjana": 55.2,
+"cap_t10_mm_h_rang": [
+29.5,
+117.1
+],
+"sortides": {
+"llera": 1240,
+"terreny": 2032,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 14
+}
+},
+"c307": {
+"urba_km2": 0.822,
+"subconques": 536,
+"cap_t10_mm_h_mitjana": 105.3,
+"cap_t2_mm_h_mitjana": 66.1,
+"cap_t10_mm_h_rang": [
+41.3,
+152.0
+],
+"sortides": {
+"llera": 210,
+"terreny": 326,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c308": {
+"urba_km2": 0.856,
+"subconques": 355,
+"cap_t10_mm_h_mitjana": 96.0,
+"cap_t2_mm_h_mitjana": 60.3,
+"cap_t10_mm_h_rang": [
+41.0,
+143.5
+],
+"sortides": {
+"llera": 122,
+"terreny": 233,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c309": {
+"urba_km2": 0.535,
+"subconques": 394,
+"cap_t10_mm_h_mitjana": 86.5,
+"cap_t2_mm_h_mitjana": 54.3,
+"cap_t10_mm_h_rang": [
+38.8,
+135.3
+],
+"sortides": {
+"llera": 102,
+"terreny": 292,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c310": {
+"urba_km2": 0.412,
+"subconques": 392,
+"cap_t10_mm_h_mitjana": 89.0,
+"cap_t2_mm_h_mitjana": 55.9,
+"cap_t10_mm_h_rang": [
+36.2,
+131.1
+],
+"sortides": {
+"llera": 74,
+"terreny": 318,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c311": {
+"urba_km2": 1.983,
+"subconques": 1048,
+"cap_t10_mm_h_mitjana": 55.7,
+"cap_t2_mm_h_mitjana": 35.0,
+"cap_t10_mm_h_rang": [
+35.7,
+129.7
+],
+"sortides": {
+"llera": 447,
+"terreny": 601,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c312": {
+"urba_km2": 2.094,
+"subconques": 964,
+"cap_t10_mm_h_mitjana": 51.7,
+"cap_t2_mm_h_mitjana": 32.5,
+"cap_t10_mm_h_rang": [
+35.9,
+127.5
+],
+"sortides": {
+"llera": 263,
+"terreny": 701,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c313": {
+"urba_km2": 0.6,
+"subconques": 524,
+"cap_t10_mm_h_mitjana": 66.3,
+"cap_t2_mm_h_mitjana": 41.6,
+"cap_t10_mm_h_rang": [
+37.3,
+127.5
+],
+"sortides": {
+"llera": 194,
+"terreny": 330,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c314": {
+"urba_km2": 0.915,
+"subconques": 758,
+"cap_t10_mm_h_mitjana": 95.9,
+"cap_t2_mm_h_mitjana": 60.2,
+"cap_t10_mm_h_rang": [
+36.9,
+127.2
+],
+"sortides": {
+"llera": 131,
+"terreny": 627,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c315": {
+"urba_km2": 0.874,
+"subconques": 768,
+"cap_t10_mm_h_mitjana": 85.3,
+"cap_t2_mm_h_mitjana": 53.5,
+"cap_t10_mm_h_rang": [
+36.6,
+127.5
+],
+"sortides": {
+"llera": 114,
+"terreny": 654,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c316": {
+"urba_km2": 0.501,
+"subconques": 1331,
+"cap_t10_mm_h_mitjana": 93.1,
+"cap_t2_mm_h_mitjana": 58.4,
+"cap_t10_mm_h_rang": [
+36.8,
+128.6
+],
+"sortides": {
+"llera": 186,
+"terreny": 1145,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c317": {
+"urba_km2": 1.043,
+"subconques": 1754,
+"cap_t10_mm_h_mitjana": 98.7,
+"cap_t2_mm_h_mitjana": 62.0,
+"cap_t10_mm_h_rang": [
+37.2,
+129.9
+],
+"sortides": {
+"llera": 447,
+"terreny": 1307,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c318": {
+"urba_km2": 0.136,
+"subconques": 131,
+"cap_t10_mm_h_mitjana": 85.4,
+"cap_t2_mm_h_mitjana": 53.6,
+"cap_t10_mm_h_rang": [
+47.6,
+128.0
+],
+"sortides": {
+"llera": 41,
+"terreny": 90,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c319": {
+"urba_km2": 0.084,
+"subconques": 83,
+"cap_t10_mm_h_mitjana": 100.3,
+"cap_t2_mm_h_mitjana": 62.9,
+"cap_t10_mm_h_rang": [
+37.8,
+128.7
+],
+"sortides": {
+"llera": 20,
+"terreny": 63,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c320": {
+"urba_km2": 0.357,
+"subconques": 288,
+"cap_t10_mm_h_mitjana": 68.1,
+"cap_t2_mm_h_mitjana": 42.8,
+"cap_t10_mm_h_rang": [
+37.5,
+131.9
+],
+"sortides": {
+"llera": 52,
+"terreny": 236,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c321": {
+"urba_km2": 0.643,
+"subconques": 639,
+"cap_t10_mm_h_mitjana": 88.4,
+"cap_t2_mm_h_mitjana": 55.5,
+"cap_t10_mm_h_rang": [
+37.9,
+132.2
+],
+"sortides": {
+"llera": 202,
+"terreny": 437,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c322": {
+"urba_km2": 1.007,
+"subconques": 802,
+"cap_t10_mm_h_mitjana": 88.9,
+"cap_t2_mm_h_mitjana": 55.8,
+"cap_t10_mm_h_rang": [
+37.8,
+133.5
+],
+"sortides": {
+"llera": 292,
+"terreny": 510,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c323": {
+"urba_km2": 1.175,
+"subconques": 946,
+"cap_t10_mm_h_mitjana": 82.5,
+"cap_t2_mm_h_mitjana": 51.8,
+"cap_t10_mm_h_rang": [
+38.1,
+135.9
+],
+"sortides": {
+"llera": 169,
+"terreny": 777,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c324": {
+"urba_km2": 7.079,
+"subconques": 9782,
+"cap_t10_mm_h_mitjana": 80.8,
+"cap_t2_mm_h_mitjana": 50.8,
+"cap_t10_mm_h_rang": [
+28.3,
+125.8
+],
+"sortides": {
+"llera": 2696,
+"terreny": 7086,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 20
+}
+},
+"c325": {
+"urba_km2": 0.715,
+"subconques": 717,
+"cap_t10_mm_h_mitjana": 85.4,
+"cap_t2_mm_h_mitjana": 53.6,
+"cap_t10_mm_h_rang": [
+39.3,
+136.9
+],
+"sortides": {
+"llera": 195,
+"terreny": 522,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c326": {
+"urba_km2": 0.65,
+"subconques": 1325,
+"cap_t10_mm_h_mitjana": 98.6,
+"cap_t2_mm_h_mitjana": 62.0,
+"cap_t10_mm_h_rang": [
+36.8,
+137.4
+],
+"sortides": {
+"llera": 62,
+"terreny": 1263,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c327": {
+"urba_km2": 0.62,
+"subconques": 1691,
+"cap_t10_mm_h_mitjana": 107.5,
+"cap_t2_mm_h_mitjana": 67.5,
+"cap_t10_mm_h_rang": [
+36.8,
+138.5
+],
+"sortides": {
+"llera": 123,
+"terreny": 1568,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c328": {
+"urba_km2": 7.202,
+"subconques": 8528,
+"cap_t10_mm_h_mitjana": 100.2,
+"cap_t2_mm_h_mitjana": 63.0,
+"cap_t10_mm_h_rang": [
+36.4,
+141.6
+],
+"sortides": {
+"llera": 1364,
+"terreny": 7164,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 31
+}
+},
+"c329": {
+"urba_km2": 2.685,
+"subconques": 1951,
+"cap_t10_mm_h_mitjana": 76.8,
+"cap_t2_mm_h_mitjana": 48.2,
+"cap_t10_mm_h_rang": [
+33.9,
+128.9
+],
+"sortides": {
+"llera": 387,
+"terreny": 1564,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c330": {
+"urba_km2": 10.641,
+"subconques": 10123,
+"cap_t10_mm_h_mitjana": 83.6,
+"cap_t2_mm_h_mitjana": 52.5,
+"cap_t10_mm_h_rang": [
+31.8,
+136.5
+],
+"sortides": {
+"llera": 2681,
+"terreny": 7442,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 22
+}
+},
+"c331": {
+"urba_km2": 4.881,
+"subconques": 8372,
+"cap_t10_mm_h_mitjana": 103.0,
+"cap_t2_mm_h_mitjana": 64.7,
+"cap_t10_mm_h_rang": [
+35.0,
+147.3
+],
+"sortides": {
+"llera": 2294,
+"terreny": 6078,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 16
+}
+},
+"c332": {
+"urba_km2": 0.636,
+"subconques": 902,
+"cap_t10_mm_h_mitjana": 85.3,
+"cap_t2_mm_h_mitjana": 53.5,
+"cap_t10_mm_h_rang": [
+38.4,
+134.5
+],
+"sortides": {
+"llera": 16,
+"terreny": 886,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c333": {
+"urba_km2": 0.598,
+"subconques": 1114,
+"cap_t10_mm_h_mitjana": 92.3,
+"cap_t2_mm_h_mitjana": 58.0,
+"cap_t10_mm_h_rang": [
+36.2,
+134.2
+],
+"sortides": {
+"llera": 10,
+"terreny": 1104,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c334": {
+"urba_km2": 2.339,
+"subconques": 1693,
+"cap_t10_mm_h_mitjana": 79.2,
+"cap_t2_mm_h_mitjana": 49.7,
+"cap_t10_mm_h_rang": [
+36.8,
+132.3
+],
+"sortides": {
+"llera": 198,
+"terreny": 1495,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c335": {
+"urba_km2": 1.813,
+"subconques": 1646,
+"cap_t10_mm_h_mitjana": 102.7,
+"cap_t2_mm_h_mitjana": 64.5,
+"cap_t10_mm_h_rang": [
+38.1,
+141.6
+],
+"sortides": {
+"llera": 301,
+"terreny": 1345,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c336": {
+"urba_km2": 1.009,
+"subconques": 1164,
+"cap_t10_mm_h_mitjana": 106.2,
+"cap_t2_mm_h_mitjana": 66.8,
+"cap_t10_mm_h_rang": [
+40.2,
+140.5
+],
+"sortides": {
+"llera": 161,
+"terreny": 1003,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c337": {
+"urba_km2": 0.885,
+"subconques": 931,
+"cap_t10_mm_h_mitjana": 104.5,
+"cap_t2_mm_h_mitjana": 65.6,
+"cap_t10_mm_h_rang": [
+39.6,
+137.4
+],
+"sortides": {
+"llera": 45,
+"terreny": 886,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c338": {
+"urba_km2": 0.106,
+"subconques": 591,
+"cap_t10_mm_h_mitjana": 94.4,
+"cap_t2_mm_h_mitjana": 59.3,
+"cap_t10_mm_h_rang": [
+29.0,
+115.1
+],
+"sortides": {
+"llera": 4,
+"terreny": 587,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c339": {
+"urba_km2": 0.067,
+"subconques": 468,
+"cap_t10_mm_h_mitjana": 128.5,
+"cap_t2_mm_h_mitjana": 80.8,
+"cap_t10_mm_h_rang": [
+38.1,
+134.1
+],
+"sortides": {
+"llera": 17,
+"terreny": 451,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 5
+}
+},
+"c340": {
+"urba_km2": 0.089,
+"subconques": 426,
+"cap_t10_mm_h_mitjana": 120.7,
+"cap_t2_mm_h_mitjana": 75.8,
+"cap_t10_mm_h_rang": [
+39.4,
+134.4
+],
+"sortides": {
+"llera": 26,
+"terreny": 400,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 4
+}
+},
+"c341": {
+"urba_km2": 3.364,
+"subconques": 1796,
+"cap_t10_mm_h_mitjana": 91.4,
+"cap_t2_mm_h_mitjana": 57.4,
+"cap_t10_mm_h_rang": [
+38.3,
+136.8
+],
+"sortides": {
+"llera": 276,
+"terreny": 1520,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 16
+}
+},
+"c342": {
+"urba_km2": 0.087,
+"subconques": 359,
+"cap_t10_mm_h_mitjana": 104.1,
+"cap_t2_mm_h_mitjana": 65.4,
+"cap_t10_mm_h_rang": [
+35.0,
+122.8
+],
+"sortides": {
+"llera": 0,
+"terreny": 359,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c343": {
+"urba_km2": 0.871,
+"subconques": 1492,
+"cap_t10_mm_h_mitjana": 97.1,
+"cap_t2_mm_h_mitjana": 61.0,
+"cap_t10_mm_h_rang": [
+35.0,
+133.7
+],
+"sortides": {
+"llera": 17,
+"terreny": 1475,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 10
+}
+},
+"c344": {
+"urba_km2": 0.877,
+"subconques": 1144,
+"cap_t10_mm_h_mitjana": 87.5,
+"cap_t2_mm_h_mitjana": 54.9,
+"cap_t10_mm_h_rang": [
+36.1,
+128.9
+],
+"sortides": {
+"llera": 61,
+"terreny": 1083,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+},
+"c345": {
+"urba_km2": 0.255,
+"subconques": 518,
+"cap_t10_mm_h_mitjana": 106.3,
+"cap_t2_mm_h_mitjana": 66.8,
+"cap_t10_mm_h_rang": [
+37.8,
+137.4
+],
+"sortides": {
+"llera": 96,
+"terreny": 422,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c346": {
+"urba_km2": 0.042,
+"subconques": 206,
+"cap_t10_mm_h_mitjana": 123.6,
+"cap_t2_mm_h_mitjana": 77.7,
+"cap_t10_mm_h_rang": [
+39.3,
+133.6
+],
+"sortides": {
+"llera": 3,
+"terreny": 203,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+},
+"c347": {
+"urba_km2": 0.333,
+"subconques": 1263,
+"cap_t10_mm_h_mitjana": 115.0,
+"cap_t2_mm_h_mitjana": 72.2,
+"cap_t10_mm_h_rang": [
+37.3,
+134.3
+],
+"sortides": {
+"llera": 176,
+"terreny": 1087,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 25
+}
+},
+"c348": {
+"urba_km2": 0.173,
+"subconques": 185,
+"cap_t10_mm_h_mitjana": 102.9,
+"cap_t2_mm_h_mitjana": 64.6,
+"cap_t10_mm_h_rang": [
+37.8,
+129.4
+],
+"sortides": {
+"llera": 0,
+"terreny": 185,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+},
+"c349": {
+"urba_km2": 0.143,
+"subconques": 281,
+"cap_t10_mm_h_mitjana": 111.7,
+"cap_t2_mm_h_mitjana": 70.2,
+"cap_t10_mm_h_rang": [
+40.3,
+137.6
+],
+"sortides": {
+"llera": 37,
+"terreny": 244,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c350": {
+"urba_km2": 1.791,
+"subconques": 2453,
+"cap_t10_mm_h_mitjana": 96.3,
+"cap_t2_mm_h_mitjana": 60.5,
+"cap_t10_mm_h_rang": [
+38.2,
+138.4
+],
+"sortides": {
+"llera": 337,
+"terreny": 2116,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c351": {
+"urba_km2": 0.244,
+"subconques": 293,
+"cap_t10_mm_h_mitjana": 77.0,
+"cap_t2_mm_h_mitjana": 48.3,
+"cap_t10_mm_h_rang": [
+34.2,
+123.9
+],
+"sortides": {
+"llera": 27,
+"terreny": 266,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c352": {
+"urba_km2": 0.624,
+"subconques": 1015,
+"cap_t10_mm_h_mitjana": 105.6,
+"cap_t2_mm_h_mitjana": 66.3,
+"cap_t10_mm_h_rang": [
+39.2,
+141.9
+],
+"sortides": {
+"llera": 90,
+"terreny": 925,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 9
+}
+},
+"c353": {
+"urba_km2": 1.325,
+"subconques": 710,
+"cap_t10_mm_h_mitjana": 98.7,
+"cap_t2_mm_h_mitjana": 61.9,
+"cap_t10_mm_h_rang": [
+40.1,
+143.0
+],
+"sortides": {
+"llera": 197,
+"terreny": 513,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c354": {
+"urba_km2": 1.804,
+"subconques": 1143,
+"cap_t10_mm_h_mitjana": 99.6,
+"cap_t2_mm_h_mitjana": 62.5,
+"cap_t10_mm_h_rang": [
+39.8,
+145.1
+],
+"sortides": {
+"llera": 151,
+"terreny": 992,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c355": {
+"urba_km2": 0.925,
+"subconques": 395,
+"cap_t10_mm_h_mitjana": 97.1,
+"cap_t2_mm_h_mitjana": 60.9,
+"cap_t10_mm_h_rang": [
+41.4,
+146.2
+],
+"sortides": {
+"llera": 165,
+"terreny": 230,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c356": {
+"urba_km2": 0.593,
+"subconques": 428,
+"cap_t10_mm_h_mitjana": 89.2,
+"cap_t2_mm_h_mitjana": 56.0,
+"cap_t10_mm_h_rang": [
+41.3,
+151.9
+],
+"sortides": {
+"llera": 130,
+"terreny": 298,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c357": {
+"urba_km2": 0.709,
+"subconques": 429,
+"cap_t10_mm_h_mitjana": 64.2,
+"cap_t2_mm_h_mitjana": 40.3,
+"cap_t10_mm_h_rang": [
+44.1,
+157.3
+],
+"sortides": {
+"llera": 83,
+"terreny": 346,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c358": {
+"urba_km2": 0.447,
+"subconques": 343,
+"cap_t10_mm_h_mitjana": 67.2,
+"cap_t2_mm_h_mitjana": 42.2,
+"cap_t10_mm_h_rang": [
+44.4,
+158.5
+],
+"sortides": {
+"llera": 109,
+"terreny": 234,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c359": {
+"urba_km2": 0.39,
+"subconques": 193,
+"cap_t10_mm_h_mitjana": 67.0,
+"cap_t2_mm_h_mitjana": 42.0,
+"cap_t10_mm_h_rang": [
+52.0,
+163.4
+],
+"sortides": {
+"llera": 21,
+"terreny": 172,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c360": {
+"urba_km2": 0.269,
+"subconques": 212,
+"cap_t10_mm_h_mitjana": 85.5,
+"cap_t2_mm_h_mitjana": 53.7,
+"cap_t10_mm_h_rang": [
+48.2,
+166.2
+],
+"sortides": {
+"llera": 33,
+"terreny": 179,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 1
+}
+},
+"c361": {
+"urba_km2": 0.457,
+"subconques": 284,
+"cap_t10_mm_h_mitjana": 101.5,
+"cap_t2_mm_h_mitjana": 63.7,
+"cap_t10_mm_h_rang": [
+49.7,
+166.4
+],
+"sortides": {
+"llera": 48,
+"terreny": 236,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c362": {
+"urba_km2": 0.432,
+"subconques": 382,
+"cap_t10_mm_h_mitjana": 117.7,
+"cap_t2_mm_h_mitjana": 73.9,
+"cap_t10_mm_h_rang": [
+50.1,
+170.7
+],
+"sortides": {
+"llera": 110,
+"terreny": 272,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 2
+}
+},
+"c363": {
+"urba_km2": 1.255,
+"subconques": 1278,
+"cap_t10_mm_h_mitjana": 114.2,
+"cap_t2_mm_h_mitjana": 71.7,
+"cap_t10_mm_h_rang": [
+47.5,
+170.7
+],
+"sortides": {
+"llera": 166,
+"terreny": 1112,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 3
+}
+},
+"c364": {
+"urba_km2": 0.918,
+"subconques": 612,
+"cap_t10_mm_h_mitjana": 116.1,
+"cap_t2_mm_h_mitjana": 72.9,
+"cap_t10_mm_h_rang": [
+47.5,
+168.3
+],
+"sortides": {
+"llera": 88,
+"terreny": 524,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 0
+}
+},
+"c365": {
+"urba_km2": 2.755,
+"subconques": 3605,
+"cap_t10_mm_h_mitjana": 105.1,
+"cap_t2_mm_h_mitjana": 65.9,
+"cap_t10_mm_h_rang": [
+35.7,
+164.3
+],
+"sortides": {
+"llera": 915,
+"terreny": 2690,
+"mar": 0,
+"fora": 0
+},
+"osm": {
+"embornals": 0,
+"pous": 0,
+"colectors": 6
+}
+}
+},
+"release": "clavegueram-cat"
+}

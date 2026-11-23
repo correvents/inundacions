@@ -1,0 +1,40 @@
+name: Màxims anuals de pluja diària (XEMA, tot Catalunya)
+
+# Per al cabal de disseny 5.2-IC dels passos de tot Catalunya (scripts/passos_cat.py). Vegeu scripts/xema_maxims.py.
+
+on:
+  workflow_dispatch:
+    inputs:
+      des:
+        description: "Primer any"
+        default: "2009"
+      fins:
+        description: "Últim any"
+        default: "2025"
+  push:
+    branches: [claude/project-thread-9hrued]
+    paths: [scripts/xema_maxims.py, .github/workflows/xema_maxims.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  maxims:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q requests
+      - run: python3 scripts/xema_maxims.py --des "${{ inputs.des || '2009' }}" --fins "${{ inputs.fins || '2025' }}"
+      - name: Desa
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalunya/xema
+          git diff --cached --quiet && exit 0
+          git commit -m "Màxims anuals de pluja diària de la XEMA"
+          for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1
