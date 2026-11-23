@@ -41,4 +41,4 @@ Secret del repo (Settings → Secrets and variables → Actions): `SUPABASE_SECR
 - `scripts/aca_aforador.py`: recull el nivell, el cabal i la pluja de l'aforador de l'ACA
 - `data/ridaura/conca.geojson`: conca a la desembocadura, conca a l'aforador i xarxa de drenatge
 - `scripts/retalla_mde.py`, `scripts/delimita_conca.py`, `scripts/dibuixa_conca.py`: delimitació de la conca
-- `docs/`: recerca de models i rieres litorals de risc
+- `docs/`: recerca de models i rieres litorals de risc; `docs/replicar.md`: com replicar el sistema en una altra comunitat
