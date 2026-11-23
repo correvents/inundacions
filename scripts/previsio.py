@@ -76,19 +76,22 @@ def main():
     if not len(ok):
         sys.exit("Sense cabal observat als últims dies")
     i_ara = int(ok[-1])
-    pluja = pluja[: i_ara + 1]
+    # la pluja ja mesurada després de l'última dada de l'aforador (el radar arriba abans) també entra al model, fins a 1 h
+    amb_pluja = np.flatnonzero(~np.isnan(pluvio) | ~np.isnan(radar))
+    i_fi = min(max(int(amb_pluja[-1]) if len(amb_pluja) else i_ara, i_ara), i_ara + 60 // DT)
+    pluja = pluja[: i_fi + 1]
     sec = np.convolve(pluja, np.ones(48 * 60 // DT), mode="full")[: len(pluja)]   # pluja de les 48 h anteriors a cada pas
     secs = np.flatnonzero(sec < 1.0)
     i0 = int(secs[-1]) + 1 if len(secs) else 0
     i0 = min(i0, i_ara)
     q_base = float(np.nanmin(q_obs[max(i0 - 12, 0): i0 + 1])) if np.isfinite(q_obs[max(i0 - 12, 0): i0 + 1]).any() else float(q_obs[i_ara])
     n_fut = ENDAVANT_H * 60 // DT
-    darrera_h = pluja[max(i_ara - 11, 0): i_ara + 1].mean()
+    darrera_h = pluja[max(i_fi - 11, 0): i_fi + 1].mean()
     escenaris = {"aforador": np.zeros(n_fut), "aforador_continua": np.r_[np.full(12, darrera_h), np.zeros(n_fut - 12)]}
     p = dict(ia=mod["Ia_mm"], c=mod["C"], k=mod["K"], m=mod["m"], n=mod["n"])
     acum = float(pluja[i0:].sum())
     t_run = temps[i_ara]
-    t_ep = [temps[i0] + timedelta(minutes=DT * k) for k in range(i_ara - i0 + 1 + n_fut)]
+    t_ep = [temps[i0] + timedelta(minutes=DT * k) for k in range(i_fi - i0 + 1 + n_fut)]
     desa = [t for t in t_ep if t >= t_run - timedelta(hours=ENRERE_H)]
     k_desa = len(t_ep) - len(desa)
     files, resum = [], {}

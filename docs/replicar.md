@@ -157,6 +157,8 @@ Configuració per conca: `config/<conca>.json` (caixa, aforador, punts, cabals Q
 - **El clavegueram no fa desaparèixer l'aigua**: cal portar-la a la riera o al mar.
 - **Manning de llera real ~0,08-0,09** (vegetació), no 0,035: amb el valor de manual la Ridaura no desbordava ni a T500.
 - **La forma de mesurar compta**: un transsecte infra-mesurava el cabal un 20-25% respecte d'una caixa.
+- **L'absorció inicial depèn de l'estat del sòl**: 150-160 mm a la Ridaura després de l'estiu, 65 mm al Congost. Un llindar fix calibrat amb un sol episodi avisa tard quan el sòl és moll: cal lligar-lo a la pluja dels dies anteriors i calibrar-lo amb diversos episodis.
+- **Validar la previsió com si fos en directe**: `previsio.py --ara <hora passada> --sense-desar` i mesurar amb quina antelació avisa. A la Ridaura el 4/10/2026 l'escenari «plou 1 h més» avisava de T10 ~1 h 25 min abans; el «no plou més», gairebé en el moment.
 - **Les opcions noves s'han de poder comparar**: desar els resultats de cada prova (aquí, un `.tar.gz` per prova a una Release).
 
 **Infraestructura**
@@ -164,6 +166,7 @@ Configuració per conca: `config/<conca>.json` (caixa, aforador, punts, cabals Q
 - Un workflow nou en una branca no es pot llançar a mà fins que el fitxer és a `main`: afegir-hi un `push` a la branca per provar-lo.
 - Releases: 1.000 assets màxim; separar en Releases per tema.
 - La web llegeix fitxers estàtics i Supabase; mai calcula.
+- GitHub Pages publica com a màxim 1 GB: les dades que la web no llegeix (rasters, clavegueram...) han d'anar a Releases.
 
 ---
 
