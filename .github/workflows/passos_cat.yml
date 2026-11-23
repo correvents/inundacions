@@ -63,7 +63,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -q numpy pandas scipy rasterio pyproj shapely pysheds numba
+      - run: pip install -q numpy pandas scipy rasterio pyproj shapely pysheds numba requests
       - uses: actions/download-artifact@v4
         with:
           name: vies
@@ -75,18 +75,23 @@ jobs:
           mkdir -p /tmp/mdt; fallades=""
           for id in ${{ matrix.lot }}; do
             nom=$(printf "c%03d" "$id")
+            # cobertes de la conca per al P0 del cabal de disseny (si no hi són, el pas queda sense cabal de disseny)
+            gh release download cobertes-cat -R "${{ github.repository }}" -p "cobertes5_$nom.tif" -D /tmp/mdt --clobber || echo "sense cobertes $nom"
+            COB=""; [ -f "/tmp/mdt/cobertes5_$nom.tif" ] && COB="--cobertes /tmp/mdt/cobertes5_$nom.tif"
             if gh release download mdt5-cat -R "${{ github.repository }}" -p "mdt5_$nom.tif" -D /tmp/mdt --clobber && \
-               timeout 3600 python3 scripts/passos_cat.py conca --id "$id" --mdt "/tmp/mdt/mdt5_$nom.tif" --vies /tmp/vies.json.gz; then :
+               timeout 3600 python3 scripts/passos_cat.py conca --id "$id" --mdt "/tmp/mdt/mdt5_$nom.tif" --vies /tmp/vies.json.gz $COB; then :
             else fallades="$fallades $id"; fi
             rm -f /tmp/mdt/*.tif
           done
-          echo "Fallades:$fallades"; mkdir -p data/catalunya/passos
-          echo "$fallades" > data/catalunya/passos/fallades_${{ strategy.job-index }}.txt
+          echo "Fallades:$fallades"; mkdir -p /tmp/sortida
+          # només les conques d'aquest lot: si cada lot puja tota la carpeta, en ajuntar-los el mateix fitxer es pot escriure barrejat
+          for id in ${{ matrix.lot }}; do f=$(printf "data/catalunya/passos/c%03d.geojson" "$id"); [ -f "$f" ] && cp "$f" /tmp/sortida/; done
+          echo "$fallades" > /tmp/sortida/fallades_${{ strategy.job-index }}.txt
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: passos-${{ strategy.job-index }}
-          path: data/catalunya/passos/
+          path: /tmp/sortida/
           if-no-files-found: ignore
 
   desa:
