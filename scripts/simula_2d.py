@@ -15,7 +15,7 @@ amb el pendent de la superfície de l'aigua i la fricció de Manning, i la làmi
     --clavegueram mm/h a les zones construïdes (embornals), excepte on el calat supera --h-llera (llera saturada). Així l'aigua embassada també es buida quan para de ploure.
   - Clavegueram (--escenari-clavegueram): «fix» = --clavegueram mm/h a tot arreu i l'aigua desapareix (com fins ara).
     «funciona» / «antic» / «collapsat»: capacitat estimada per subconca de clavegueram (scripts/clavegueram_cat.py,
-    Release clavegueram-cat: C·I de la pluja de 10 anys, de 2 anys, o la de 10 anys × --factor-collapsat si els
+    Release clavegueram-cat (rasters i taules): C·I de la pluja de 10 anys, de 2 anys, o la de 10 anys × --factor-collapsat si els
     embornals es tapen). L'aigua que entra a la xarxa surt al seu punt de desguàs (llera, mar o terreny) i hi segueix
     corrent. Amb --clavegueram-ofegat M, una subconca deixa de desguassar mentre el calat al desguàs passa de M metres.
   - Fricció: n de Manning per coberta (o --n-natural, --n-urba amb --sense-cobertes).

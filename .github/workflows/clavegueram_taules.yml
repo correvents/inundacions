@@ -1,0 +1,34 @@
+name: Clavegueram – taules a la Release (un cop)
+
+# Puja les taules del clavegueram per conca (data/catalunya/clavegueram/cNNN.json, ~200 MB) a la Release clavegueram-cat
+# com a taula_cNNN.json.gz, a partir de l'últim commit de main que encara les tenia (07a22577). Després es treuen del repo.
+# Es pot tornar a llançar sense perill (--clobber).
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/project-thread-o6ch8o]
+    paths: [.github/workflows/clavegueram_taules.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  puja:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 07a2257748a2ccdd7f243c1949572482ae4408f1
+      - name: Puja
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p /tmp/t
+          for f in data/catalunya/clavegueram/c[0-9][0-9][0-9].json; do
+            n=$(basename "$f" .json); gzip -9 -n -c "$f" > "/tmp/t/taula_$n.json.gz"
+          done
+          ls /tmp/t | wc -l; du -sh /tmp/t
+          for i in 1 2 3; do gh release upload clavegueram-cat /tmp/t/*.json.gz -R "${{ github.repository }}" --clobber && break; sleep 30; done
+          n=$(gh api "repos/${{ github.repository }}/releases/tags/clavegueram-cat" --paginate -q '.assets[].name' | grep -c '^taula_')
+          echo "### Taules a la Release: $n" >> "$GITHUB_STEP_SUMMARY"
