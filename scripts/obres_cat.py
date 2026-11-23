@@ -10,6 +10,10 @@ capacitat de desguàs a partir de fonts obertes, per ordre de confiança, i cada
      (sig.gencat.cat/ows/AIGUA/wfs) + fitxes PDF (acanet.gencat.cat/sig/fitxes/PSE/<codi>.pdf). El servei WFS no
      accepta clients automàtics, per això les fitxes es baixen des d'un ordinador i se'n desa una instantània al repo
      (data/catalunya/obres/aca_pse.json, ordre «aca»). Si el pas és un PSE, la capacitat és la de l'ACA.
+  1b. Catàleg de ponts i estructures de la xarxa de carreteres de la Generalitat (Territori, v2 2018, CC BY-NC,
+     terra.repositori.gencat.cat/handle/20.500.13045/344): 3.594 ponts, pontons (llum 3-10 m) i viaductes amb
+     coordenades, longitud i nombre de trams. Només els que el nom diu que passen sobre un curs d'aigua. No dona
+     gàlib: l'alçada es pren com l'alçada del terraplè (MDT) i es diu. Instantània gencat_ponts.json (ordre «gencat»).
   2. OpenStreetMap: waterway amb tunnel=culvert i etiquetes diameter / width / height (ordre «osm», Geofabrik).
   3. Relació empírica secció ~ conca drenada, AJUSTADA AMB LES OBRES DE LES FONTS 1 I 2 de tot Catalunya
      (log A = a + b·log S, mínims quadrats). No hi ha cap coeficient triat a mà: si no hi ha prou obres per ajustar,
@@ -29,6 +33,7 @@ Sortides:  data/catalunya/obres/aca_pse.json   (instantània ACA, tots els PSE, 
 És una OPCIÓ: passos_cat.py i la simulació no canvien si no es llegeixen aquests fitxers.
 
 Ús:  python3 scripts/obres_cat.py aca --txt ~/Downloads/inundacions/obres/txt --wfs aca_pse_wfs.json(opcional)
+     python3 scripts/obres_cat.py gencat --txt <carpeta amb les fitxes en text (pdftotext -layout)>
      python3 scripts/obres_cat.py osm --pbf cataluna-latest.osm.pbf --sortida /tmp/culverts.json.gz
      python3 scripts/obres_cat.py tot --culverts /tmp/culverts.json.gz"""
 import argparse, gzip, json, math, re, sys
@@ -178,6 +183,52 @@ def aca(a):
           " amb q_max:", sum(r.get("q_max_m3s") is not None for r in out))
 
 
+# ---------- 1b. Catàleg de ponts i estructures de la xarxa de carreteres de la Generalitat ----------
+AIGUA = re.compile(r"\b(riu|riera|rieral|torrent|torrentet|rec|barranc|rial|sèquia|séquia|canal|font|clot|sot|fondo|xaragall|"
+                   r"reguer|regatell|llera|riereta|aigua|drenatge|desguàs|bassa|estany|ribera|curs|gorg|rasa|cuneta)\b", re.I)
+
+
+def gencat(a):
+    """Llegeix les fitxes del Catàleg (pdftotext -layout) → data/catalunya/obres/gencat_ponts.json."""
+    out = []
+    for fp in sorted(Path(a.txt).expanduser().glob("*.txt")):
+        t = fp.read_text(errors="replace")
+        for bloc in t.split("Nom de l'estructura:")[1:]:
+            b = re.sub(r"[ \t]+", " ", bloc)
+            linies = b.splitlines()
+            r = {"nom": linies[0].strip()}
+            def camp(et, nums=False):
+                m = re.search(rf"^\s*{et}\s+(.+?)\s*$", b, re.M)
+                return (num(m.group(1)) if nums else m.group(1).strip()) if m else None
+            r["carretera"] = camp("Carretera"); r["pk"] = camp("PK"); r["municipi"] = camp("Municipi")
+            r["titular"] = camp("Titularitat"); r["tipologia"] = camp("Tipologia general")
+            r["longitud_m"] = camp(r"Longitud total \(m\)", True); r["superficie_m2"] = camp(r"Superfície total \(m2\)", True)
+            r["trams"] = camp("Nombre de trams", True); r["material"] = (camp("Material") or "").replace("m ", "m").strip() or None
+            m = re.search(r"(Convencional[^\n]*\n?[^\n]*?(?:bigues|calaix)\)|Convencional)", b)
+            if "calaix" in b[:2000]:
+                r["tauler"] = "llosa/calaix"
+            elif "bigues" in b[:2000]:
+                r["tauler"] = "bigues"
+            x, y = camp("UTM X", True), camp("UTM Y", True)
+            m = re.search(r"Generalitat de Catalunya\s+(\S+-\S+)\s*$", b, re.M)
+            r["codi"] = m.group(1) if m else None
+            if not (x and y and 250000 < x < 550000 and 4480000 < y < 4760000):
+                continue
+            r["utm"] = [round(x, 1), round(y, 1)]
+            r["lonlat"] = [round(v, 6) for v in lonlat(x, y)]
+            r["sobre_aigua"] = bool(AIGUA.search(r["nom"]))
+            r["font_fitxer"] = fp.stem
+            out.append(r)
+    SORT.mkdir(parents=True, exist_ok=True)
+    (SORT / "gencat_ponts.json").write_text(json.dumps({
+        "font": "Catàleg de ponts i estructures de la xarxa de carreteres de la Generalitat de Catalunya (v2, 2018, Territori)",
+        "url": "https://terra.repositori.gencat.cat/handle/20.500.13045/344", "llicencia": "CC BY-NC 4.0",
+        "n": len(out), "ponts": out}, ensure_ascii=False, separators=(",", ":")))
+    from collections import Counter
+    print(f"Catàleg Generalitat: {len(out)} estructures, {sum(r['sobre_aigua'] for r in out)} sobre un curs d'aigua (pel nom)")
+    print(" tipologia:", Counter(r.get("tipologia") for r in out).most_common())
+
+
 # ---------- 2. OSM ----------
 def osm(pbf, sortida):
     import osmium
@@ -230,6 +281,10 @@ def tot(a):
     pse = json.loads((SORT / "aca_pse.json").read_text())["pse"] if (SORT / "aca_pse.json").exists() else []
     pse_pt = [Point(r["utm"]) for r in pse]
     arbre_p = STRtree(pse_pt) if pse_pt else None
+    gp = []
+    if (SORT / "gencat_ponts.json").exists():
+        gp = [r for r in json.loads((SORT / "gencat_ponts.json").read_text())["ponts"] if r["sobre_aigua"]]
+    gp_pt = [Point(r["utm"]) for r in gp]
     cul = []
     if a.culverts:
         with gzip.open(a.culverts, "rt") as f:
@@ -238,7 +293,7 @@ def tot(a):
                 if s:
                     cul.append((wid, s, LineString([utm(xy[k], xy[k + 1]) for k in range(0, len(xy), 2)])))
     arbre_c = STRtree([c[2] for c in cul]) if cul else None
-    print(f"ACA PSE: {len(pse)}  ·  OSM culverts amb mida: {len(cul)}")
+    print(f"ACA PSE: {len(pse)}  ·  Catàleg Generalitat sobre aigua: {len(gp)}  ·  OSM culverts amb mida: {len(cul)}")
 
     # tots els passos (punts) de Catalunya
     pas = []                                                   # (cid, props, punt UTM)
@@ -250,13 +305,19 @@ def tot(a):
     arbre_pas = STRtree([x[2] for x in pas])
     # cada obra es casa amb UN sol pas: el PSE de l'ACA amb el pas de més conca a menys de dist-aca (terraplè abans
     # que gual: el PSE és al riu principal, no al torrentet del costat); el culvert d'OSM amb el pas més proper.
-    de_pse, de_cul = {}, {}
+    de_pse, de_gp, de_cul = {}, {}, {}
     for j, pt in enumerate(pse_pt):
         ii = arbre_pas.query(pt.buffer(a.dist_aca))
         if len(ii):
             k = max(ii, key=lambda k: (pas[k][1].get("tipus") == "terraplè", pas[k][1].get("conca_km2") or 0))
             if k not in de_pse or pt.distance(pas[k][2]) < pse_pt[de_pse[k]].distance(pas[k][2]):
                 de_pse[k] = j
+    for j, pt in enumerate(gp_pt):
+        ii = arbre_pas.query(pt.buffer(a.dist_aca))
+        if len(ii):
+            k = max(ii, key=lambda k: (pas[k][1].get("tipus") == "terraplè", pas[k][1].get("conca_km2") or 0))
+            if k not in de_gp or pt.distance(pas[k][2]) < gp_pt[de_gp[k]].distance(pas[k][2]):
+                de_gp[k] = j
     for j, (wid, s_, g) in enumerate(cul):
         ii = arbre_pas.query(g.buffer(a.dist_osm))
         if len(ii):
@@ -291,6 +352,16 @@ def tot(a):
             if H and B and r.get("cota_rasant_m") and r.get("cota_clau_m"):
                 e["hw_m"] = round(r["cota_rasant_m"] - r["cota_clau_m"] + H, 2)
                 e["hw_font"] = "cota rasant − cota clau + gàlib (fitxa ACA)"
+        # 1b. Catàleg de ponts de la Generalitat: llum i trams; sense alçada (gàlib) a la fitxa
+        elif k in de_gp:
+            r = gp[de_gp[k]]
+            n = int(r.get("trams") or 1)
+            B = r["longitud_m"] / n if r.get("longitud_m") else None
+            H = hw                                              # la fitxa no dona gàlib: com a màxim, l'alçada del terraplè
+            e.update({"font": "Generalitat, catàleg de ponts", "ref": r.get("codi"), "nom": r.get("nom"), "dist_m": round(gp_pt[de_gp[k]].distance(pt)),
+                      "estructura": r.get("tipologia"), "tauler": r.get("tauler"), "material": r.get("material"),
+                      "B_m": round(B, 2) if B else None, "H_m": H, "n": n,
+                      "H_font": "alçada del terraplè (MDT 5 m): la fitxa no dona gàlib" if H else None})
         # 2. OSM
         elif k in de_cul:
             wid, s_, g = cul[de_cul[k]]
@@ -314,7 +385,7 @@ def tot(a):
     else:
         print(f"Ajust empíric: només {len(mostres)} obres amb mida i conca (< {a.min_mostres}); no s'estima")
 
-    cnt = {"ACA PSE": 0, "OSM": 0, "empíric": 0, "sense": 0}
+    cnt = {"ACA PSE": 0, "Generalitat, catàleg de ponts": 0, "OSM": 0, "empíric": 0, "sense": 0}
     SORT.mkdir(parents=True, exist_ok=True)
     for cid, d in res.items():
         for pid, e in d.items():
@@ -341,7 +412,7 @@ def tot(a):
             d[pid] = e
             cnt[e.get("font") or "sense"] += 1
         (SORT / f"c{cid:03d}.json").write_text(json.dumps(d, ensure_ascii=False, separators=(",", ":")))
-    (SORT / "index.json").write_text(json.dumps({"passos_per_font": cnt, "ajust_empiric": aj, "aca_pse": len(pse),
+    (SORT / "index.json").write_text(json.dumps({"passos_per_font": cnt, "ajust_empiric": aj, "aca_pse": len(pse), "gencat_ponts_sobre_aigua": len(gp),
                                                  "osm_culverts_amb_mida": len(cul)}, ensure_ascii=False, indent=1))
     print("Passos per font:", cnt)
 
@@ -350,13 +421,14 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="ordre", required=True)
     s = sub.add_parser("aca"); s.add_argument("--txt", required=True); s.add_argument("--wfs")
+    s = sub.add_parser("gencat"); s.add_argument("--txt", required=True)
     s = sub.add_parser("osm"); s.add_argument("--pbf", required=True); s.add_argument("--sortida", required=True)
     s = sub.add_parser("tot"); s.add_argument("--culverts")
     s.add_argument("--dist-aca", type=float, default=50, help="distància màxima pas ↔ PSE de l'ACA (m)")
     s.add_argument("--dist-osm", type=float, default=30, help="distància màxima pas ↔ culvert d'OSM (m, com passos_cat.py)")
     s.add_argument("--min-mostres", type=int, default=30, help="obres amb mida mínimes per fer l'ajust empíric")
     a = ap.parse_args()
-    return {"aca": aca, "tot": tot}[a.ordre](a) if a.ordre != "osm" else osm(a.pbf, a.sortida)
+    return {"aca": aca, "gencat": gencat, "tot": tot}[a.ordre](a) if a.ordre != "osm" else osm(a.pbf, a.sortida)
 
 
 if __name__ == "__main__":

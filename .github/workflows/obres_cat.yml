@@ -2,6 +2,7 @@ name: Secció i capacitat dels passos (tot Catalunya)
 
 # Posa a cada pas de torrentet sota via (data/catalunya/passos) la secció de l'obra i la seva capacitat de desguàs:
 # 1) inventari ACA de punts singulars estructurals (instantània data/catalunya/obres/aca_pse.json),
+# 1b) catàleg de ponts de la xarxa de carreteres de la Generalitat (instantània gencat_ponts.json),
 # 2) culverts d'OSM amb mida (Geofabrik), 3) ajust secció~conca fet amb 1 i 2. Vegeu scripts/obres_cat.py.
 # Resultat (OPCIÓ, no canvia res més): data/catalunya/obres/cNNN.json + index.json.
 
@@ -9,7 +10,7 @@ on:
   workflow_dispatch:
   push:
     branches: [claude/project-thread-7ruhwb]
-    paths: [scripts/obres_cat.py, .github/workflows/obres_cat.yml, data/catalunya/obres/aca_pse.json]
+    paths: [scripts/obres_cat.py, .github/workflows/obres_cat.yml, data/catalunya/obres/aca_pse.json, data/catalunya/obres/gencat_ponts.json]
 
 permissions:
   contents: write
