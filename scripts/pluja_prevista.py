@@ -13,7 +13,8 @@ Combinació ('tot'): fins a 60 min el nowcast; de 60 a 120 min, pes lineal del n
 Si una font falla, es fa servir l'altra; si fallen les dues, la pluja prevista és 0 (com l'escenari "no plou més").
 
 Ús (prova):  python3 scripts/pluja_prevista.py --config config/ridaura.json [--ara 2026-10-04T06:00] [--font tot]"""
-import argparse, json, re, sys, tempfile, urllib.parse
+import argparse, json, re, sys, tempfile, urllib.parse, warnings
+warnings.filterwarnings("ignore", "Mean of empty slice")
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import numpy as np, h5py, requests

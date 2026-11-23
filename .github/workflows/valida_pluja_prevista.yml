@@ -36,7 +36,7 @@ jobs:
           python3 scripts/pluja_prevista.py --config config/ridaura.json --ara 2026-10-04T06:00 || true
       - name: Validació
         run: |
-          python3 scripts/valida_pluja_prevista.py --config config/ridaura.json --des "${{ inputs.des || '2026-10-01T00:00' }}" --fins "${{ inputs.fins || '2026-10-08T00:00' }}" \
+          python3 scripts/valida_pluja_prevista.py --config config/ridaura.json --des "${{ inputs.des || '2026-08-11T00:00' }}" --fins "${{ inputs.fins || '2026-11-11T18:00' }}" \
             --pas "${{ inputs.pas || '60' }}" --episodi "${{ inputs.episodi || '2026-10-04T02:00,2026-10-04T09:30' }}" --sortida informes/pluja_prevista.md
       - uses: actions/upload-artifact@v4
         if: always()
