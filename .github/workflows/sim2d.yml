@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       episodis:
-        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150}]'
+        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150, "sol": "B|mapa|mapa-sup|litologia" (opcional), "sol_ref": "mitjana|B" (opcional)}]'
         required: true
       conca:
         description: "Conca (config/<conca>.json)"
@@ -61,6 +61,8 @@ jobs:
           rm -rf "data/${{ inputs.conca }}/sim2d/${{ matrix.ep.id }}"
           EP=""; [ -n "${{ matrix.ep.episodi }}" ] && EP="--episodi data/${{ inputs.conca }}/episodis/${{ matrix.ep.episodi }}"
           ED="data/${{ inputs.conca }}/cadastre/edificis.json.gz"; [ -f "$ED" ] && [ "${{ inputs.edificis }}" != "no" ] && EP="$EP --edificis $ED"
+          [ -n "${{ matrix.ep.sol }}" ] && EP="$EP --grup-sol ${{ matrix.ep.sol }}"
+          [ -n "${{ matrix.ep.sol_ref }}" ] && EP="$EP --sol-referencia ${{ matrix.ep.sol_ref }}"
           PB=""; for c in $(echo "$PLANTA_BAIXA" | tr ',' ' '); do f=$(printf "data/catalunya/planta_baixa/c%03d.json" "$c"); [ -f "$f" ] && PB="$PB $f"; done
           [ -n "$PB" ] && EP="$EP --planta-baixa $PB"
           python3 scripts/simula_2d.py --config config/${{ inputs.conca }}.json --mdt /tmp/relleu/mdt.tif --id "${{ matrix.ep.id }}" \
