@@ -679,6 +679,8 @@ def informe(ids, sortida):
         if not f.exists():
             continue
         j = json.loads(f.read_text()); r = j["resum"]
+        if not r.get("seccions"):
+            continue
         o += [f"## {NOMS.get(cid, 'Conca')} (c{cid:03d})", "",
               f"{r['seccions']} seccions; {r['llera_desborda_abans_T10']} amb la llera desbordant abans de T10. Pluja: {r['pluja']}. "
               f"{r['estrenyiments']} estrenyiments, {r['estrenyiments_urbans']} dins o a tocar de nucli.", ""]
