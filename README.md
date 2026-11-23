@@ -25,7 +25,6 @@ L'episodi del 3-4/10/2026 va fer passar el riu de 30 a 300 m³/s en 2 h, de mane
 ## Funcionament
 
 - **GitHub Actions** (`.github/workflows/vigila.yml`) recull les dades i fa la previsió cada 10 minuts, en una execució de ~5 h 40 min que es torna a llançar sola (amb una programació horària de reserva). `recull.yml` queda per recuperar històric a mà.
-- Guia per replicar el sistema en una altra conca o comunitat: [`docs/replicar.md`](docs/replicar.md).
 - **Supabase** (projecte minairo, esquema `inundacions`) guarda els resultats: `observacions`, `pluja_conca`, `previsions_cabal`, `avisos`. Lectura pública; escriptura només amb la clau secreta.
 - **GitHub Pages** serveix el visor, que llegeix de Supabase.
 
@@ -42,4 +41,4 @@ Secret del repo (Settings → Secrets and variables → Actions): `SUPABASE_SECR
 - `scripts/aca_aforador.py`: recull el nivell, el cabal i la pluja de l'aforador de l'ACA
 - `data/ridaura/conca.geojson`: conca a la desembocadura, conca a l'aforador i xarxa de drenatge
 - `scripts/retalla_mde.py`, `scripts/delimita_conca.py`, `scripts/dibuixa_conca.py`: delimitació de la conca
-- `docs/`: recerca de models i rieres litorals de risc
+- `docs/`: recerca de models i rieres litorals de risc; `docs/replicar.md`: com replicar el sistema en una altra comunitat
