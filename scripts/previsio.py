@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from sb import insereix, llegeix, esborra
 from model_cabal import simula, DT
 from episodi import periode_retorn, cabal_racional, FENALS
+from avisa import envia
 
 DIES, ENDAVANT_H, ENRERE_H, RETARD_MAR = 7, 3, 6, 45
 NIVELLS = [(500, 5, "T500"), (100, 4, "T100"), (50, 3, "T50"), (10, 2, "T10"), (2.33, 1, "crescuda ordinària")]
@@ -128,8 +129,13 @@ def main():
     nivell, motiu = next(((n, f"Previsió fins a {m} en les 3 h vinents") for T, n, m in NIVELLS if pitjor >= T), (0, "Sense crescuda prevista"))
     darrer = llegeix("avisos", {"select": "nivell", "conca": f"eq.{conca}", "order": "temps.desc", "limit": 1})
     if not darrer or darrer[0]["nivell"] != nivell:
-        ins("avisos", [{"conca": conca, "temps": t_run.isoformat(), "nivell": nivell,
-                             "motiu": f"{motiu}. Pluja de l'episodi: {acum:.0f} mm (llindar de resposta {mod['Ia_mm']:.0f} mm)."}])
+        text = f"{motiu}. Pluja de l'episodi: {acum:.0f} mm (llindar de resposta {mod['Ia_mm']:.0f} mm)."
+        ins("avisos", [{"conca": conca, "temps": t_run.isoformat(), "nivell": nivell, "motiu": text}])
+        if darrer and not a.sense_desar:    # només els canvis de nivell, no la primera fila
+            puja = nivell > darrer[0]["nivell"]
+            envia(f"{conca}: nivell {darrer[0]['nivell']} → {nivell}. {text}\n"
+                  f"Cabal ara {q_obs[i_ara]:.1f} m³/s. https://correvents.github.io/inundacions/previsio.html",
+                  ("🔴 Inundacions: puja el risc" if puja else "🟢 Inundacions: baixa el risc") + f" ({conca}, nivell {nivell})")
     print(f"Run {t_run:%Y-%m-%d %H:%M} UTC · episodi des de {temps[i0]:%Y-%m-%d %H:%M} · pluja {acum:.1f} mm · "
           f"Q ara {q_obs[i_ara]:.1f} · màx 3 h {resum['aforador'][fut].max():.1f} (si continua {resum['aforador_continua'][fut].max():.1f}) m³/s · "
           f"Fenals {q_fen[fut].max():.1f} · nivell {nivell}")

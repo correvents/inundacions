@@ -25,6 +25,7 @@ L'episodi del 3-4/10/2026 va fer passar el riu de 30 a 300 m³/s en 2 h, de mane
 ## Funcionament
 
 - **GitHub Actions** (`.github/workflows/vigila.yml`) recull les dades i fa la previsió cada 10 minuts, en una execució de ~5 h 40 min que es torna a llançar sola (amb una programació horària de reserva). `recull.yml` queda per recuperar històric a mà.
+- **Avisos** (`scripts/avisa.py`): quan el nivell de risc de la previsió canvia, s'envia un missatge per Telegram i/o correu. `salut.yml` (cada 20 min, independent de la vigilància) avisa quan l'aforador, el radar, el radar corregit o la previsió deixen d'arribar, quan tornen, i dels forats de radar de 30 min o més. Secrets: `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID`, o `SMTP_USER` + `SMTP_PASS` + `AVIS_EMAIL` (sense secrets, només queda al registre).
 - **Supabase** (projecte minairo, esquema `inundacions`) guarda els resultats: `observacions`, `pluja_conca`, `previsions_cabal`, `avisos`. Lectura pública; escriptura només amb la clau secreta.
 - **GitHub Pages** serveix el visor, que llegeix de Supabase.
 
