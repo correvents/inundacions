@@ -76,5 +76,16 @@
   "Caldes de Montbui",
   "Sant Feliu de Codines",
   "Santa Maria de Martorelles"
- ]
+ ],
+ "humitat": {
+  "estacions": [
+   "X9",
+   "KX",
+   "YM"
+  ],
+  "sensor_aca": [
+   "AFORAMENT-EST",
+   "CALC001212"
+  ]
+ }
 }

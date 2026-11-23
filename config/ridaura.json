@@ -76,5 +76,12 @@
     "Llagostera",
     "Vall-llobrega",
     "Cassà de la Selva"
-  ]
+  ],
+  "humitat": {
+    "estacions": [
+      "DO",
+      "DF",
+      "UN"
+    ]
+  }
 }
