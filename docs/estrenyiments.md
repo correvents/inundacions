@@ -6,16 +6,6 @@ Generat per `scripts/estrenyiments.py informe` amb les dades de `data/catalunya/
 
 4408 seccions; 451 amb la llera desbordant abans de T10. Pluja: XEMA de la conca pilot ridaura (51 anys-estació), P0 = 50 mm (episodi més moll del model). 44 estrenyiments, 10 dins o a tocar de nucli.
 
-Comparació amb les zones inundables de l'ACA: 737 seccions; 47 % a la mateixa classe de període i 75 % a la mateixa o la veïna.
-
-| ACA \ model | <10 | 10-50 | 50-100 | 100-500 | >500 |
-|---|---|---|---|---|---|
-| <10 | 8 | 0 | 2 | 1 | 0 |
-| 10-50 | 13 | 15 | 11 | 11 | 9 |
-| 50-100 | 2 | 12 | 7 | 10 | 19 |
-| 100-500 | 16 | 27 | 12 | 29 | 72 |
-| >500 | 34 | 44 | 17 | 81 | 285 |
-
 | T desborda | Què | Riu (ACA) | Capacitat m³/s | Q10 | Q100 | Conca km² | Lloc |
 |---|---|---|---|---|---|---|---|
 | ≤2 | llera, 180 m, surt pel — |  | 0.5 | 5.0 | 12.0 | 3.12 | [41.80638, 3.01863](https://www.openstreetmap.org/?mlat=41.80638&mlon=3.01863#map=18/41.80638/3.01863) |
@@ -100,25 +90,7 @@ Ponts de l'inventari ACA que no passen el T500 (46; capacitat de la fitxa oficia
 
 136 seccions; 40 amb la llera desbordant abans de T10. Pluja: XEMA de la conca pilot ridaura (51 anys-estació), P0 = 50 mm (episodi més moll del model). 1 estrenyiments, 1 dins o a tocar de nucli.
 
-Comparació amb les zones inundables de l'ACA: 120 seccions; 37 % a la mateixa classe de període i 45 % a la mateixa o la veïna.
-
-| ACA \ model | <10 | 10-50 | 50-100 | 100-500 | >500 |
-|---|---|---|---|---|---|
-| <10 | 1 | 0 | 0 | 1 | 5 |
-| 10-50 | 0 | 0 | 0 | 0 | 0 |
-| 50-100 | 6 | 1 | 0 | 1 | 11 |
-| 100-500 | 0 | 1 | 0 | 1 | 7 |
-| >500 | 30 | 11 | 1 | 1 | 42 |
-
 | T desborda | Què | Riu (ACA) | Capacitat m³/s | Q10 | Q100 | Conca km² | Lloc |
 |---|---|---|---|---|---|---|---|
 | <10 | llera, 80 m, surt pel dret | el Ridaura | 39.7 | 87.7 | 275.5 | 0.86 | [41.81046, 3.05392](https://www.openstreetmap.org/?mlat=41.81046&mlon=3.05392#map=18/41.81046/3.05392) |
 
-## Limitacions
-
-- Platja d'Aro nucli (c124): el tall de conques deixa la Ridaura sense la conca d'aigües amunt; les seccions de la Ridaura hi surten curtes i l'encert amb l'ACA és baix. Cal fer-les amb la conca de la Ridaura sencera.
-- El LiDAR veu la làmina d'aigua on hi ha cabal permanent (Congost): el fons real és més avall.
-- El MET no té edificis: on la riera és un carrer entre façanes l'aigua «s'escampa» pel solar i el desbordament pot sortir abans del real.
-- Ponts sense fitxa ACA ni mida real: el MET no els veu i no surten com a estrenyiment. Els passos amb mida empírica tampoc compten.
-- Granollers no té XEMA dins la conca: pluja regional a 20 km.
-- Són candidats per mirar sobre el terreny o amb fotos. Pas següent: contrastar-los amb els episodis (4/10/2026 a la Ridaura, Granollers, Cabrera) i, si encaixen, pintar-los a conques.html.
