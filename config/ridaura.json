@@ -1,6 +1,10 @@
 {
   "conca": "ridaura",
   "nom": "Ridaura",
+  "centre": [
+    41.81,
+    3.03
+  ],
   "aforador": {
     "codi": "171812-001",
     "nom": "Santa Cristina d'Aro (Ridaura)",

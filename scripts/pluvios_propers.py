@@ -14,11 +14,22 @@ def _km(la, lo, la0, lo0):
     return math.hypot((la - la0) * 110.6, (lo - lo0) * 111.3 * math.cos(math.radians(la0)))
 
 
+def centre(cfg):
+    """[lat, lon] del centre de la conca: el de la configuració o, si no n'hi ha, el centroide de la primera conca de
+    cfg["geometria"] (abans es feia servir Platja d'Aro per defecte, i una conca nova sense "centre" agafava les estacions d'allà)."""
+    if "centre" in cfg:
+        return cfg["centre"]
+    from shapely.geometry import shape
+    fc = json.loads(Path(cfg["geometria"]).read_text())
+    c = shape(next(f for f in fc["features"] if f["geometry"]["type"].endswith("Polygon"))["geometry"]).centroid
+    return [round(c.y, 4), round(c.x, 4)]
+
+
 def propers(cfg, radi_km=40):
     cache = Path(f"/tmp/pluvios_{cfg['conca']}_{int(radi_km)}.json")
     if cache.exists() and time.time() - cache.stat().st_mtime < 6 * 3600:
         return json.loads(cache.read_text())
-    la0, lo0 = cfg.get("centre", [41.81, 3.03])
+    la0, lo0 = centre(cfg)
     out = []
     try:
         cat = aca.get(aca.sessio(), "/catalog") or {}

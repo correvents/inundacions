@@ -1,6 +1,18 @@
+# Dependències de tots els scripts (cada workflow només instal·la les que necessita).
 numpy
+scipy
+pandas
+requests
+h5py
 rasterio
-pysheds
-shapely
 pyproj
+shapely
+pysheds
+numba
+pillow
 matplotlib
+lxml
+osmium
+pyshp
+geopandas
+pyogrio
