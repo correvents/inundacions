@@ -1,0 +1,23 @@
+{
+ "passos_per_font": {
+  "ACA PSE": 722,
+  "Generalitat, catàleg de ponts": 522,
+  "OSM": 24,
+  "empíric": 15959,
+  "sense": 34971
+ },
+ "ajust_empiric": {
+  "n": 73,
+  "n_aca": 73,
+  "n_osm": 0,
+  "a": 2.3214,
+  "b": 0.309,
+  "r2": 0.31,
+  "p25": -0.337,
+  "p75": 0.402,
+  "formula": "A_m2 = exp(a) · S_km2^b"
+ },
+ "aca_pse": 2619,
+ "gencat_ponts_sobre_aigua": 1885,
+ "osm_culverts_amb_mida": 183
+}
