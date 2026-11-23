@@ -28,11 +28,17 @@ on:
         description: "Edificis del Cadastre com a obstacles i soterranis (si/no)"
         default: "si"
       clavegueram:
-        description: "Capacitat dels embornals a les zones construïdes (mm/h)"
+        description: "Capacitat dels embornals a les zones construïdes (mm/h), escenari fix"
         default: "30"
       planta_baixa:
         description: "OPCIÓ: ús de la planta baixa (ids de conca del tall de 100 km², p. ex. 124,125; buit = no)"
         default: ""
+      escenari_clavegueram:
+        description: "Clavegueram: fix (el de dalt), funciona (estimat T10), antic (T2) o collapsat (T10 × 0,25)"
+        default: "fix"
+      clavegueram_ofegat:
+        description: "Calat al desguàs (m) a partir del qual la xarxa no desguassa (0 = mai)"
+        default: "0"
 
 permissions:
   contents: write
@@ -68,7 +74,8 @@ jobs:
           python3 scripts/simula_2d.py --config config/${{ inputs.conca }}.json --mdt /tmp/relleu/mdt.tif --id "${{ matrix.ep.id }}" \
             --radar "data/${{ inputs.conca }}/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ inputs.pas }}" \
             --ia-natural "${{ matrix.ep.ia }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}" \
-            --perdua-natural "${{ inputs.perdua_natural }}" --clavegueram "${{ inputs.clavegueram }}" --extra-hores "${{ inputs.extra_hores }}"
+            --perdua-natural "${{ inputs.perdua_natural }}" --clavegueram "${{ inputs.clavegueram }}" \
+            --escenari-clavegueram "${{ inputs.escenari_clavegueram }}" --clavegueram-ofegat "${{ inputs.clavegueram_ofegat }}" --extra-hores "${{ inputs.extra_hores }}"
       - name: Desa
         run: |
           git config user.name "github-actions[bot]"
