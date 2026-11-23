@@ -71,6 +71,55 @@ def contingencia(prev, obs, llindar):
             "POD": round(a / (a + c), 2) if a + c else None, "FAR": round(b / (a + b), 2) if a + b else None}
 
 
+def informe(cfg, res, sortida):
+    L = [f"# Validació de la pluja prevista ({cfg['nom']})", "",
+         f"Període {res['periode'][0]} - {res['periode'][1]} UTC, una previsió cada {res['pas_min']} min. Pluja mesurada: pluviòmetre de l'ACA a l'aforador "
+         f"(si falta, radar). AROME: execució disponible a cada hora (≥ {pp.LATENCIA_H} h abans). Nowcast: radar OPERA (Marshall-Palmer).", ""]
+    A = res["A"]
+    L += [f"## A. Pluja prevista vs mesurada ({len(A)} hores amb pluja propera)", "",
+          "| Font | Termini | Llindar | Encerts | Falses alarmes | No previstos | POD | FAR |", "|---|---|---|---|---|---|---|---|"]
+    resum_biaix = []
+    for font in FONTS:
+        for h in (1, 3, 6):
+            if font == "nowcast" and h > 1:
+                continue
+            ok = [f for f in A if font in f and h in f[font]]
+            if not ok:
+                continue
+            prev = [f[font][h] for f in ok]; obs = [f["obs"][h] for f in ok]
+            resum_biaix.append(f"{font} {h} h: prevista {sum(prev):.0f} mm, mesurada {sum(obs):.0f} mm (n = {len(ok)}), "
+                               f"correlació {np.corrcoef(prev, obs)[0, 1]:.2f}" if np.std(prev) > 0 and np.std(obs) > 0 else f"{font} {h} h: n = {len(ok)}")
+            for ll in LLINDARS[h]:
+                c = contingencia(prev, obs, ll)
+                L.append(f"| {font} | {h} h | ≥ {ll} mm | {c['encerts']} | {c['falses']} | {c['no_previstos']} | {c['POD']} | {c['FAR']} |")
+    L += ["", "Totals (biaix) i correlació:", ""] + [f"- {x}" for x in resum_biaix] + [""]
+    for ep in res["B"]:
+        L += [f"## B. Antelació de l'avís, episodi {ep['episodi']}", "",
+              f"Aforador: crescuda ordinària a les {ep['aforador'][1]}, T10 a les {ep['aforador'][2]} UTC.", "",
+              "| Pluja prevista | Primer avís de crescuda | Antelació | Primer avís de T10 | Antelació |", "|---|---|---|---|---|"]
+        def ant(x, y):
+            return f"{int((utc(y) - utc(x)).total_seconds() // 60)} min" if x and y else "-"
+        for font, v in ep["fonts"].items():
+            nom = {"no": "cap (com ara)", "real": "la que va caure (previsió perfecta)"}.get(font, font)
+            L.append(f"| {nom} | {v['crescuda'] or '-'} | {ant(v['crescuda'], ep['aforador'][1])} | {v['T10'] or '-'} | {ant(v['T10'], ep['aforador'][2])} |")
+        L.append("")
+    C = res["C"]
+    if C:
+        puja = [c for c in C if c["puja"]]
+        falses = [c for c in puja if c["falsa"]]
+        L += [f"## C. Falses alarmes de l'avís", "",
+              f"Previsions avaluades: {len(C)} (hores amb ≥ 5 mm previstos o mesurats en 6 h). La pluja prevista fa pujar el nivell "
+              f"en {len(puja)}; d'aquestes, {len(falses)} són falses (ni l'aforador ni la previsió amb la pluja real hi arriben).", ""]
+        if puja:
+            L += ["| Hora | Nivell amb prevista | Sense | Amb pluja real | Aforador | Falsa |", "|---|---|---|---|---|---|"]
+            L += [f"| {c['t']} | {c['nivell']} | {c['sense_prevista']} | {c['amb_pluja_real']} | {c['aforador']} | {'sí' if c['falsa'] else 'no'} |" for c in puja]
+            L.append("")
+    out = Path(sortida); out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text("\n".join(L))
+    out.with_suffix(".json").write_text(json.dumps(res, ensure_ascii=False, default=str))
+    print("\n".join(L))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", required=True)
@@ -79,8 +128,20 @@ def main():
     ap.add_argument("--episodi", action="append", default=[], help="INICI,FI (UTC) per a la part B")
     ap.add_argument("--sortida", default="informes/pluja_prevista.md")
     ap.add_argument("--sense-c", action="store_true", help="no facis la part C (és la més lenta)")
+    ap.add_argument("--sense-a", action="store_true", help="només la part B (episodis)")
+    ap.add_argument("--combina", nargs="+", help="ajunta els JSON de diverses execucions (per trossos de període) en un sol informe")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
+    if a.combina:
+        rs = [json.loads(Path(f).read_text()) for f in a.combina]
+        res = {"periode": [min(r["periode"][0] for r in rs if r["A"] or not r["B"]), max(r["periode"][1] for r in rs if r["A"] or not r["B"])],
+               "pas_min": rs[0]["pas_min"], **{k: sorted(sum((r[k] for r in rs), []), key=lambda x: x.get("t", x.get("episodi", ""))) for k in "ABC"}}
+        for f in res["A"]:                          # el JSON desa les claus numèriques com a text
+            for k in ("obs", "arome", "nowcast", "tot"):
+                if k in f:
+                    f[k] = {(int(x) if x != "2" or k != "nowcast" else x): v for x, v in f[k].items()}
+        informe(cfg, res, a.sortida)
+        return 0
     qt = cfg["cabals_T"]["aforador"]
     ini, fi = utc(a.des), utc(a.fins)
     pl, rd, qobs = series(cfg, ini - timedelta(days=1), fi + timedelta(hours=7))
@@ -90,7 +151,7 @@ def main():
 
     # ---------- A. pluja ----------
     t = ini
-    while t <= fi:
+    while t <= fi and not a.sense_a:
         obs = {h: acumulat(pl, rd, t, h * 60) for h in (1, 3, 6)}
         prop = acumulat(pl, rd, t - timedelta(hours=6), 12 * 60)
         fila = {"t": t.strftime("%Y-%m-%dT%H:%M"), "obs": obs}
@@ -180,53 +241,7 @@ def main():
                              "T": {k: round(v, 1) for k, v in r["T"].items()}})
             print("C", fila["t"], res["C"][-1], flush=True)
 
-    # ---------- informe ----------
-    L = [f"# Validació de la pluja prevista ({cfg['nom']})", "",
-         f"Període {a.des} - {a.fins} UTC, una previsió cada {a.pas} min. Pluja mesurada: pluviòmetre de l'ACA a l'aforador "
-         f"(si falta, radar). AROME: execució disponible a cada hora (≥ {pp.LATENCIA_H} h abans). Nowcast: radar OPERA (Marshall-Palmer).", ""]
-    A = res["A"]
-    L += [f"## A. Pluja prevista vs mesurada ({len(A)} hores amb pluja propera)", "",
-          "| Font | Termini | Llindar | Encerts | Falses alarmes | No previstos | POD | FAR |", "|---|---|---|---|---|---|---|---|"]
-    resum_biaix = []
-    for font in FONTS:
-        for h in (1, 3, 6):
-            if font == "nowcast" and h > 1:
-                continue
-            ok = [f for f in A if font in f and h in f[font]]
-            if not ok:
-                continue
-            prev = [f[font][h] for f in ok]; obs = [f["obs"][h] for f in ok]
-            resum_biaix.append(f"{font} {h} h: prevista {sum(prev):.0f} mm, mesurada {sum(obs):.0f} mm (n = {len(ok)}), "
-                               f"correlació {np.corrcoef(prev, obs)[0, 1]:.2f}" if np.std(prev) > 0 and np.std(obs) > 0 else f"{font} {h} h: n = {len(ok)}")
-            for ll in LLINDARS[h]:
-                c = contingencia(prev, obs, ll)
-                L.append(f"| {font} | {h} h | ≥ {ll} mm | {c['encerts']} | {c['falses']} | {c['no_previstos']} | {c['POD']} | {c['FAR']} |")
-    L += ["", "Totals (biaix) i correlació:", ""] + [f"- {x}" for x in resum_biaix] + [""]
-    for ep in res["B"]:
-        L += [f"## B. Antelació de l'avís, episodi {ep['episodi']}", "",
-              f"Aforador: crescuda ordinària a les {ep['aforador'][1]}, T10 a les {ep['aforador'][2]} UTC.", "",
-              "| Pluja prevista | Primer avís de crescuda | Antelació | Primer avís de T10 | Antelació |", "|---|---|---|---|---|"]
-        def ant(x, y):
-            return f"{int((utc(y) - utc(x)).total_seconds() // 60)} min" if x and y else "-"
-        for font, v in ep["fonts"].items():
-            nom = {"no": "cap (com ara)", "real": "la que va caure (previsió perfecta)"}.get(font, font)
-            L.append(f"| {nom} | {v['crescuda'] or '-'} | {ant(v['crescuda'], ep['aforador'][1])} | {v['T10'] or '-'} | {ant(v['T10'], ep['aforador'][2])} |")
-        L.append("")
-    C = res["C"]
-    if not a.sense_c:
-        puja = [c for c in C if c["puja"]]
-        falses = [c for c in puja if c["falsa"]]
-        L += [f"## C. Falses alarmes de l'avís", "",
-              f"Previsions avaluades: {len(C)} (hores amb ≥ 5 mm previstos o mesurats en 6 h). La pluja prevista fa pujar el nivell "
-              f"en {len(puja)}; d'aquestes, {len(falses)} són falses (ni l'aforador ni la previsió amb la pluja real hi arriben).", ""]
-        if puja:
-            L += ["| Hora | Nivell amb prevista | Sense | Amb pluja real | Aforador | Falsa |", "|---|---|---|---|---|---|"]
-            L += [f"| {c['t']} | {c['nivell']} | {c['sense_prevista']} | {c['amb_pluja_real']} | {c['aforador']} | {'sí' if c['falsa'] else 'no'} |" for c in puja]
-            L.append("")
-    out = Path(a.sortida); out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text("\n".join(L))
-    out.with_suffix(".json").write_text(json.dumps(res, ensure_ascii=False, default=str))
-    print("\n".join(L))
+    informe(cfg, res, a.sortida)
     return 0
 
 
