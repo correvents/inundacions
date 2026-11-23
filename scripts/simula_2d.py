@@ -183,7 +183,11 @@ def main():
     ap.add_argument("--extra-hores", type=float, default=0, help="hores addicionals sense pluja després de l'última dada de radar, per veure com es buida l'aigua")
     ap.add_argument("--cada", type=int, default=10, help="minuts entre fotogrames")
     ap.add_argument("--sense-cobertes", action="store_true", help="sense el mapa de cobertes de l'ICGC: WorldCover i --n-natural/--n-urba únics")
-    ap.add_argument("--grup-sol", help="grup hidrològic de sòl (A-D) per al número de corba; per defecte el de config/cobertes_parametres.json")
+    ap.add_argument("--grup-sol", help="grup hidrològic de sòl per al número de corba: A-D (tota la conca igual), «mapa» "
+                    "(scripts/sols.py, SoilGrids NEH-630 0-60 cm + roca), «mapa-sup» (SoilGrids 0-30 cm) o «litologia» (permeabilitat IGME); per defecte el de config/cobertes_parametres.json")
+    ap.add_argument("--sol-referencia", choices=["mitjana", "B"], default="mitjana",
+                    help="amb el mapa de sòls: «mitjana» conserva la mitjana calibrada (només reparteix); «B» pren la calibració "
+                    "com feta amb grup B a tot arreu, i el mapa també en canvia la mitjana")
     ap.add_argument("--edificis", help="edificis del Cadastre (cadastre.py: data/<conca>/cadastre/edificis.json.gz): obstacles i soterranis")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
@@ -214,12 +218,21 @@ def main():
         import cobertes as C
         cob = C.a_reixa(tr, (nf, nc), crs)
     if cob is not None:
-        n, cn, tipus = C.parametres(cob, grup_sol=a.grup_sol)
+        grup = a.grup_sol
+        if grup in ("mapa", "mapa-sup", "litologia"):
+            import sols
+            grup = sols.a_reixa(tr, (nf, nc), crs, variant=a.grup_sol)
+            if grup is None:
+                sys.exit("No es pot llegir el mapa de grups hidrològics de sòl (Release sols-cat)")
+            v = grup[grup >= 0]
+            print("Grups de sòl (" + a.grup_sol + "): " + ", ".join(f"{'ABCD'[k]} {(v == k).mean() * 100:.0f} %" for k in range(4)))
+        n, cn, tipus = C.parametres(cob, grup_sol=grup)
         urba = tipus == 1
         aigua = tipus == 2
         S = 25400 / cn - 254                                     # retenció potencial màxima (mm), SCS
         nat = ~urba & ~aigua & ~mar
-        rel = S / S[nat].mean() if nat.any() else np.ones_like(S)   # la mitjana del terreny natural conserva el valor calibrat
+        Sref = S if a.sol_referencia == "mitjana" else 25400 / C.parametres(cob, grup_sol="B")[1] - 254
+        rel = S / Sref[nat].mean() if nat.any() else np.ones_like(S)   # la mitjana de referència conserva el valor calibrat
         ia = np.where(urba, a.ia_urba, a.ia_natural * rel)
         sorti = np.where(urba, a.clavegueram, a.perdua_natural * rel) / 1000 / 3600
         ia[aigua] = 0; sorti[aigua] = 0                          # sobre l'aigua la pluja no s'infiltra
@@ -370,7 +383,8 @@ def main():
         "graella_utm": {"crs": str(crs), "x0": tr.c, "y0": tr.f, "nf": nf, "nc": nc, "fitxers": {"calat_max_cm.u2": "uint16 cm",
                         "minut_15cm.u2": "uint16 minuts des de inici_utc fins a superar 15 cm; 65535 = mai", "durada_min.u2": "uint16 minuts entre superar 15 cm i l'últim moment amb més de 5 cm; 65535 = mai superat"}}, "fotogrames": fotos, "q_aforador_sim": hidro, "maxim": "maxim.png", "assecat": "assecat.png", "assecat_final_mullat_km2": round(float(mullat_final.sum()) * dx * dx / 1e6, 3), "llegenda_assecat_h": [0, 1, 3, 6, 12],
         "hipotesis": {"ia_natural_mm": a.ia_natural, "ia_urba_mm": a.ia_urba, "perdua_natural_mm_h": a.perdua_natural, "clavegueram_mm_h": a.clavegueram, "h_llera_m": a.h_llera, "manning": ({"natural": a.n_natural, "construit": a.n_urba} if cob is None else "per coberta (config/cobertes_parametres.json, Chow 1959)"),
-                      "cobertes": None if cob is None else {"font": "Mapa de cobertes del sòl de Catalunya, ICGC (CC BY 4.0)", "absorcio": "ia_natural × S/S̄ (número de corba TR-55)", "grup_sol": a.grup_sol or json.loads(Path("config/cobertes_parametres.json").read_text())["grup_hidrologic_sol"]},
+                      "cobertes": None if cob is None else {"font": "Mapa de cobertes del sòl de Catalunya, ICGC (CC BY 4.0)", "absorcio": "ia_natural × S/S̄ (número de corba TR-55)", "grup_sol": a.grup_sol or json.loads(Path("config/cobertes_parametres.json").read_text())["grup_hidrologic_sol"],
+                                                    "sol_referencia": a.sol_referencia},
                       "pluja": "radar OPERA corregit cada hora amb el pluviòmetre de l'ACA" if ep else "radar OPERA sense corregir", "esquema": "inercial local (Bates et al. 2010)"},
         "llegenda_calat_m": [0.05, 0.15, 0.3, 0.6, 1.2],
         "edificis": None if edif is None else {"font": "Cadastre (INSPIRE Buildings)", "metode": "porositat: els edificis treuen espai i amplada de pas a cada cel·la; la pluja de les teulades va al carrer",

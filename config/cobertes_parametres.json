@@ -5,7 +5,7 @@
  "font_cn": "USDA-NRCS (1986) Urban hydrology for small watersheds, TR-55, taules 2-2a, 2-2b i 2-2c (A, B, C, D).",
  "us_cn": "simula_2d.py: l'absorció inicial i la infiltració del terreny natural, calibrades a l'aforador com a mitjana de la conca, es reparteixen per cel·la en proporció a la retenció S = 25400/CN - 254 (mm). Urbà: clavegueram; aigua: sense pèrdues.",
  "grup_hidrologic_sol": "B",
- "grup_hidrologic_nota": "Provisional: grup B (sòls de textura mitjana) a tot arreu fins que hi hagi mapa de grups hidrològics de sòl. Només canvia el repartiment relatiu entre cobertes, no la mitjana calibrada.",
+ "grup_hidrologic_nota": "Per defecte grup B (textura mitjana) a tot arreu. Opció: simula_2d.py --grup-sol mapa|mapa-sup fa servir el mapa de grups A-D de tot Catalunya (scripts/sols.py, Release sols-cat); --sol-referencia mitjana (per defecte) només canvia el repartiment, B també la mitjana calibrada. Aquest grup s'usa també on el mapa no té dades.",
  "sense_dades": 14,
  "grups": {
   "conreu": {

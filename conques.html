@@ -117,9 +117,18 @@ dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:
         <span><i class="sw" style="background:rgb(120,120,120);border-radius:50%"></i>Gual: el torrentet passa per sobre la via</span>
         <span><i class="sw" style="background:#fff;border:2px solid #111;border-radius:50%"></i>Vora negra: obra de drenatge a OSM</span>
       </div>
+      <label><input type="checkbox" id="kSol"> Grups hidrològics de sòl</label>
+      <select id="solVar" hidden><option value="litologia">De la litologia (IGME 1:200.000)</option><option value="mapa">SoilGrids, 0-60 cm + roca</option><option value="mapa-sup">SoilGrids, 0-30 cm</option></select>
+      <div class="ll" id="llSol" hidden>
+        <span><i class="sw" style="background:rgb(255,237,160)"></i>A: sorrenc, infiltra molt</span>
+        <span><i class="sw" style="background:rgb(161,217,155)"></i>B: textura mitjana</span>
+        <span><i class="sw" style="background:rgb(65,171,93)"></i>C: llimós o argilós</span>
+        <span><i class="sw" style="background:rgb(0,90,50)"></i>D: argilós o roca a menys de 50 cm</span>
+      </div>
       <p class="hint" id="relInfo" style="margin:0"></p>
       <p class="hint" id="cobInfo" style="margin:0"></p>
       <p class="hint" id="pasInfo" style="margin:0"></p>
+      <p class="hint" id="solInfo" style="margin:0"></p>
     </fieldset>
     <label class="op">Opacitat de les conques <input type="range" id="op" min="0" max="100" value="35"></label>
     <p class="hint" style="margin:0">Mapa de fons i noms de llocs: selector a dalt a la dreta del mapa (també «Sense mapa»).</p>
@@ -159,7 +168,7 @@ function dibuixa(){
   capaR.bringToFront();
   pinta();
 }
-function tria(id){sel=id;pinta();relleu();if(typeof cobertes==="function")cobertes();if(typeof passos==="function")passos()}
+function tria(id){sel=id;pinta();relleu();if(typeof cobertes==="function")cobertes();if(typeof passos==="function")passos();if(typeof sols==="function")sols()}
 // Capes de relleu calculades al servidor (scripts/mdt_cat.py), una carpeta per conca del tall de 100 km²
 let relIdx=null, capaRier=null, capaZb=null, capaSot=null, relConca=null;
 const kSot=document.getElementById("kSot");
@@ -310,6 +319,26 @@ function passos(){
       onEachFeature:(f,l)=>{if(f.geometry.type==="Point")l.bindPopup(fitxaPas(f.properties),{maxWidth:280})}
     }).addTo(capaPas)}).catch(()=>{pasInfo.textContent=`No s'han pogut carregar els passos de la conca ${id}.`});
 }
+// Grups hidrològics de sòl (scripts/sols.py): un sol PNG per a tot Catalunya; a la simulació 2D és opcional (--grup-sol mapa)
+const kSol=document.getElementById("kSol"), solInfo=document.getElementById("solInfo"), gSol=L.layerGroup();
+F.ctl.addOverlay(gSol,"Grups hidrològics de sòl");
+let solRes=null, capaSol=null, solCapaVar=null;
+const solVar=document.getElementById("solVar");
+d3.json("data/catalunya/sols/resum.json").then(j=>{solRes=j;sols()}).catch(()=>{});
+kSol.onchange=()=>{kSol.checked?gSol.addTo(mapa):mapa.removeLayer(gSol);sols()};
+solVar.onchange=()=>sols();
+mapa.on("overlayadd overlayremove",e=>{if(e.layer===gSol){kSol.checked=mapa.hasLayer(gSol);sols()}});
+function sols(){
+  document.getElementById("llSol").hidden=solVar.hidden=!kSol.checked;
+  if(!kSol.checked){solInfo.textContent="";return}
+  if(!solRes){solInfo.textContent="El mapa de grups de sòl encara no està calculat.";return}
+  const v=solVar.value, vv=(solRes.variants||{})[v]||{png:v==="mapa-sup"?"grups_sup.png":"grups.png",limits:solRes.limits,font:solRes.font};
+  if(v!==solCapaVar){gSol.clearLayers();capaSol=null;solCapaVar=v}
+  if(!capaSol){capaSol=L.imageOverlay(`data/catalunya/sols/${vv.png}`,vv.limits,{opacity:.7,interactive:false,pane:"relleu"}).addTo(gSol)}
+  const id=conca100(), r=id==null?null:solRes.conques["c"+String(id).padStart(3,"0")];
+  const t=x=>x?"ABCD".split("").map((g,k)=>`${g} ${Math.round(x[k])} %`).join(", "):"sense dades";
+  solInfo.textContent=(r?`Conca ${id}: ${t(r[v])}. `:"")+`Font: ${vv.font}.`;
+}
 let av=new Set(), am=new Set(), cami=[];
 function estil(f){
   const i=f.properties.id, o=op.value/100, buit=F.senseMapa();
@@ -356,7 +385,7 @@ function pinta(){
    <div><div class="lbl">Camí de l'aigua</div><div class="cami">${[p.id,...cami].join(" → ")} → ${cami.length||p.avall==null?"mar o límit":""}</div></div>
    <p class="hint">Si el camí acaba lluny de la costa, és que el riu surt de Catalunya o la conca toca el límit del mapa.</p>`;
 }
-function canvia(m){mida=m;sel=null;relleu();cobertes();passos();
+function canvia(m){mida=m;sel=null;relleu();cobertes();passos();sols();
   d3.select("#b25").attr("aria-pressed",m==="25");d3.select("#b100").attr("aria-pressed",m==="100");dibuixa()}
 d3.select("#b25").on("click",()=>canvia("25"));d3.select("#b100").on("click",()=>canvia("100"));
 Promise.all([d3.json("data/catalunya/conques/web/conques_25.json"),d3.json("data/catalunya/conques/web/conques_100.json"),d3.json("data/catalunya/conques/web/rius.json")]).then(([a,b,r])=>{
