@@ -29,7 +29,12 @@ jobs:
         run: |
           url=$(curl -sSfL https://download.geofabrik.de/index-v1-nogeom.json | python3 -c "import json,sys; f=[x['properties'] for x in json.load(sys.stdin)['features'] if 'catal' in x['properties']['id'].lower() or 'catal' in x['properties']['name'].lower()]; print(f[0]['urls']['pbf'])")
           echo "Extracte: $url"
-          for i in 1 2 3 4 5; do curl -sSfL --retry 3 -o /tmp/cat.osm.pbf "$url" && break; echo "Geofabrik: intent $i fallat"; sleep $((i*30)); done
+          # si «latest» no hi és (Geofabrik l'està regenerant), es prova l'extracte datat dels dies anteriors
+          for i in 0 1 2 3 4 5 6 7; do
+            u="$url"; [ "$i" -gt 0 ] && u="${url%latest.osm.pbf}$(date -u -d "-$i day" +%y%m%d).osm.pbf"
+            curl -sSfL --retry 3 -o /tmp/cat.osm.pbf "$u" && { echo "Baixat: $u"; break; }
+            echo "Geofabrik: $u no disponible"; sleep 20
+          done
           [ -s /tmp/cat.osm.pbf ] || { echo "::error::No s'ha pogut baixar l'extracte de Geofabrik"; exit 1; }
           python3 scripts/obres_cat.py osm --pbf /tmp/cat.osm.pbf --sortida /tmp/culverts.json.gz
       - name: Secció i capacitat de cada pas
