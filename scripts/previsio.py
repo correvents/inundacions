@@ -14,7 +14,11 @@
 5. Desa a previsions_cabal (des de 6 h enrere fins a 3 h endavant), un avís quan canvia el nivell, i esborra
    les previsions de més de 2 dies.
 
-Ús:  python3 scripts/previsio.py --config config/ridaura.json"""
+Opció --pluja-prevista (per defecte 'no', i aleshores tot és igual que abans): afegeix l'escenari aforador_previst,
+amb la pluja prevista de les 6 h següents (pluja_prevista.py: nowcast del radar OPERA i AROME HD via Open-Meteo), i
+allarga totes les previsions a 6 h. L'avís té en compte també aquest escenari i ho diu al motiu.
+
+Ús:  python3 scripts/previsio.py --config config/ridaura.json [--pluja-prevista tot]"""
 import argparse, json, sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -23,8 +27,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 from sb import insereix, llegeix, esborra
 from model_cabal import simula, DT
 from episodi import periode_retorn, cabal_racional, FENALS
+import pluja_prevista as pp
 
 DIES, ENDAVANT_H, ENRERE_H, RETARD_MAR = 7, 3, 6, 45
+pp_H = 6                     # hores de previsió amb --pluja-prevista
 NIVELLS = [(500, 5, "T500"), (100, 4, "T100"), (50, 3, "T50"), (10, 2, "T10"), (2.33, 1, "crescuda ordinària")]
 
 
@@ -46,17 +52,12 @@ def serie(files, temps, camp, f=lambda v: v):
     return s
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--config", required=True)
-    ap.add_argument("--ara", help="fa la previsió com si fos aquesta hora UTC (YYYY-MM-DDTHH:MM), per provar amb episodis passats")
-    ap.add_argument("--sense-desar", action="store_true")
-    a = ap.parse_args()
-    cfg = json.loads(Path(a.config).read_text())
+def preveu(cfg, ara=None, prevista="no", desar=True, cache=None, verb=True):
+    """Una previsió. ara=None: ara mateix (directe). Torna un resum (nivell, cabals màxims i períodes de retorn per escenari)."""
     mod = json.loads(Path(f"config/{cfg['conca']}_model_pluviometre.json").read_text())
     conca = cfg["conca"]
-
-    ara = (datetime.fromisoformat(a.ara).replace(tzinfo=timezone.utc) if a.ara else datetime.now(timezone.utc)).replace(second=0, microsecond=0)
+    directe = ara is None
+    ara = (ara or datetime.now(timezone.utc)).replace(second=0, microsecond=0)
     ara -= timedelta(minutes=ara.minute % DT)
     ini = ara - timedelta(days=DIES)
     temps = [ini + timedelta(minutes=DT * i) for i in range(int((ara - ini).total_seconds() // (DT * 60)) + 1)]
@@ -85,9 +86,18 @@ def main():
     i0 = int(secs[-1]) + 1 if len(secs) else 0
     i0 = min(i0, i_ara)
     q_base = float(np.nanmin(q_obs[max(i0 - 12, 0): i0 + 1])) if np.isfinite(q_obs[max(i0 - 12, 0): i0 + 1]).any() else float(q_obs[i_ara])
-    n_fut = ENDAVANT_H * 60 // DT
+    endavant_h = ENDAVANT_H if prevista == "no" else pp_H
+    n_fut = endavant_h * 60 // DT
     darrera_h = pluja[max(i_fi - 11, 0): i_fi + 1].mean()
     escenaris = {"aforador": np.zeros(n_fut), "aforador_continua": np.r_[np.full(12, darrera_h), np.zeros(n_fut - 12)]}
+    info_prev = None
+    if prevista != "no":
+        # la pluja prevista comença just després de l'última pluja mesurada (i_fi)
+        t_fi = temps[i_fi]
+        from radar_conca import relacio_zr
+        prev, info_prev = pp.prevista(cfg, t_fi, n_fut * DT, prevista, directe=directe,
+                                      zr=relacio_zr(conca) if directe else None, cache=cache)
+        escenaris["aforador_previst"] = prev
     p = dict(ia=mod["Ia_mm"], c=mod["C"], k=mod["K"], m=mod["m"], n=mod["n"])
     acum = float(pluja[i0:].sum())
     t_run = temps[i_ara]
@@ -117,22 +127,52 @@ def main():
     for nom, q in (("desembocadura", q_mar), ("fenals", q_fen)):
         files += [{"conca": conca, "punt": nom, "run": t_run.isoformat(), "temps": t.isoformat(), "cabal_m3s": round(float(v), 2)}
                   for t, v in zip(desa, q[k_desa:])]
-    ins, esb = ((lambda *x, **k: None),) * 2 if a.sense_desar else (insereix, esborra)
+    ins, esb = (insereix, esborra) if desar else ((lambda *x, **k: None),) * 2
     ins("previsions_cabal", files, actualitza=True)
     esb("previsions_cabal", {"conca": f"eq.{conca}", "run": f"lt.{(t_run - timedelta(days=2)).isoformat()}"})
 
     # avís: el pitjor període de retorn previst a les 3 h vinents (sense més pluja / si continua)
     fut = slice(i_ara - i0, None)
-    pitjor = max(max(periode_retorn(v, qt_af) for v in resum[n][fut]) for n in escenaris)
-    pitjor = max(pitjor, max(periode_retorn(v, FENALS) for v in q_fen[fut]))
-    nivell, motiu = next(((n, f"Previsió fins a {m} en les 3 h vinents") for T, n, m in NIVELLS if pitjor >= T), (0, "Sense crescuda prevista"))
-    darrer = llegeix("avisos", {"select": "nivell", "conca": f"eq.{conca}", "order": "temps.desc", "limit": 1})
-    if not darrer or darrer[0]["nivell"] != nivell:
+    T_esc = {n: max(periode_retorn(v, qt_af) for v in resum[n][fut]) for n in escenaris}
+    # Fenals: amb la pluja observada i, si n'hi ha, amb la prevista
+    q_fen_prev = (cabal_racional(np.r_[pluja[i0:], escenaris["aforador_previst"]], FENALS["area_km2"], 26, 45)
+                  if "aforador_previst" in escenaris else q_fen)
+    T_fen = max(periode_retorn(v, FENALS) for v in q_fen[fut])
+    T_fen_prev = max(periode_retorn(v, FENALS) for v in q_fen_prev[fut])
+    pitjor_obs = max(max(T_esc["aforador"], T_esc["aforador_continua"]), T_fen)
+    pitjor = max(max(T_esc.values()), T_fen, T_fen_prev)
+    nivell, motiu = next(((n, f"Previsió fins a {m} en les {endavant_h} h vinents") for T, n, m in NIVELLS if pitjor >= T), (0, "Sense crescuda prevista"))
+    nivell_obs = next((n for T, n, m in NIVELLS if pitjor_obs >= T), 0)
+    if nivell > nivell_obs:
+        motiu += f" amb la pluja prevista ({info_prev.get('mm_3h', 0):.0f} mm en 3 h; sense comptar-la, nivell {nivell_obs})"
+    darrer = llegeix("avisos", {"select": "nivell", "conca": f"eq.{conca}", "order": "temps.desc", "limit": 1}) if desar else []
+    if desar and (not darrer or darrer[0]["nivell"] != nivell):
         ins("avisos", [{"conca": conca, "temps": t_run.isoformat(), "nivell": nivell,
                              "motiu": f"{motiu}. Pluja de l'episodi: {acum:.0f} mm (llindar de resposta {mod['Ia_mm']:.0f} mm)."}])
-    print(f"Run {t_run:%Y-%m-%d %H:%M} UTC · episodi des de {temps[i0]:%Y-%m-%d %H:%M} · pluja {acum:.1f} mm · "
-          f"Q ara {q_obs[i_ara]:.1f} · màx 3 h {resum['aforador'][fut].max():.1f} (si continua {resum['aforador_continua'][fut].max():.1f}) m³/s · "
-          f"Fenals {q_fen[fut].max():.1f} · nivell {nivell}")
+    if verb:
+        print(f"Run {t_run:%Y-%m-%d %H:%M} UTC · episodi des de {temps[i0]:%Y-%m-%d %H:%M} · pluja {acum:.1f} mm · "
+              f"Q ara {q_obs[i_ara]:.1f} · màx {endavant_h} h {resum['aforador'][fut].max():.1f} (si continua {resum['aforador_continua'][fut].max():.1f}"
+              + (f", amb la prevista {resum['aforador_previst'][fut].max():.1f}" if "aforador_previst" in resum else "")
+              + f") m³/s · Fenals {q_fen[fut].max():.1f} · nivell {nivell}")
+        if info_prev is not None:
+            print("Pluja prevista:", json.dumps(info_prev, ensure_ascii=False))
+    return {"run": t_run, "ultima_pluja": temps[i_fi], "nivell": nivell, "nivell_sense_prevista": nivell_obs, "pluja_episodi_mm": acum,
+            "q_ara": float(q_obs[i_ara]), "q_max": {n: float(resum[n][fut].max()) for n in resum},
+            "T": {**T_esc, "fenals": T_fen, "fenals_previst": T_fen_prev}, "prevista": info_prev,
+            "prevista_mm": escenaris["aforador_previst"] if "aforador_previst" in escenaris else None}
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--config", required=True)
+    ap.add_argument("--ara", help="fa la previsió com si fos aquesta hora UTC (YYYY-MM-DDTHH:MM), per provar amb episodis passats")
+    ap.add_argument("--sense-desar", action="store_true")
+    ap.add_argument("--pluja-prevista", default="no", choices=["no", "nowcast", "arome", "tot"],
+                    help="afegeix l'escenari amb la pluja prevista de les 6 h següents (per defecte, no)")
+    a = ap.parse_args()
+    cfg = json.loads(Path(a.config).read_text())
+    ara = datetime.fromisoformat(a.ara).replace(tzinfo=timezone.utc) if a.ara else None
+    preveu(cfg, ara, a.pluja_prevista, desar=not a.sense_desar)
     return 0
 
 
