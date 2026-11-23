@@ -1,0 +1,50 @@
+name: Control de salut
+
+# Independent de vigila.yml: si la vigilància s'atura, aquest control ho detecta igualment.
+# Avisa (Telegram/correu, segons els secrets) quan una font deixa d'arribar, quan torna, i dels buits del radar.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "7,27,47 * * * *"
+
+concurrency:
+  group: salut
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  salut:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
+      SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      SMTP_USER: ${{ secrets.SMTP_USER }}
+      SMTP_PASS: ${{ secrets.SMTP_PASS }}
+      AVIS_EMAIL: ${{ secrets.AVIS_EMAIL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Recupera l'estat anterior
+        uses: actions/cache/restore@v4
+        with:
+          path: salut_estat.json
+          key: salut-${{ github.run_id }}
+          restore-keys: salut-
+      - name: Comprova
+        run: python3 scripts/salut.py --estat salut_estat.json
+      - name: Desa l'estat
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: salut_estat.json
+          key: salut-${{ github.run_id }}
