@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       episodis:
-        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150, "sol": "B|mapa|mapa-sup|litologia" (opcional), "sol_ref": "mitjana|B" (opcional)}]'
+        description: 'Llista JSON [{"id": "2026-10-04", "radar": "2026-10-03_radar.json", "episodi": "2026-10-04.json" (opcional), "ia": 150, "sol": "B|mapa|mapa-sup|litologia" (opcional), "sol_ref": "mitjana|B" (opcional)}]; opcionals per episodi (passen per davant de les entrades): "pas", "perdua", "perdua_sobre" (calat/pluja), "grup_sol" (A-D), "cobertes" ("no"), "clavegueram_desti" (perdut/riu), "passos" (tapats/oberts/arrossegalls), "obertura" (petita/mitjana)'
         required: true
       conca:
         description: "Conca (config/<conca>.json)"
@@ -84,9 +84,12 @@ jobs:
           PB=""; for c in $(echo "$PLANTA_BAIXA" | tr ',' ' '); do f=$(printf "data/catalunya/planta_baixa/c%03d.json" "$c"); [ -f "$f" ] && PB="$PB $f"; done
           [ -n "$PB" ] && EP="$EP --planta-baixa $PB"
           python3 scripts/simula_2d.py --config config/${{ inputs.conca }}.json --mdt /tmp/relleu/mdt.tif --id "${{ matrix.ep.id }}" \
-            --radar "data/${{ inputs.conca }}/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ inputs.pas }}" \
+            --radar "data/${{ inputs.conca }}/episodis/${{ matrix.ep.radar }}" $EP --pas "${{ matrix.ep.pas || inputs.pas }}" \
             --ia-natural "${{ matrix.ep.ia }}" --ia-urba "${{ inputs.ia_urba }}" --n-natural "${{ inputs.n_natural }}" \
-            --perdua-natural "${{ inputs.perdua_natural }}" --clavegueram "${{ inputs.clavegueram }}" \
+            --perdua-natural "${{ matrix.ep.perdua || inputs.perdua_natural }}" --perdua-sobre "${{ matrix.ep.perdua_sobre || 'calat' }}" \
+            $([ -n "${{ matrix.ep.grup_sol }}" ] && echo --grup-sol ${{ matrix.ep.grup_sol }}) $([ "${{ matrix.ep.cobertes }}" = "no" ] && echo --sense-cobertes) --clavegueram-desti "${{ matrix.ep.clavegueram_desti || 'perdut' }}" \
+            --passos "${{ matrix.ep.passos || 'tapats' }}" --obertura "${{ matrix.ep.obertura || 'petita' }}" \
+            --clavegueram "${{ inputs.clavegueram }}" \
             --escenari-clavegueram "${{ inputs.escenari_clavegueram }}" --clavegueram-ofegat "${{ inputs.clavegueram_ofegat }}" --extra-hores "${{ inputs.extra_hores }}" $OPC
       - name: Desa
         run: |
