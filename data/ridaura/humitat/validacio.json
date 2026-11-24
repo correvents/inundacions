@@ -1,0 +1,266 @@
+{
+ "Ia_fixa_mm": 159.4,
+ "smax_mm": 195.2,
+ "model_diposit": {
+  "phi_mm_h": 7.0,
+  "K": 652.5,
+  "m": 1.241,
+  "n": 2,
+  "C": 1.0,
+  "area_km2": 35.593
+ },
+ "4_10_2026": {
+  "pic_obs": 303.7,
+  "fixa": {
+   "ia_mm": 159.4,
+   "NSE": 0.873,
+   "pic_sim": 206.3
+  },
+  "diposit": {
+   "ia_mm": 152.9,
+   "NSE": 0.857,
+   "pic_sim": 195.2
+  }
+ },
+ "gener_2026": {
+  "inici": "2026-01-17 22:55",
+  "pluja_xema_mm": 148.9,
+  "pic_obs": 28.6,
+  "fixa": {
+   "ia_mm": 159,
+   "pic_sim": 0.0
+  },
+  "diposit": {
+   "ia_mm": 22,
+   "pic_sim": 27.2
+  }
+ },
+ "continu_ago_nov_2026": {
+  "fixa": {
+   "NSE": 0.69,
+   "NSE_sense_4_10": -488.008
+  },
+  "diposit": {
+   "NSE": 0.825,
+   "NSE_sense_4_10": -9.136
+  }
+ },
+ "episodis_2026": [
+  {
+   "inici": "2026-09-09 10:55",
+   "pluja_mm": 10.3,
+   "q_obs_max": 0.0,
+   "ia_fixa": 159,
+   "q_fixa_max": 0.0,
+   "ia_diposit": 177,
+   "q_diposit_max": 0.0
+  },
+  {
+   "inici": "2026-09-28 08:10",
+   "pluja_mm": 11.9,
+   "q_obs_max": 0.0,
+   "ia_fixa": 159,
+   "q_fixa_max": 0.0,
+   "ia_diposit": 163,
+   "q_diposit_max": 0.0
+  },
+  {
+   "inici": "2026-10-03 22:10",
+   "pluja_mm": 233.1,
+   "q_obs_max": 303.7,
+   "ia_fixa": 159,
+   "q_fixa_max": 203.2,
+   "ia_diposit": 152,
+   "q_diposit_max": 195.0
+  },
+  {
+   "inici": "2026-10-17 16:45",
+   "pluja_mm": 20.3,
+   "q_obs_max": 0.3,
+   "ia_fixa": 159,
+   "q_fixa_max": 0.0,
+   "ia_diposit": 20,
+   "q_diposit_max": 0.0
+  },
+  {
+   "inici": "2026-11-11 23:30",
+   "pluja_mm": 27.8,
+   "q_obs_max": 0.3,
+   "ia_fixa": 159,
+   "q_fixa_max": 0.0,
+   "ia_diposit": 36,
+   "q_diposit_max": 0.0
+  }
+ ],
+ "cataleg_xema": {
+  "episodis": 89,
+  "sobre_QMCO_fora_4_10": {
+   "fixa": 2,
+   "diposit": 5
+  },
+  "mes_humits": [
+   {
+    "inici": "2011-11-21",
+    "pluja_mm": 88,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 4,
+    "q_diposit": 23.8
+   },
+   {
+    "inici": "2010-03-08",
+    "pluja_mm": 58,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 5,
+    "q_diposit": 0.0
+   },
+   {
+    "inici": "2018-04-13",
+    "pluja_mm": 25,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 6,
+    "q_diposit": 3.3
+   },
+   {
+    "inici": "2011-11-15",
+    "pluja_mm": 57,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 9,
+    "q_diposit": 0.0
+   },
+   {
+    "inici": "2018-11-14",
+    "pluja_mm": 98,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 9,
+    "q_diposit": 94.8
+   },
+   {
+    "inici": "2018-11-15",
+    "pluja_mm": 107,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 9,
+    "q_diposit": 94.8
+   },
+   {
+    "inici": "2018-11-17",
+    "pluja_mm": 209,
+    "ia_fixa": 159,
+    "q_fixa": 84.2,
+    "ia_diposit": 9,
+    "q_diposit": 94.8
+   },
+   {
+    "inici": "2019-12-04",
+    "pluja_mm": 81,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 14,
+    "q_diposit": 8.7
+   },
+   {
+    "inici": "2011-11-03",
+    "pluja_mm": 106,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 16,
+    "q_diposit": 8.2
+   },
+   {
+    "inici": "2010-02-08",
+    "pluja_mm": 91,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 17,
+    "q_diposit": 38.8
+   }
+  ],
+  "mes_cabal_diposit": [
+   {
+    "inici": "2018-11-14",
+    "pluja_mm": 98,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 9,
+    "q_diposit": 94.8
+   },
+   {
+    "inici": "2018-11-15",
+    "pluja_mm": 107,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 9,
+    "q_diposit": 94.8
+   },
+   {
+    "inici": "2018-11-17",
+    "pluja_mm": 209,
+    "ia_fixa": 159,
+    "q_fixa": 84.2,
+    "ia_diposit": 9,
+    "q_diposit": 94.8
+   },
+   {
+    "inici": "2020-01-20",
+    "pluja_mm": 187,
+    "ia_fixa": 159,
+    "q_fixa": 39.2,
+    "ia_diposit": 38,
+    "q_diposit": 40.3
+   },
+   {
+    "inici": "2010-02-08",
+    "pluja_mm": 91,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 17,
+    "q_diposit": 38.8
+   },
+   {
+    "inici": "2026-01-17",
+    "pluja_mm": 149,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 23,
+    "q_diposit": 27.2
+   },
+   {
+    "inici": "2019-10-21",
+    "pluja_mm": 128,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 105,
+    "q_diposit": 26.6
+   },
+   {
+    "inici": "2011-11-21",
+    "pluja_mm": 88,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 4,
+    "q_diposit": 23.8
+   },
+   {
+    "inici": "2010-10-12",
+    "pluja_mm": 111,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 52,
+    "q_diposit": 21.9
+   },
+   {
+    "inici": "2025-12-25",
+    "pluja_mm": 150,
+    "ia_fixa": 159,
+    "q_fixa": 0.0,
+    "ia_diposit": 85,
+    "q_diposit": 18.5
+   }
+  ]
+ }
+}

@@ -6,6 +6,10 @@ name: Valida la pluja prevista
 
 on:
   workflow_dispatch:
+    inputs:
+      trossos:
+        description: "Trossos a fer, separats per comes (buit = tots), p. ex. b-2026-10-04,2026-10a"
+        default: ""
 
 permissions:
   contents: read
@@ -38,8 +42,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests numpy scipy h5py pyproj shapely
+      - run: pip install requests numpy scipy pandas h5py pyproj shapely
       - name: Validació
+        if: inputs.trossos == '' || contains(format(',{0},', inputs.trossos), format(',{0},', matrix.tros.nom))
         run: |
           a="${{ matrix.tros.args }}"
           [[ "$a" == *--des* ]] || a="$a --des 2026-10-04T00:00 --fins 2026-10-04T00:00"
@@ -59,7 +64,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests numpy scipy h5py pyproj shapely
+      - run: pip install requests numpy scipy pandas h5py pyproj shapely
       - uses: actions/download-artifact@v4
         with:
           pattern: pp-*

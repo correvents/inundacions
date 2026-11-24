@@ -189,7 +189,7 @@ def nwp(cfg, ara, minuts, directe=True):
     if directe:
         p.update({"start_minutely_15": (ara - timedelta(minutes=15)).strftime("%Y-%m-%dT%H:%M"),
                   "end_minutely_15": (ara + timedelta(minutes=minuts + 15)).strftime("%Y-%m-%dT%H:%M")})
-        r = _om(OM_ACTUAL, p)
+        r = _om(OM_ACTUAL, p, intents=2)            # en directe, no fer esperar el bucle de 10 min
     else:
         base = ara - timedelta(hours=LATENCIA_H)
         r = None

@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests numpy scipy h5py pyproj shapely
+      - run: pip install requests numpy scipy pandas h5py pyproj shapely
       - name: Cada 10 minuts
         run: |
           fi=$(( $(date +%s) + 340*60 ))
@@ -38,7 +38,7 @@ jobs:
             timeout 240 python3 scripts/aca_aforador.py --config config/ridaura.json --hores 3 || echo "ACA: ha fallat"
             timeout 240 python3 scripts/radar_conca.py --config config/ridaura.json --hores 1 || echo "Radar: ha fallat"
             timeout 180 python3 scripts/radar_corregit.py --config config/ridaura.json --hores 3 || echo "Radar corregit: ha fallat"
-            timeout 120 python3 scripts/previsio.py --config config/ridaura.json || echo "Previsió: ha fallat"
+            timeout 180 python3 scripts/previsio.py --config config/ridaura.json --pluja-prevista tot || echo "Previsió: ha fallat"
             echo "::endgroup::"
             ara=$(date +%s); sleep $(( 600 - ara % 600 + 60 ))
           done
