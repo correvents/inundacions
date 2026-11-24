@@ -1,13 +1,10 @@
 name: Valida la pluja prevista
 
 # Valida pluja_prevista.py (nowcast del radar OPERA i AROME HD via Open-Meteo) i l'antelació que guanya l'avís de
-# previsio.py --pluja-prevista. No desa res a Supabase. El període es parteix en trossos que van en paral·lel; l'últim
+# previsio.py --pluja-prevista. No desa res a Supabase. El període es parteix en trossos (un rere l'altre); l'últim
 # pas els ajunta en un sol informe (al registre i com a artefacte).
 
 on:
-  push:                     # TEMPORAL: per provar-ho des de la branca; es treu abans de fusionar
-    branches: [claude/project-thread-iham80]
-    paths: [".github/workflows/valida_pluja_prevista.yml", "scripts/pluja_prevista.py", "scripts/valida_pluja_prevista.py", "scripts/previsio.py"]
   workflow_dispatch:
 
 permissions:
@@ -24,7 +21,7 @@ jobs:
     timeout-minutes: 340
     strategy:
       fail-fast: false
-      max-parallel: 3       # Open-Meteo limita les peticions per minut
+      max-parallel: 1       # Open-Meteo gratuït limita les peticions (per minut i per dia): en paral·lel es perden execucions d'AROME
       matrix:
         tros:
           - {nom: "b-2026-10-04", args: "--sense-a --episodi 2026-10-04T02:00,2026-10-04T09:30"}
