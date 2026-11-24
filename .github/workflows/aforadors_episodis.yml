@@ -1,0 +1,38 @@
+name: Aforadors ACA als episodis de 2026
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  aforadors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests
+      - name: Pics de cabal per episodi
+        env:
+          SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: python3 scripts/aforadors_episodis.py
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cp data/catalunya/aforadors/episodis_2026.json /tmp/a.json
+          B="${GITHUB_REF_NAME}"
+          for i in 1 2 3 4 5; do
+            git fetch -q origin "$B" && git reset -q --hard "origin/$B"
+            mkdir -p data/catalunya/aforadors && cp /tmp/a.json data/catalunya/aforadors/episodis_2026.json
+            git add data/catalunya/aforadors/
+            git diff --cached --quiet && exit 0
+            git commit -q -m "Aforadors ACA als episodis de 2026"
+            git push origin "HEAD:$B" && exit 0
+            sleep $((i*7))
+          done; exit 1
