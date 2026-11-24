@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install requests numpy scipy h5py pyproj shapely
+      - run: pip install requests numpy scipy pandas h5py pyproj shapely
       - name: Cada 10 minuts
         run: |
           fi=$(( $(date +%s) + 340*60 ))

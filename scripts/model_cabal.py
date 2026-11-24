@@ -21,10 +21,12 @@ from scipy.optimize import minimize
 DT = 5          # minuts
 
 
-def simula(pluja, area_km2, q_base, ia, c, k, m, n=2):
-    """Cabal (m³/s) a cada pas a partir de la pluja mitjana de la conca (mm per pas)."""
+def simula(pluja, area_km2, q_base, ia, c, k, m, n=2, phi=0.0):
+    """Cabal (m³/s) a cada pas a partir de la pluja mitjana de la conca (mm per pas).
+    phi (mm/h): pèrdua contínua un cop omplerta l'absorció inicial (0 = el model original, tot llindar)."""
     p = np.cumsum(pluja)
-    neta = np.diff(c * np.maximum(p - ia, 0.0), prepend=0.0)          # mm per pas
+    neta = np.diff(np.maximum(p - ia, 0.0), prepend=0.0)
+    neta = c * np.maximum(neta - phi * DT / 60, 0.0)                  # mm per pas
     entrada = neta * area_km2 * 1000 / (DT * 60)                     # m³/s
     sub, h = 3, DT * 60 / 3
     s = np.zeros(n); q = np.empty_like(entrada)

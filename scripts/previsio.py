@@ -4,8 +4,10 @@
 1. Llegeix de Supabase els últims 7 dies de pluja (pluviòmetre de l'ACA a l'aforador; els forats s'omplen amb el radar
    OPERA sobre la conca) i de cabal observat.
 2. Busca l'inici de l'episodi de pluja: després de l'última finestra de 48 h amb menys d'1 mm. La pluja acumulada des
-   d'aleshores és la que omple el llindar Ia del model (el 4/10 la conca no va respondre fins a ~150 mm).
-3. Simula amb el model calibrat (model_cabal.py, pluviòmetre) fins a 3 h endavant en dos escenaris:
+   d'aleshores és la que omple el llindar Ia del model. Ia depèn de la pluja dels 60 dies anteriors (humitat.py: dipòsit
+   d'humitat del sòl calibrat amb el 4/10, quan després de l'estiu sec la conca no va respondre fins a ~160 mm). Es calcula
+   un cop per inici d'episodi i es guarda a /tmp mentre dura l'execució de vigila.yml.
+3. Simula amb el model calibrat (humitat.py si hi ha config/<conca>_humitat.json; si no, model_cabal.py, pluviòmetre) fins a 3 h endavant en dos escenaris:
      - aforador: no plou més,
      - aforador_continua: plou 1 h més amb la intensitat de l'última hora.
    La diferència entre el cabal observat i el simulat ara es manté a la previsió i s'esvaeix en 2 h.
@@ -23,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from sb import insereix, llegeix, esborra
 from model_cabal import simula, DT
 from episodi import periode_retorn, cabal_racional, FENALS
+import humitat
 
 DIES, ENDAVANT_H, ENRERE_H, RETARD_MAR = 7, 3, 6, 45
 NIVELLS = [(500, 5, "T500"), (100, 4, "T100"), (50, 3, "T50"), (10, 2, "T10"), (2.33, 1, "crescuda ordinària")]
@@ -44,6 +47,27 @@ def serie(files, temps, camp, f=lambda v: v):
         if t in ix and r[camp] is not None:
             s[ix[t]] = f(r[camp])
     return s
+
+
+def absorcio_inicial(conca, t0, mod):
+    """Ia (mm) en començar l'episodi a t0, amb el pluviòmetre de l'ACA dels 60 dies anteriors (sense dada = sec).
+    Sense config/<conca>_humitat.json, l'Ia fix del model."""
+    par = humitat.parametres(conca)
+    if not par:
+        return mod["Ia_mm"], "fixa"
+    cau = Path(f"/tmp/ia_{conca}.json")
+    memo = json.loads(cau.read_text()) if cau.exists() else {}
+    if t0.isoformat() in memo:
+        return memo[t0.isoformat()], "60 dies"
+    import pandas as pd
+    ini = t0 - timedelta(days=humitat.DIES)
+    files = tot("observacions", {"select": "temps,valor", "conca": f"eq.{conca}", "var": "eq.pluja_mmh",
+                                 "and": f"(temps.gte.{ini.isoformat()},temps.lt.{t0.isoformat()})"})
+    s = pd.Series([r["valor"] * DT / 60 for r in files], index=pd.to_datetime([r["temps"] for r in files], utc=True).tz_localize(None), dtype=float)
+    ph = s.resample("1h").sum() if len(s) else pd.Series(dtype=float)
+    ia = round(humitat.ia(t0.replace(tzinfo=None), ph, par), 1)
+    memo[t0.isoformat()] = ia; cau.write_text(json.dumps(memo))
+    return ia, "60 dies"
 
 
 def main():
@@ -88,7 +112,13 @@ def main():
     n_fut = ENDAVANT_H * 60 // DT
     darrera_h = pluja[max(i_fi - 11, 0): i_fi + 1].mean()
     escenaris = {"aforador": np.zeros(n_fut), "aforador_continua": np.r_[np.full(12, darrera_h), np.zeros(n_fut - 12)]}
-    p = dict(ia=mod["Ia_mm"], c=mod["C"], k=mod["K"], m=mod["m"], n=mod["n"])
+    ia_ep, via_ia = absorcio_inicial(conca, temps[i0], mod)
+    hum = humitat.parametres(conca)
+    if hum and "model" in hum:        # model calibrat junt amb el dipòsit d'humitat: Ia variable + pèrdua contínua phi
+        mh = hum["model"]
+        p = dict(ia=ia_ep, c=mh["C"], k=mh["K"], m=mh["m"], n=mh["n"], phi=mh["phi_mm_h"])
+    else:
+        p = dict(ia=ia_ep, c=mod["C"], k=mod["K"], m=mod["m"], n=mod["n"])
     acum = float(pluja[i0:].sum())
     t_run = temps[i_ara]
     t_ep = [temps[i0] + timedelta(minutes=DT * k) for k in range(i_fi - i0 + 1 + n_fut)]
@@ -129,10 +159,11 @@ def main():
     darrer = llegeix("avisos", {"select": "nivell", "conca": f"eq.{conca}", "order": "temps.desc", "limit": 1})
     if not darrer or darrer[0]["nivell"] != nivell:
         ins("avisos", [{"conca": conca, "temps": t_run.isoformat(), "nivell": nivell,
-                             "motiu": f"{motiu}. Pluja de l'episodi: {acum:.0f} mm (llindar de resposta {mod['Ia_mm']:.0f} mm)."}])
+                             "motiu": f"{motiu}. Pluja de l'episodi: {acum:.0f} mm (el terreny n'absorbeix {ia_ep:.0f} mm, segons la pluja dels 60 dies anteriors"
+                                      + (f", i després {p['phi']:.0f} mm/h" if p.get("phi") else "") + ")."}])
     print(f"Run {t_run:%Y-%m-%d %H:%M} UTC · episodi des de {temps[i0]:%Y-%m-%d %H:%M} · pluja {acum:.1f} mm · "
           f"Q ara {q_obs[i_ara]:.1f} · màx 3 h {resum['aforador'][fut].max():.1f} (si continua {resum['aforador_continua'][fut].max():.1f}) m³/s · "
-          f"Fenals {q_fen[fut].max():.1f} · nivell {nivell}")
+          f"Fenals {q_fen[fut].max():.1f} · Ia {ia_ep:.0f} mm ({via_ia}) · nivell {nivell}")
     return 0
 
 
