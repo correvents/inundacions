@@ -55,7 +55,7 @@ S'han avaluat 110 hores, les que tenien ≥ 5 mm previstos o mesurats en 6 h. La
 - **4 són bones:** el 4/10 a les 02:00 i les 03:00, i el 5/10 a les 09:00 i les 11:00. En aquestes, la previsió feta amb la pluja real dona el mateix nivell.
 - **8 són falses:** el 6/10 a les 16, 18, 20, 21 i 22 h, i el 8/10 a les 11, 17 i 18 h.
   - El 6/10, AROME preveia ~46 mm en 3 h i en van caure 5.
-  - El nivell arriba a T10-T50 perquè el model encara compta l'episode del 4/10. La regla "inici d'episodi després de 48 h seques" no es reinicia, i l'absorció de 159 mm continua gastada.
+  - El nivell arriba a T10-T50 perquè el model encara compta l'episodi del 4/10. La regla "inici d'episodi després de 48 h seques" no es reinicia, i l'absorció de 159 mm continua gastada.
   - Amb l'absorció calculada a partir dels 60 dies anteriors (l'altra feina en curs), aquests nivells baixarien. Aquest efecte no és de la pluja prevista, sinó del model de cabal: el 5/10, la previsió amb la pluja real ja dona T10 i l'aforador va marcar 1 m³/s.
 
 ## Limitacions
