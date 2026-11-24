@@ -140,6 +140,8 @@ def main():
             for k in ("obs", "arome", "nowcast", "tot"):
                 if k in f:
                     f[k] = {(int(x) if x != "2" or k != "nowcast" else x): v for x, v in f[k].items()}
+        for ep in res["B"]:
+            ep["aforador"] = {int(x): v for x, v in ep["aforador"].items()}
         informe(cfg, res, a.sortida)
         return 0
     qt = cfg["cabals_T"]["aforador"]
@@ -188,6 +190,8 @@ def main():
         return next((r["t"] for r in llista if r["nivell"] >= nivell), None)
     for ep in a.episodi:
         e0, e1 = (utc(x) for x in ep.split(","))
+        for d, x in zip((pl, rd, qobs), series(cfg, e0 - timedelta(days=1), e1 + timedelta(hours=7))):
+            d.update(x)                                  # l'episodi pot quedar fora del període de la part A
         q_ep = sorted((tq, v) for tq, v in qobs.items() if e0 <= tq <= e1 + timedelta(hours=6))
         obs_n = {n: next((tq.strftime("%Y-%m-%dT%H:%M") for tq, v in q_ep if v >= qq), None) for n, qq in ((1, qt["QMCO"]), (2, qt["Q10"]))}
         sortida = {"episodi": ep, "aforador": obs_n, "fonts": {}}
