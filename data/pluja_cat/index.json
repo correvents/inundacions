@@ -183,6 +183,50 @@
      }
     }
    }
+  },
+  "2026-02": {
+   "primera": "2026-02-01T01:00",
+   "hores": 672,
+   "falten": [],
+   "generat": "2026-11-24T22:01",
+   "corregit": true,
+   "estacions": 187,
+   "validacio": {
+    "hores_estacio": 9024,
+    "radar_sol": {
+     "biaix_total": 0.64,
+     "rmse_mm_h": 0.95,
+     "correlacio": 0.56
+    },
+    "biaix_mitja": {
+     "biaix_total": 0.97,
+     "rmse_mm_h": 1.07,
+     "correlacio": 0.61
+    },
+    "corregit": {
+     "biaix_total": 0.97,
+     "rmse_mm_h": 0.79,
+     "correlacio": 0.75
+    },
+    "diari": {
+     "dies_estacio": 1326,
+     "radar_sol": {
+      "biaix_total": 0.64,
+      "rmse_mm_dia": 5.1,
+      "correlacio": 0.7
+     },
+     "biaix_mitja": {
+      "biaix_total": 0.96,
+      "rmse_mm_dia": 5.0,
+      "correlacio": 0.73
+     },
+     "corregit": {
+      "biaix_total": 0.99,
+      "rmse_mm_dia": 3.3,
+      "correlacio": 0.87
+     }
+    }
+   }
   }
  },
  "oest": 0.15,
