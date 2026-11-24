@@ -2,6 +2,9 @@ name: Aforadors ACA als episodis de 2026
 
 on:
   workflow_dispatch:
+  push:
+    branches: [claude/project-thread-p0fwtq]
+    paths: [".github/workflows/aforadors_episodis.yml", "scripts/aforadors_episodis.py"]
 
 permissions:
   contents: write
