@@ -61,7 +61,7 @@ CAD_TMP = Path("/tmp/cadastre_cat")
 CONQUES_WEB = Path("data/catalunya/conques/web/conques_100.json")
 CABAL_BASE = Path("data/catalunya/cabal_base/aforadors.json")
 AIGUA = (20, 36, 37, 38, 39, 40, 41)       # cobertes ICGC: zones humides, embassaments, llacs, cursos d'aigua, basses, canals, mar
-PARET = 100.0                               # m que s'afegeixen a les cel·les d'edifici (l'aigua no hi passa)
+PARET = 1.0                                 # m: la façana fa de paret fins a 1 m d'aigua; per sobre entra a les plantes baixes (desborda)
 SECCIONS = Path("/tmp/estrenyiments_seccions")
 PILOTS = {124: "ridaura", 125: "ridaura", 188: "granollers", 199: "cabrera"}
 TS = (2, 5, 10, 25, 50, 100, 200, 500)
@@ -699,7 +699,9 @@ def conca(cid, a):
              "estrenyiments": len(llista), "estrenyiments_urbans": sum(f["urba"] for f in llista),
              "edificis_cadastre": n_edif, "seccions_sota_edificis": n_coberta,
              "seccions_lamina_aigua": sum(1 for sc in seccions if sc["Ww"] > 0),
-             "seccions_corregides_lamina": sum(1 for sc in seccions if sc.get("d_sota_lamina"))}
+             "seccions_corregides_lamina": sum(1 for sc in seccions if sc.get("d_sota_lamina")),
+             "fondaria_sota_lamina_mediana_m": round(float(np.median([sc["d_sota_lamina"] for sc in seccions
+                                                                      if sc.get("d_sota_lamina")] or [0])), 3)}
     print(json.dumps(resum, ensure_ascii=False))
     for f in llista[:15]:
         print(f"  {'U' if f['urba'] else ' '} T{str(f['T_desborda']):>4} {f['tipus'][:22]:22s} cap {f['capacitat_m3s']:7.1f}  Q10 {f['Q10']:6.1f} Q100 {f['Q100']:6.1f}"
