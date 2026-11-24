@@ -209,6 +209,7 @@ def main():
                             pp.prevista = orig
                     else:
                         r = previsio.preveu(cfg, t, font, desar=False, cache=cache, verb=False)
+                    print(f"  {font} {t:%H:%M} nivell {r['nivell']} Qmax {r['q_max'].get('aforador_previst', 0):.0f} m3/s", json.dumps(r["prevista"], ensure_ascii=False), flush=True)
                     llista.append({"t": t.strftime("%Y-%m-%dT%H:%M"), "nivell": r["nivell"], "q_max": {k: round(v, 1) for k, v in r["q_max"].items()},
                                    "prevista": r["prevista"]})
                 except SystemExit as e:

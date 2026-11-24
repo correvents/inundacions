@@ -163,6 +163,23 @@ def _punts_mostra(cfg):
     return (lon, lat) if len(lon) else punts_conca(cfg, pas=0.005)
 
 
+def _om(url, params, intents=6):
+    """GET a Open-Meteo. Si diu que hi ha massa peticions (429) o falla el servidor, espera i ho torna a provar amb la
+    mateixa execució (si no, es passaria a una execució més antiga sense voler)."""
+    import time
+    for k in range(intents):
+        try:
+            r = requests.get(url, params=params, timeout=60)
+        except requests.RequestException:
+            r = None
+        if r is not None and r.status_code != 429 and r.status_code < 500:
+            return r
+        time.sleep(min(10 * 2 ** k, 120))
+    if r is None:
+        raise RuntimeError("Open-Meteo no respon")
+    return r
+
+
 def nwp(cfg, ara, minuts, directe=True):
     """mm per pas de DT minuts (mitjana de punts de la conca) d'AROME HD. directe=False: execució disponible a 'ara'."""
     lon, lat = _punts_mostra(cfg)
@@ -172,14 +189,14 @@ def nwp(cfg, ara, minuts, directe=True):
     if directe:
         p.update({"start_minutely_15": (ara - timedelta(minutes=15)).strftime("%Y-%m-%dT%H:%M"),
                   "end_minutely_15": (ara + timedelta(minutes=minuts + 15)).strftime("%Y-%m-%dT%H:%M")})
-        r = requests.get(OM_ACTUAL, params=p, timeout=60)
+        r = _om(OM_ACTUAL, p)
     else:
         base = ara - timedelta(hours=LATENCIA_H)
         r = None
         for k in range(0, 7):                   # l'última execució abans de 'base' que existeixi
             cand = base.replace(minute=0, second=0) - timedelta(hours=k)
             q = {**p, "run": cand.strftime("%Y-%m-%dT%H:%M"), "forecast_hours": int(LATENCIA_H + k + minuts / 60 + 2)}
-            r = requests.get(OM_RUNS, params=q, timeout=60)
+            r = _om(OM_RUNS, q)
             if r.ok and "minutely_15" in (r.json()[0] if isinstance(r.json(), list) else r.json()):
                 run = cand
                 break
