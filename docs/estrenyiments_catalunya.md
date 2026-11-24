@@ -2,30 +2,12 @@
 
 Generat per `scripts/estrenyiments.py informe` amb les dades de `data/catalunya/estrenyiments/`. El mètode és a la capçalera de l'script: seccions cada 20 m amb el MET 2 m de l'ICGC (LiDAR 2021-2023), nivell de desbordament quan l'aigua arriba a conreus, carrers o edificis (cobertes ICGC), Manning amb la n de les cobertes, cabals T2-T500 de la 5.2-IC amb la XEMA o els oficials de l'ACA on n'hi ha, i capacitat real dels ponts i passos coneguts. Res ajustat a mà.
 
-365 conques; 2944 estrenyiments dins o a tocar de nucli.
+365 conques; 2944 estrenyiments dins o a tocar de nucli, 52 d'ells en rius de més de 1000 km² (a part, al final).
 
 Els 200 primers (els que desborden abans; a igualtat, els de més conca):
 
 | Conca | T desborda | Què | Capacitat m³/s | Q10 | Q100 | Conca km² | Lloc |
 |---|---|---|---|---|---|---|---|
-| c230 | <10 | llera, 100 m | 116.3 | 1150.6 | 2903.7 | 4778.72 | [41.34127, 2.08894](https://www.openstreetmap.org/?mlat=41.34127&mlon=2.08894#map=18/41.34127/2.08894) |
-| c230 | <10 | llera, 60 m | 118.0 | 1177.0 | 2940.6 | 4757.5 | [41.37726, 2.0296](https://www.openstreetmap.org/?mlat=41.37726&mlon=2.0296#map=18/41.37726/2.0296) |
-| c230 | <10 | llera, 60 m | 108.9 | 1198.1 | 2950.1 | 4672.06 | [41.4085, 2.01196](https://www.openstreetmap.org/?mlat=41.4085&mlon=2.01196#map=18/41.4085/2.01196) |
-| c208 | <10 | llera, 100 m | 324.7 | 959.2 | 2284.1 | 3366.63 | [41.54255, 1.88103](https://www.openstreetmap.org/?mlat=41.54255&mlon=1.88103#map=18/41.54255/1.88103) |
-| c208 | <10 | llera, 100 m | 119.6 | 959.2 | 2284.1 | 3299.63 | [41.62331, 1.86545](https://www.openstreetmap.org/?mlat=41.62331&mlon=1.86545#map=18/41.62331/1.86545) |
-| c080 | <10 | llera, 360 m | 44.0 | 507.5 | 839.4 | 2837.72 | [42.05368, 3.04417](https://www.openstreetmap.org/?mlat=42.05368&mlon=3.04417#map=18/42.05368/3.04417) |
-| c078 | <10 | llera, 80 m | 29.2 | 802.4 | 1751.4 | 2524.89 | [42.02324, 2.85238](https://www.openstreetmap.org/?mlat=42.02324&mlon=2.85238#map=18/42.02324/2.85238) |
-| c161 | <10 | llera, 120 m | 38.6 | 375.4 | 1051.7 | 1335.75 | [41.69581, 1.84484](https://www.openstreetmap.org/?mlat=41.69581&mlon=1.84484#map=18/41.69581/1.84484) |
-| c150 | <10 | llera, 60 m | 86.3 | 282.0 | 922.9 | 1159.86 | [41.72048, 1.82496](https://www.openstreetmap.org/?mlat=41.72048&mlon=1.82496#map=18/41.72048/1.82496) |
-| c150 | <10 | llera, 60 m | 51.3 | 282.0 | 922.9 | 1156.55 | [41.72822, 1.81323](https://www.openstreetmap.org/?mlat=41.72822&mlon=1.81323#map=18/41.72822/1.81323) |
-| c150 | <10 | llera, 120 m | 95.3 | 282.0 | 922.9 | 1156.51 | [41.72946, 1.813](https://www.openstreetmap.org/?mlat=41.72946&mlon=1.813#map=18/41.72946/1.813) |
-| c150 | <10 | pont ACA: Pont de trànsit rodat C. del Riu Cardener sob | 186.1 | 282.0 | 922.9 | 1149.13 | [41.74238, 1.80766](https://www.openstreetmap.org/?mlat=41.74238&mlon=1.80766#map=18/41.74238/1.80766) |
-| c150 | <10 | pont ACA: Pont de trànsit rodat C. Pont Petit sobre El  | 80.5 | 282.0 | 922.9 | 1148.51 | [41.74467, 1.80892](https://www.openstreetmap.org/?mlat=41.74467&mlon=1.80892#map=18/41.74467/1.80892) |
-| c150 | <10 | llera, 180 m | 96.9 | 282.0 | 922.9 | 1148.01 | [41.74955, 1.80767](https://www.openstreetmap.org/?mlat=41.74955&mlon=1.80767#map=18/41.74955/1.80767) |
-| c089 | <10 | llera, 80 m | 215.6 | 532.0 | 1863.4 | 1052.58 | [42.01061, 2.25416](https://www.openstreetmap.org/?mlat=42.01061&mlon=2.25416#map=18/42.01061/2.25416) |
-| c223 | <10 | llera, 460 m | 394.4 | 1060.2 | 2403.9 | 1012.21 | [41.43635, 2.21021](https://www.openstreetmap.org/?mlat=41.43635&mlon=2.21021#map=18/41.43635/2.21021) |
-| c223 | <10 | llera, 240 m | 5.4 | 1047.7 | 2427.2 | 1004.99 | [41.45122, 2.19987](https://www.openstreetmap.org/?mlat=41.45122&mlon=2.19987#map=18/41.45122/2.19987) |
-| c128 | <10 | llera, 140 m | 57.0 | 433.1 | 874.6 | 1002.78 | [41.79944, 1.90239](https://www.openstreetmap.org/?mlat=41.79944&mlon=1.90239#map=18/41.79944/1.90239) |
 | c150 | <10 | llera, 100 m | 88.4 | 282.0 | 922.2 | 962.09 | [41.83828, 1.74846](https://www.openstreetmap.org/?mlat=41.83828&mlon=1.74846#map=18/41.83828/1.74846) |
 | c150 | <10 | llera, 80 m | 29.3 | 282.0 | 922.1 | 962.04 | [41.83932, 1.74709](https://www.openstreetmap.org/?mlat=41.83932&mlon=1.74709#map=18/41.83932/1.74709) |
 | c128 | <10 | llera, 280 m | 40.2 | 433.1 | 874.6 | 953.1 | [41.8306, 1.88496](https://www.openstreetmap.org/?mlat=41.8306&mlon=1.88496#map=18/41.8306/1.88496) |
@@ -208,3 +190,47 @@ Els 200 primers (els que desborden abans; a igualtat, els de més conca):
 | c143 | <10 | pont ACA: Passarel·la per a vianants Via sense nom sobr | 4.6 | 40.1 | 133.7 | 23.12 | [41.6937, 2.49184](https://www.openstreetmap.org/?mlat=41.6937&mlon=2.49184#map=18/41.6937/2.49184) |
 | c034 | <10 | llera, 80 m | 16.7 | 67.6 | 166.9 | 23.11 | [42.33765, 2.89974](https://www.openstreetmap.org/?mlat=42.33765&mlon=2.89974#map=18/42.33765/2.89974) |
 | c056 | <10 | llera, 140 m | 0.1 | 36.2 | 85.6 | 22.8 | [42.18831, 2.4459](https://www.openstreetmap.org/?mlat=42.18831&mlon=2.4459#map=18/42.18831/2.4459) |
+| c177 | <10 | pont ACA: Pont de trànsit rodat Via sense nom sobre Rie | 67.0 | 79.0 | 174.5 | 22.4 | [41.61853, 2.5895](https://www.openstreetmap.org/?mlat=41.61853&mlon=2.5895#map=18/41.61853/2.5895) |
+| c177 | <10 | llera, 60 m | 11.1 | 78.8 | 174.1 | 22.33 | [41.61961, 2.58705](https://www.openstreetmap.org/?mlat=41.61961&mlon=2.58705#map=18/41.61961/2.58705) |
+| c034 | <10 | pont ACA: Passarel·la per a vianants Via sense nom sobr | 37.6 | 126.9 | 302.9 | 21.72 | [42.41627, 2.8725](https://www.openstreetmap.org/?mlat=42.41627&mlon=2.8725#map=18/42.41627/2.8725) |
+| c034 | <10 | llera, 100 m | 53.7 | 127.1 | 303.5 | 21.67 | [42.41727, 2.87271](https://www.openstreetmap.org/?mlat=42.41727&mlon=2.87271#map=18/42.41727/2.87271) |
+| c034 | <10 | pont ACA: Passarel·la per a vianants Via sense nom sobr | 1.7 | 126.9 | 302.9 | 21.54 | [42.41849, 2.87251](https://www.openstreetmap.org/?mlat=42.41849&mlon=2.87251#map=18/42.41849/2.87251) |
+| c177 | <10 | llera, 120 m | 17.2 | 78.7 | 173.5 | 21.48 | [41.62028, 2.58628](https://www.openstreetmap.org/?mlat=41.62028&mlon=2.58628#map=18/41.62028/2.58628) |
+| c177 | <10 | llera, 120 m | 33.4 | 78.5 | 173.2 | 21.43 | [41.62181, 2.58431](https://www.openstreetmap.org/?mlat=41.62181&mlon=2.58431#map=18/41.62181/2.58431) |
+| c219 | <10 | pont ACA: Pont de trànsit rodat C. de Joan Camps sobre  | 55.7 | 81.0 | 124.2 | 21.36 | [41.60616, 2.01652](https://www.openstreetmap.org/?mlat=41.60616&mlon=2.01652#map=18/41.60616/2.01652) |
+| c189 | <10 | llera, 80 m | 8.0 | 53.6 | 144.8 | 20.5 | [41.68359, 2.35483](https://www.openstreetmap.org/?mlat=41.68359&mlon=2.35483#map=18/41.68359/2.35483) |
+| c158 | <10 | pont ACA: Passarel·la per a vianants Avinguda del Riera | 73.0 | 83.1 | 212.1 | 20.31 | [41.70832, 2.83595](https://www.openstreetmap.org/?mlat=41.70832&mlon=2.83595#map=18/41.70832/2.83595) |
+| c158 | <10 | pont ACA: Pont de trànsit rodat GI-680 sobre Riera de L | 33.5 | 79.8 | 169.0 | 20.15 | [41.70844, 2.83289](https://www.openstreetmap.org/?mlat=41.70844&mlon=2.83289#map=18/41.70844/2.83289) |
+| c189 | <10 | llera, 60 m | 16.5 | 50.5 | 136.7 | 20.15 | [41.68581, 2.3562](https://www.openstreetmap.org/?mlat=41.68581&mlon=2.3562#map=18/41.68581/2.3562) |
+| c188 | <10 | pont ACA: Pont de trànsit rodat C. del Gorg Negre sobre | 47.6 | 59.1 | 133.6 | 19.86 | [41.79403, 2.23452](https://www.openstreetmap.org/?mlat=41.79403&mlon=2.23452#map=18/41.79403/2.23452) |
+| c086 | <10 | llera, 100 m | 48.9 | 86.3 | 151.0 | 19.23 | [41.97831, 2.81421](https://www.openstreetmap.org/?mlat=41.97831&mlon=2.81421#map=18/41.97831/2.81421) |
+| c086 | <10 | llera, 60 m | 10.5 | 86.2 | 150.8 | 19.2 | [41.97618, 2.80997](https://www.openstreetmap.org/?mlat=41.97618&mlon=2.80997#map=18/41.97618/2.80997) |
+| c246 | <10 | llera, 80 m | 2.9 | 27.0 | 90.2 | 19.02 | [41.33536, 1.87317](https://www.openstreetmap.org/?mlat=41.33536&mlon=1.87317#map=18/41.33536/1.87317) |
+| c228 | <10 | pont ACA: Pont de trànsit rodat C. d'Anselm Clavé sobre | 28.7 | 41.0 | 122.2 | 19.01 | [41.41966, 2.01275](https://www.openstreetmap.org/?mlat=41.41966&mlon=2.01275#map=18/41.41966/2.01275) |
+| c233 | <10 | llera, 500 m | 10.1 | 75.3 | 77.9 | 18.48 | [41.28933, 2.00501](https://www.openstreetmap.org/?mlat=41.28933&mlon=2.00501#map=18/41.28933/2.00501) |
+
+## Rius de més de 1000 km² (estudi ACA)
+
+Aquí el mètode agafa el canal de baix cabal i no la llera sencera entre motes, i la capacitat surt massa baixa. Aquests rius tenen estudi propi de l'ACA (zones inundables T10-T500): cal mirar-ho amb aquell estudi. Trams urbans per conca:
+
+| Conca | Trams | Conca km² màx. |
+|---|---|---|
+| c194 | 1 | 12140 |
+| c136 | 4 | 7462 |
+| c230 | 3 | 4779 |
+| c218 | 3 | 4503 |
+| c107 | 2 | 3783 |
+| c208 | 7 | 3492 |
+| c080 | 1 | 2838 |
+| c078 | 1 | 2525 |
+| c085 | 2 | 2232 |
+| c081 | 1 | 2072 |
+| c047 | 1 | 1807 |
+| c160 | 1 | 1759 |
+| c161 | 3 | 1406 |
+| c046 | 3 | 1219 |
+| c150 | 12 | 1166 |
+| c089 | 1 | 1053 |
+| c154 | 3 | 1026 |
+| c223 | 2 | 1012 |
+| c128 | 1 | 1003 |

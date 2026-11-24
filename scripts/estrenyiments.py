@@ -58,6 +58,7 @@ SORT = Path("data/catalunya/estrenyiments")
 CAD_IDX = Path("data/catalunya/cadastre/municipis.json")
 CAD_URL = "https://github.com/correvents/inundacions/releases/download/cadastre-cat/edificis_{}.json.gz"
 CAD_TMP = Path("/tmp/cadastre_cat")
+RIU_GRAN = 1000.0                           # km²: a l'informe de Catalunya, a part (estudi ACA)
 CONQUES_WEB = Path("data/catalunya/conques/web/conques_100.json")
 CABAL_BASE = Path("data/catalunya/cabal_base/aforadors.json")
 AIGUA = (20, 36, 37, 38, 39, 40, 41)       # cobertes ICGC: zones humides, embassaments, llacs, cursos d'aigua, basses, canals, mar
@@ -854,10 +855,15 @@ def informe(ids, sortida):
         clau = lambda ce: ((-1 if ce[1]["qT_font"].startswith("ACA") and ce[1]["capacitat_m3s"] < ce[1]["Q10"] else
                             ce[1]["T_desborda"] if ce[1]["T_desborda"] != ">500" else 999), -ce[1]["conca_km2"])
         tots.sort(key=clau)
+        # rius grans: el mètode hi agafa el canal de baix cabal i no la llera entre motes (capacitat massa baixa); tenen
+        # estudi propi de l'ACA. Van a part, no a la llista principal (RIU_GRAN = 0 els hi torna).
+        grans = [ce for ce in tots if RIU_GRAN and ce[1]["conca_km2"] > RIU_GRAN]
+        tots = [ce for ce in tots if not (RIU_GRAN and ce[1]["conca_km2"] > RIU_GRAN)]
         val = [json.loads((SORT / f"c{c:03d}.json").read_text()).get("validacio_zones_aca") for c in ids if (SORT / f"c{c:03d}.json").exists()]
         val = [v for v in val if v and v.get("seccions")]
         ns = sum(v["seccions"] for v in val)
-        o += [f"{len(ids)} conques; {len(tots)} estrenyiments dins o a tocar de nucli.", ""]
+        o += [f"{len(ids)} conques; {len(tots) + len(grans)} estrenyiments dins o a tocar de nucli, {len(grans)} d'ells en "
+              f"rius de més de {RIU_GRAN:.0f} km² (a part, al final).", ""]
         if ns:
             o += [f"Comparació amb les zones inundables de l'ACA a {len(val)} conques ({ns} seccions dins dels trams estudiats): "
                   f"{round(100 * sum(v['mateixa_classe'] for v in val) / ns)} % a la mateixa classe de període i "
@@ -871,6 +877,16 @@ def informe(ids, sortida):
             la, lo = e["lonlat"][1], e["lonlat"][0]
             o.append(f"| c{cid:03d} | {T} | {que} | {e['capacitat_m3s']} | {e['Q10']} | {e['Q100']} | {e['conca_km2']} | "
                      f"[{la}, {lo}](https://www.openstreetmap.org/?mlat={la}&mlon={lo}#map=18/{la}/{lo}) |")
+        if grans:
+            o += ["", f"## Rius de més de {RIU_GRAN:.0f} km² (estudi ACA)", "",
+                  "Aquí el mètode agafa el canal de baix cabal i no la llera sencera entre motes, i la capacitat surt massa "
+                  "baixa. Aquests rius tenen estudi propi de l'ACA (zones inundables T10-T500): cal mirar-ho amb aquell "
+                  "estudi. Trams urbans per conca:", "", "| Conca | Trams | Conca km² màx. |", "|---|---|---|"]
+            per = {}
+            for cid, e in grans:
+                n, k = per.get(cid, (0, 0)); per[cid] = (n + 1, max(k, e["conca_km2"]))
+            for cid, (n, k) in sorted(per.items(), key=lambda t: -t[1][1]):
+                o.append(f"| c{cid:03d} | {n} | {k:.0f} |")
     Path(sortida).write_text("\n".join(o) + "\n")
     print(f"{sortida}: {len(o)} línies")
 
