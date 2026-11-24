@@ -508,7 +508,8 @@ def main():
             q = q_caixa if cfg.get("aforador_mode") == "caixa" else q_trans
             hidro_caixa.append(round(q_caixa, 1)); hidro_trans.append(round(q_trans, 1))
             fotos.append({"temps": proxim.strftime("%Y-%m-%dT%H:%M"), "png": nom}); hidro.append(round(q, 1))
-            print(f"{proxim:%d %H:%M} dt {dt:.2f} s, calat màx {hm:.2f} m, cabal aforador {q:.1f} m³/s, inundat >15 cm {(h > 0.15).sum() * dx * dx / 1e6:.2f} km² ({time.time() - rellotge:.0f} s)")
+            if proxim.minute == 0:                                 # una línia per hora al log (el detall és a index.json)
+                print(f"{proxim:%d %H:%M} dt {dt:.2f} s, calat màx {hm:.2f} m, cabal aforador {q:.1f} m³/s, inundat >15 cm {(h > 0.15).sum() * dx * dx / 1e6:.2f} km² ({time.time() - rellotge:.0f} s)")
             proxim += timedelta(minutes=a.cada)
     png(hmax, "maxim.png")
     # temps d'assecat: des que supera 15 cm fins l'últim minut amb més de 5 cm; les cel·les encara mullades al final queden marcades
@@ -611,6 +612,11 @@ def main():
                                                "soterranis_risc": sum(1 for v in sot.values() if v[0] >= 15)},
         "plantes_baixes": pb_resum}, ensure_ascii=False))
     print(f"Fet en {time.time() - rellotge:.0f} s: {len(fotos)} fotogrames")
+    try:                                                           # resum curt (resum.md) per no haver de llegir el log sencer
+        sys.path.insert(0, str(Path(__file__).parent)); from resum import resum_sim2d
+        print(resum_sim2d(dest))
+    except Exception as e:
+        print(f"Resum: no s'ha pogut fer ({type(e).__name__} {e})")
     return 0
 
 
