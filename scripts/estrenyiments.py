@@ -72,6 +72,9 @@ DH = 0.05             # m, pas d'ompliment
 SALT = 0.5            # salt relatiu d'amplada que vol dir sortir de la llera
 D_OBRA = 30.0         # m: secció dominada per una obra
 ESTESA = 10.0         # m que l'aigua avança cap a un costat en 50 cm de pujada (pendent < 5 %) per sortir de la llera
+MOTES = True          # desbordament per sobre de la mota (vegeu mota())
+MOTA_L = 30.0         # m seguits de plana per sota de la carena, darrere la mota
+MOTA_DZ = 0.5         # m que la plana protegida queda per sota de la carena
 HMIN = 0.5            # m: per sota, els salts d'amplada són el canal de baix cabal dins del llit
 
 
@@ -296,7 +299,7 @@ class Relleu:
 LLIT = tuple(range(7, 21)) + tuple(range(36, 42))
 
 
-def omple(s, zs, i0, llit=None, hmax=20.0):
+def omple(s, zs, i0, llit=None, hmax=20.0, km2=0.0):
     """Ompliment de la secció des del fons i0. Torna el nivell de desbordament, l'àrea i el perímetre mullats, el
     costat per on surt i si la vall el conté."""
     zt = zs[i0]; ds = s[1] - s[0]; n = len(zs)
@@ -331,8 +334,25 @@ def omple(s, zs, i0, llit=None, hmax=20.0):
             l2, r2, W2 = (0 if hist[-1][1] == 0 else l), (len(s) - 1 if hist[-1][2] == len(s) - 1 else r), len(s) * ds
         fora = (lambda a_, b_: (b_ - a_) if llit is None else int((~llit[a_:b_]).sum()))   # metres nous fora del llit
         if h >= HMIN - 1e-9 and W2 >= (1 + SALT) * W and max(fora(l2, l), fora(r + 1, r2 + 1)) * ds >= ESTESA:
+            if MOTES and terrassa(zs, i0, l2, r2, zt + h, ds, km2):
+                continue                    # s'estén per una terrassa tancada dins la llera gran: encara no desborda
             millor = (W2 - W, k)
             break
+    if millor and MOTES:
+        # motes: si l'aigua surt entre motes (conreus, prats o camins dins de la llera gran), no desborda fins que
+        # passa la mota més baixa. A l'altre costat, la mota o la vessant (cota màxima de la secció) si és més alta.
+        mL = mota(zs[i0::-1], ds, HMIN); mR = mota(zs[i0:], ds, HMIN)
+        if mL is not None or mR is not None:
+            cL = mL if mL is not None else (ML[-1] if ML[-1] > (mR or 0) else None)
+            cR = mR if mR is not None else (MR[-1] if MR[-1] > (mL or 0) else None)
+            if cL is not None and cR is not None:
+                hm = min(cL, cR) - zt
+                km = max((i for i, t in enumerate(hist) if t[0] <= hm + 1e-9), default=None)
+                if km is not None and km > millor[1]:
+                    h, l, r, W, A, P, _ = hist[km]
+                    nx = hist[min(km + 1, len(hist) - 1)]
+                    costat = "esquerre" if cL <= cR else "dret"
+                    return {"h": h, "A": A, "P": P, "W": W, "costat": costat, "conte": False, "l": l, "r": r, "mota": True}
     if millor:
         k = millor[1]
         h, l, r, W, A, P, _ = hist[k]
@@ -351,6 +371,33 @@ def omple(s, zs, i0, llit=None, hmax=20.0):
     h, l, r, W, A, P, _ = hist[k]
     conte = k >= len(hist) - 2
     return {"h": h, "A": A, "P": P, "W": W, "costat": None, "conte": conte, "l": l, "r": r}
+
+
+def terrassa(zs, i0, l2, r2, nivell, ds, km2):
+    """Rius grans: l'aigua que s'estén fins a l2..r2 és dins d'una terrassa de la llera (parc fluvial, prats, camins entre
+    murs o motes) si, a cada costat, a menys de 3·√A m del fons (A en km²) hi ha un marge ≥ 1 m per sobre del nivell."""
+    D = 3 * math.sqrt(max(km2, 0)) / ds
+    if D * ds < 2 * ESTESA:
+        return False
+    a, b = max(int(i0 - D), 0), min(int(i0 + D), len(zs) - 1)
+    return l2 > a and r2 < b and zs[a:l2 + 1].max() >= nivell + 1 and zs[r2:b + 1].max() >= nivell + 1
+
+
+def mota(z, ds, hmin):
+    """Cota de la primera mota cap a fora des del fons (z[0] = fons): carena ≥ hmin sobre el fons amb, darrere, ≥ MOTA_L m
+    seguits més de 0,3 m per sota i un punt ≥ MOTA_DZ m per sota (plana protegida), dins de 150 m. Si no n'hi ha, None."""
+    M = np.maximum.accumulate(z); nL = max(int(MOTA_L / ds), 1); n150 = int(150 / ds)
+    for j in range(1, len(z) - nL):
+        if z[j] < M[j] or z[j] - z[0] < hmin:
+            continue
+        rere = z[j + 1:j + 1 + n150]
+        sota = rere < z[j] - 0.3
+        if not sota.any() or rere.min() > z[j] - MOTA_DZ:
+            continue
+        run = np.diff(np.flatnonzero(np.diff(np.r_[0, sota.astype(int), 0])))[::2]   # trams seguits per sota
+        if run.size and run.max() >= nL:
+            return float(z[j])
+    return None
 
 
 def t_desborda(q, qs):
@@ -377,6 +424,8 @@ def densifica(xy, pas):
 
 # ---------- una conca ----------
 def conca(cid, a):
+    global MOTES
+    MOTES = getattr(a, "motes", True)
     Cq = {f["properties"]["id"]: f for f in json.loads(CONQUES.read_text())["features"]}
     geom = shape(Cq[cid]["geometry"])
     t_mdt = Transformer.from_crs(4326, rasterio.open(a.mdt).crs, always_xy=True).transform
@@ -522,7 +571,7 @@ def conca(cid, a):
                 rr_ += 1
             Ww = (rr_ - ll_ + 1) * 1.0
             aigua = Ww >= 4 and cobs is not None and bool(np.isin(cl[ll_:rr_ + 1], AIGUA).any())
-            res = omple(s, np.where(eb, zs + PARET, zs), i0, llit)
+            res = omple(s, np.where(eb, zs + PARET, zs), i0, llit, km2=A)
             if not res:
                 continue
             res["Ww"] = Ww if aigua else 0.0
@@ -700,6 +749,7 @@ def conca(cid, a):
              "estrenyiments": len(llista), "estrenyiments_urbans": sum(f["urba"] for f in llista),
              "edificis_cadastre": n_edif, "seccions_sota_edificis": n_coberta,
              "seccions_lamina_aigua": sum(1 for sc in seccions if sc["Ww"] > 0),
+             "seccions_mota": sum(1 for sc in seccions if sc.get("mota")),
              "seccions_corregides_lamina": sum(1 for sc in seccions if sc.get("d_sota_lamina")),
              "fondaria_sota_lamina_mediana_m": round(float(np.median([sc["d_sota_lamina"] for sc in seccions
                                                                       if sc.get("d_sota_lamina")] or [0])), 3)}
@@ -910,6 +960,7 @@ def main():
     c.add_argument("--cobertes")
     c.add_argument("--area-min", type=float, default=0.5)
     c.add_argument("--sense-edificis", dest="edificis", action="store_false", help="sense els edificis del Cadastre")
+    c.add_argument("--sense-motes", dest="motes", action="store_false", help="sense la regla de les motes")
     z = sub.add_parser("zones")
     z.add_argument("--id", type=int, required=True)
     z.add_argument("--sortida", required=True)

@@ -4,7 +4,7 @@ Generat per `scripts/estrenyiments.py informe` amb les dades de `data/catalunya/
 
 ## Ridaura (Santa Cristina d'Aro, Castell d'Aro) (c125)
 
-4407 seccions; 438 amb la llera desbordant abans de T10. Pluja: XEMA de la conca pilot ridaura (51 anys-estació), P0 = 50 mm (episodi més moll del model). 45 estrenyiments, 11 dins o a tocar de nucli.
+4407 seccions; 437 amb la llera desbordant abans de T10. Pluja: XEMA de la conca pilot ridaura (51 anys-estació), P0 = 50 mm (episodi més moll del model). 44 estrenyiments, 11 dins o a tocar de nucli.
 
 | T desborda | Què | Riu (ACA) | Capacitat m³/s | Q10 | Q100 | Conca km² | Lloc |
 |---|---|---|---|---|---|---|---|
@@ -34,25 +34,25 @@ Ponts de l'inventari ACA que no passen el T500 (7; capacitat de la fitxa oficial
 
 ## Congost (Granollers) (c188)
 
-14262 seccions; 734 amb la llera desbordant abans de T10. Pluja: XEMA a 20 km (107 anys-estació), P0 = 65 mm (episodi més moll del model). 142 estrenyiments, 61 dins o a tocar de nucli.
+14262 seccions; 382 amb la llera desbordant abans de T10. Pluja: XEMA de la conca pilot granollers (27 anys-estació), P0 = 65 mm (episodi més moll del model). 115 estrenyiments, 56 dins o a tocar de nucli.
 
 | T desborda | Què | Riu (ACA) | Capacitat m³/s | Q10 | Q100 | Conca km² | Lloc |
 |---|---|---|---|---|---|---|---|
-| <10 | llera, 60 m, surt pel esquerre | El Congost | 25.9 | 59.1 | 133.6 | 18.34 | [41.79571, 2.23308](https://www.openstreetmap.org/?mlat=41.79571&mlon=2.23308#map=18/41.79571/2.23308) |
-| <10 | llera, 60 m, surt pel esquerre | Riera d'Avencó | 27.6 | 70.6 | 191.7 | 35.5 | [41.76511, 2.26087](https://www.openstreetmap.org/?mlat=41.76511&mlon=2.26087#map=18/41.76511/2.26087) |
 | <10 | pont ACA: Pont de trànsit rodat Pont del Poncic sobre El Con | El Congost | 53.4 | 134.5 | 338.0 | 63.08 | [41.76797, 2.24899](https://www.openstreetmap.org/?mlat=41.76797&mlon=2.24899#map=18/41.76797/2.24899) |
-| <10 | llera, 120 m, surt pel esquerre | El Congost | 54.2 | 134.2 | 337.3 | 63.53 | [41.76635, 2.251](https://www.openstreetmap.org/?mlat=41.76635&mlon=2.251#map=18/41.76635/2.251) |
-| <10 | llera, 60 m, surt pel dret | El Congost | 66.6 | 351.6 | 926.7 | 214.72 | [41.57626, 2.27465](https://www.openstreetmap.org/?mlat=41.57626&mlon=2.27465#map=18/41.57626/2.27465) |
+| <10 | llera, 80 m, surt pel esquerre | El Congost | 54.2 | 134.2 | 337.3 | 63.53 | [41.76635, 2.251](https://www.openstreetmap.org/?mlat=41.76635&mlon=2.251#map=18/41.76635/2.251) |
 | <10 | llera, 60 m, surt pel — | El Congost | 76.8 | 214.5 | 571.1 | 118.66 | [41.73085, 2.2679](https://www.openstreetmap.org/?mlat=41.73085&mlon=2.2679#map=18/41.73085/2.2679) |
-| <10 | llera, 180 m, surt pel esquerre | El Congost | 77.2 | 249.0 | 676.4 | 150.31 | [41.68426, 2.28235](https://www.openstreetmap.org/?mlat=41.68426&mlon=2.28235#map=18/41.68426/2.28235) |
-| <10 | llera, 80 m, surt pel esquerre | El Congost | 107.4 | 213.8 | 569.4 | 116.8 | [41.73746, 2.26648](https://www.openstreetmap.org/?mlat=41.73746&mlon=2.26648#map=18/41.73746/2.26648) |
-| <10 | llera, 120 m, surt pel esquerre | Torrent de Can Bosquets | 139.1 | 257.5 | 695.6 | 155.16 | [41.66904, 2.2803](https://www.openstreetmap.org/?mlat=41.66904&mlon=2.2803#map=18/41.66904/2.2803) |
+| <10 | llera, 60 m, surt pel esquerre | El Congost | 107.4 | 213.8 | 569.4 | 116.8 | [41.73746, 2.26648](https://www.openstreetmap.org/?mlat=41.73746&mlon=2.26648#map=18/41.73746/2.26648) |
+| <10 | llera, 60 m, surt pel — | El Congost | 130.4 | 243.8 | 658.4 | 133.48 | [41.71447, 2.27025](https://www.openstreetmap.org/?mlat=41.71447&mlon=2.27025#map=18/41.71447/2.27025) |
 | <10 | pont ACA: Pont de trànsit rodat C-17 sobre El Congost | El Congost | 156.7 | 243.8 | 658.4 | 132.51 | [41.71884, 2.27267](https://www.openstreetmap.org/?mlat=41.71884&mlon=2.27267#map=18/41.71884/2.27267) |
-| <10 | llera, 80 m, surt pel esquerre | El Congost | 162.9 | 243.4 | 657.4 | 140.53 | [41.70645, 2.28474](https://www.openstreetmap.org/?mlat=41.70645&mlon=2.28474#map=18/41.70645/2.28474) |
-| <10 | llera, 140 m, surt pel esquerre | El Congost | 170.9 | 249.1 | 676.7 | 149.0 | [41.68996, 2.28488](https://www.openstreetmap.org/?mlat=41.68996&mlon=2.28488#map=18/41.68996/2.28488) |
-| 5 | llera, 140 m, surt pel dret |  | 2.6 | 8.3 | 25.1 | 11.38 | [41.80291, 2.22907](https://www.openstreetmap.org/?mlat=41.80291&mlon=2.22907#map=18/41.80291/2.22907) |
-| 5 | llera, 80 m, surt pel esquerre |  | 3.6 | 8.3 | 25.3 | 11.37 | [41.80424, 2.22803](https://www.openstreetmap.org/?mlat=41.80424&mlon=2.22803#map=18/41.80424/2.22803) |
-| 5 | llera, 80 m, surt pel dret |  | 7.0 | 56.0 | 191.9 | 220.06 | [41.55938, 2.25982](https://www.openstreetmap.org/?mlat=41.55938&mlon=2.25982#map=18/41.55938/2.25982) |
+| 5 | llera, 80 m, surt pel — |  | 0.3 | 0.8 | 2.6 | 0.88 | [41.63757, 2.27556](https://www.openstreetmap.org/?mlat=41.63757&mlon=2.27556#map=18/41.63757/2.27556) |
+| <10 | pont ACA: Pont de trànsit rodat C. del Gorg Negre sobre El C | El Congost | 47.6 | 59.1 | 133.6 | 19.86 | [41.79403, 2.23452](https://www.openstreetmap.org/?mlat=41.79403&mlon=2.23452#map=18/41.79403/2.23452) |
+| <10 | llera, 100 m, surt pel dret | El Congost | 107.4 | 134.3 | 337.4 | 62.94 | [41.76809, 2.24881](https://www.openstreetmap.org/?mlat=41.76809&mlon=2.24881#map=18/41.76809/2.24881) |
+| <10 | llera, 80 m, surt pel esquerre | El Congost | 201.2 | 249.2 | 677.1 | 149.12 | [41.6896, 2.28496](https://www.openstreetmap.org/?mlat=41.6896&mlon=2.28496#map=18/41.6896/2.28496) |
+| <10 | pont ACA: Pont de trànsit rodat C. de Can Noguera sobre El C | El Congost | 209.4 | 249.0 | 676.4 | 149.57 | [41.68863, 2.28459](https://www.openstreetmap.org/?mlat=41.68863&mlon=2.28459#map=18/41.68863/2.28459) |
+| <10 | pont ACA: Pont de trànsit rodat C. Moranta sobre El Congost | El Congost | 209.4 | 249.0 | 676.4 | 148.93 | [41.69125, 2.28474](https://www.openstreetmap.org/?mlat=41.69125&mlon=2.28474#map=18/41.69125/2.28474) |
+| <10 | pont ACA: Pont de trànsit rodat C. de Josep Maria Ruera sobr | El Congost | 216.1 | 249.0 | 676.4 | 150.31 | [41.68408, 2.2823](https://www.openstreetmap.org/?mlat=41.68408&mlon=2.2823#map=18/41.68408/2.2823) |
+| <10 | pont ACA: Pont de trànsit rodat Camí de Can Bassa sobre El C | El Congost | 336.0 | 351.6 | 926.7 | 210.51 | [41.59176, 2.27619](https://www.openstreetmap.org/?mlat=41.59176&mlon=2.27619#map=18/41.59176/2.27619) |
+| 10 | pont ACA: Pont de trànsit rodat C-17 sobre El Congost | El Congost | 214.4 | 214.0 | 569.8 | 122.9 | [41.7262, 2.2731](https://www.openstreetmap.org/?mlat=41.7262&mlon=2.2731#map=18/41.7262/2.2731) |
 
 Ponts de l'inventari ACA que no passen el T500 (46; capacitat de la fitxa oficial):
 
@@ -89,9 +89,6 @@ Ponts de l'inventari ACA que no passen el T500 (46; capacitat de la fitxa oficia
 
 ## Platja d'Aro (nucli) (c124)
 
-136 seccions; 31 amb la llera desbordant abans de T10. Pluja: XEMA de la conca pilot ridaura (51 anys-estació), P0 = 50 mm (episodi més moll del model). 1 estrenyiments, 1 dins o a tocar de nucli.
+136 seccions; 32 amb la llera desbordant abans de T10. Pluja: XEMA de la conca pilot ridaura (51 anys-estació), P0 = 50 mm (episodi més moll del model). 2 estrenyiments, 0 dins o a tocar de nucli.
 
-| T desborda | Què | Riu (ACA) | Capacitat m³/s | Q10 | Q100 | Conca km² | Lloc |
-|---|---|---|---|---|---|---|---|
-| <10 | llera, 80 m, surt pel dret | el Ridaura | 39.7 | 87.7 | 275.5 | 0.86 | [41.81046, 3.05392](https://www.openstreetmap.org/?mlat=41.81046&mlon=3.05392#map=18/41.81046/3.05392) |
 
