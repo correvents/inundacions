@@ -5,9 +5,6 @@ name: Valida la pluja prevista
 # pas els ajunta en un sol informe (al registre i com a artefacte).
 
 on:
-  push:                     # TEMPORAL: comprovació amb l'absorció nova; es treu abans de fusionar
-    branches: [claude/project-thread-iham80]
-    paths: [".github/workflows/valida_pluja_prevista.yml"]
   workflow_dispatch:
     inputs:
       trossos:
@@ -47,7 +44,7 @@ jobs:
           python-version: "3.12"
       - run: pip install requests numpy scipy pandas h5py pyproj shapely
       - name: Validació
-        if: github.event_name == 'push' && contains(',b-2026-10-04,2026-10a,', format(',{0},', matrix.tros.nom)) || github.event_name != 'push' && (inputs.trossos == '' || contains(format(',{0},', inputs.trossos), format(',{0},', matrix.tros.nom)))
+        if: inputs.trossos == '' || contains(format(',{0},', inputs.trossos), format(',{0},', matrix.tros.nom))
         run: |
           a="${{ matrix.tros.args }}"
           [[ "$a" == *--des* ]] || a="$a --des 2026-10-04T00:00 --fins 2026-10-04T00:00"

@@ -1,4 +1,19 @@
-# Pluja prevista a la previsió de la Ridaura: validació (24/11/2026)
+# Pluja prevista a la previsió de la Ridaura: validació (24-25/11/2026)
+
+## Actualització 25/11: amb l'absorció segons la pluja dels 60 dies (PR #38)
+
+S'han repetit el 4/10 i l'1-10/10 amb l'absorció nova:
+- **Antelació (4/10):**
+  - El primer avís de T10 continua sortint a les 04:20 UTC (255 min abans), però en aquell moment és un sol pas (a les 04:30 baixa a crescuda ordinària).
+  - De manera continuada, T10 a partir de les 06:30 (125 min abans, enfront dels 85 d'ara).
+  - L'avís de crescuda ordinària surt a les 02:00 (390 min abans).
+- **Falses alarmes de l'1 al 10/10:**
+  - Han passat de 2 dies a 1: les del 8/10 i les del 5/10, que eren del model, ja no hi són.
+  - En queden 7 hores, totes el 6/10 entre les 14 i les 22 h (T10-T33 previst). AROME preveia ~46 mm en 3 h i en van caure 5, amb el sòl encara moll pel 4/10.
+  - Aquesta és una falsa alarma de la pluja prevista, no del model.
+- La resta del període no s'ha tornat a fer, perquè Open-Meteo limita les peticions i cada tros triga hores.
+
+
 
 Opció `previsio.py --pluja-prevista tot` (PR #37). Fonts:
 - **Nowcast del radar OPERA (0-2 h):** extrapolació de l'últim compost amb el moviment estimat entre dos compostos separats 15 min.
