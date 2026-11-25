@@ -19,6 +19,9 @@
 Opció --pluja-prevista (per defecte 'no', i aleshores tot és igual que abans): afegeix l'escenari aforador_previst,
 amb la pluja prevista de les 6 h següents (pluja_prevista.py: nowcast del radar OPERA i AROME HD via Open-Meteo), i
 allarga totes les previsions a 6 h. L'avís té en compte també aquest escenari i ho diu al motiu.
+Amb --avis-previst possible, en canvi, l'avís principal només compta la pluja ja mesurada, i el que afegeix la pluja
+prevista es desa a part com a "avís possible" (avisos, conca "<conca>:possible"): és menys segur (el 6/10/2026 AROME va
+preveure 46 mm en 3 h i en van caure 5).
 
 Ús:  python3 scripts/previsio.py --config config/ridaura.json [--pluja-prevista tot]"""
 import argparse, json, sys
@@ -76,7 +79,7 @@ def absorcio_inicial(conca, t0, mod):
     return ia, "60 dies"
 
 
-def preveu(cfg, ara=None, prevista="no", desar=True, cache=None, verb=True):
+def preveu(cfg, ara=None, prevista="no", desar=True, cache=None, verb=True, avis_previst="junt"):
     """Una previsió. ara=None: ara mateix (directe). Torna un resum (nivell, cabals màxims i períodes de retorn per escenari)."""
     mod = json.loads(Path(f"config/{cfg['conca']}_model_pluviometre.json").read_text())
     conca = cfg["conca"]
@@ -173,21 +176,34 @@ def preveu(cfg, ara=None, prevista="no", desar=True, cache=None, verb=True):
     pitjor = max(max(T_esc.values()), T_fen, T_fen_prev)
     nivell, motiu = next(((n, f"Previsió fins a {m} en les {endavant_h} h vinents") for T, n, m in NIVELLS if pitjor >= T), (0, "Sense crescuda prevista"))
     nivell_obs = next((n for T, n, m in NIVELLS if pitjor_obs >= T), 0)
-    if nivell > nivell_obs:
+    nivell_possible, motiu_possible = 0, "Sense avís possible per la pluja prevista"
+    if nivell > nivell_obs and avis_previst == "possible":
+        # l'avís principal es queda amb la pluja mesurada; el que afegeix la pluja prevista va a part
+        nivell_possible = nivell
+        motiu_possible = (f"Possible {NIVELLS[len(NIVELLS) - nivell][2]} en les {endavant_h} h vinents si cau la pluja prevista "
+                          f"({info_prev.get('mm_3h', 0):.0f} mm en 3 h, {info_prev.get('mm_6h', 0):.0f} mm en 6 h)")
+        nivell = nivell_obs
+        motiu = next((f"Previsió fins a {m} en les {endavant_h} h vinents" for T, n, m in NIVELLS if pitjor_obs >= T), "Sense crescuda prevista")
+    elif nivell > nivell_obs:
         motiu += f" amb la pluja prevista ({info_prev.get('mm_3h', 0):.0f} mm en 3 h; sense comptar-la, nivell {nivell_obs})"
     darrer = llegeix("avisos", {"select": "nivell", "conca": f"eq.{conca}", "order": "temps.desc", "limit": 1}) if desar else []
     if desar and (not darrer or darrer[0]["nivell"] != nivell):
         ins("avisos", [{"conca": conca, "temps": t_run.isoformat(), "nivell": nivell,
                              "motiu": f"{motiu}. Pluja de l'episodi: {acum:.0f} mm (el terreny n'absorbeix {ia_ep:.0f} mm, segons la pluja dels 60 dies anteriors"
                                       + (f", i després {p['phi']:.0f} mm/h" if p.get("phi") else "") + ")."}])
+    if desar and avis_previst == "possible":
+        darrer_p = llegeix("avisos", {"select": "nivell", "conca": f"eq.{conca}:possible", "order": "temps.desc", "limit": 1})
+        if (darrer_p[0]["nivell"] if darrer_p else 0) != nivell_possible:
+            ins("avisos", [{"conca": f"{conca}:possible", "temps": t_run.isoformat(), "nivell": nivell_possible, "motiu": motiu_possible + "."}])
     if verb:
         print(f"Run {t_run:%Y-%m-%d %H:%M} UTC · episodi des de {temps[i0]:%Y-%m-%d %H:%M} · pluja {acum:.1f} mm · "
               f"Q ara {q_obs[i_ara]:.1f} · màx {endavant_h} h {resum['aforador'][fut].max():.1f} (si continua {resum['aforador_continua'][fut].max():.1f}"
               + (f", amb la prevista {resum['aforador_previst'][fut].max():.1f}" if "aforador_previst" in resum else "")
-              + f") m³/s · Fenals {q_fen[fut].max():.1f} · Ia {ia_ep:.0f} mm ({via_ia}) · nivell {nivell}")
+              + f") m³/s · Fenals {q_fen[fut].max():.1f} · Ia {ia_ep:.0f} mm ({via_ia}) · nivell {nivell}"
+              + (f" (possible {nivell_possible})" if nivell_possible else ""))
         if info_prev is not None:
             print("Pluja prevista:", json.dumps(info_prev, ensure_ascii=False))
-    return {"run": t_run, "ultima_pluja": temps[i_fi], "nivell": nivell, "nivell_sense_prevista": nivell_obs, "pluja_episodi_mm": acum, "ia_mm": ia_ep,
+    return {"run": t_run, "ultima_pluja": temps[i_fi], "nivell": nivell, "nivell_sense_prevista": nivell_obs, "nivell_possible": nivell_possible, "pluja_episodi_mm": acum, "ia_mm": ia_ep,
             "q_ara": float(q_obs[i_ara]), "q_max": {n: float(resum[n][fut].max()) for n in resum},
             "T": {**T_esc, "fenals": T_fen, "fenals_previst": T_fen_prev}, "prevista": info_prev,
             "prevista_mm": escenaris["aforador_previst"] if "aforador_previst" in escenaris else None}
@@ -200,10 +216,12 @@ def main():
     ap.add_argument("--sense-desar", action="store_true")
     ap.add_argument("--pluja-prevista", default="no", choices=["no", "nowcast", "arome", "tot"],
                     help="afegeix l'escenari amb la pluja prevista de les 6 h següents (per defecte, no)")
+    ap.add_argument("--avis-previst", default="junt", choices=["junt", "possible"],
+                    help="junt: la pluja prevista pot pujar l'avís principal; possible: va a un avís a part (menys segur)")
     a = ap.parse_args()
     cfg = json.loads(Path(a.config).read_text())
     ara = datetime.fromisoformat(a.ara).replace(tzinfo=timezone.utc) if a.ara else None
-    preveu(cfg, ara, a.pluja_prevista, desar=not a.sense_desar)
+    preveu(cfg, ara, a.pluja_prevista, desar=not a.sense_desar, avis_previst=a.avis_previst)
     return 0
 
 
