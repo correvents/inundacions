@@ -1,0 +1,50 @@
+name: Cabal base dels aforadors ACA
+
+# Mediana del cabal diari de cada aforador de l'ACA (arxiu privat de Supabase, darrera data) i cabal específic per km²
+# de conca drenada. El fa servir scripts/estrenyiments.py per estimar la fondària sota la làmina d'aigua del MET.
+# Sortida: data/catalunya/cabal_base/aforadors.json (es desa a la branca). Vegeu scripts/cabal_base.py.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/project-thread-dhfffz]
+    paths: [.github/workflows/cabal_base.yml, scripts/cabal_base.py]
+
+permissions:
+  contents: write
+
+jobs:
+  cabal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q numpy pandas scipy rasterio pyproj shapely pysheds numba requests
+      - name: Baixa l'arxiu ACA de Supabase
+        env:
+          SUPABASE_URL: https://rxfjwklbvqkwgzmpzwae.supabase.co
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: |
+          H=(-H "Authorization: Bearer $SUPABASE_SECRET_KEY" -H "apikey: $SUPABASE_SECRET_KEY")
+          llista() { curl -sS -f -X POST "$SUPABASE_URL/storage/v1/object/list/arxiu-inundacions" "${H[@]}" \
+                       -H "Content-Type: application/json" -d "{\"prefix\":\"$1\",\"limit\":1000}"; }
+          DIA=$(llista "aca/" | python3 -c "import json,sys; print(sorted(x['name'] for x in json.load(sys.stdin))[-1])")
+          echo "Arxiu ACA: $DIA"; mkdir -p /tmp/aca
+          for f in $(llista "aca/$DIA/" | python3 -c "import json,sys; print(' '.join(x['name'] for x in json.load(sys.stdin)))"); do
+            curl -sS -f "$SUPABASE_URL/storage/v1/object/arxiu-inundacions/aca/$DIA/$f" "${H[@]}" -o "/tmp/aca/$f"
+            case "$f" in *.tar) tar -C /tmp/aca -xf "/tmp/aca/$f" && rm "/tmp/aca/$f";; esac
+          done
+          ls /tmp/aca | head -30
+      - name: Calcula
+        run: python3 scripts/cabal_base.py --arxiu /tmp/aca
+      - name: Desa
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalunya/cabal_base
+          git diff --cached --quiet && exit 0
+          git commit -m "Cabal base dels aforadors ACA [skip ci]"
+          for i in 1 2 3 4; do git pull --rebase origin "${{ github.ref_name }}" && git push origin "HEAD:${{ github.ref_name }}" && exit 0; sleep $((i*5)); done; exit 1

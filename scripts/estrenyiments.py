@@ -29,14 +29,17 @@ Per a cada conca del tall de 100 km²:
    meitat de la de 200 m aigües amunt, o bé on la llera desborda abans de T10. Primer els que són dins o a tocar d'un
    nucli (cobertes urbanes a < 30 m): fora, una llera natural sol desbordar cada 1-2 anys (cabal de sobreeixidor).
 
-Sortides: data/catalunya/estrenyiments/cNNN.json (seccions i estrenyiments ordenats per període de desbordament)
-          data/catalunya/estrenyiments/index.json
+Sortides: data/catalunya/estrenyiments/cNNN.json (resum, estrenyiments ordenats per període de desbordament, ponts ACA)
+          data/catalunya/estrenyiments/index.json (resum de totes les conques)
+          --seccions/cNNN.json.gz (totes les seccions; Release estrenyiments-cat)
+Comprovació: zones inundables de l'ACA (T10-T500) a la caixa de la conca → valida (taula de períodes model/ACA).
 
 Ús:  python3 scripts/estrenyiments.py conca --id 125 --mdt mdt5_c125.tif --met met21_c125.tif --cobertes cobertes5_c125.tif
-     python3 scripts/estrenyiments.py valida --id 125 --zones data/ridaura/zones
+     python3 scripts/estrenyiments.py zones --id 125 --sortida /tmp/zones_c125
+     python3 scripts/estrenyiments.py valida --id 125 --zones /tmp/zones_c125
      python3 scripts/estrenyiments.py informe [--ids 125,188,199,124] [--sortida docs/estrenyiments.md]
      python3 scripts/estrenyiments.py index"""
-import argparse, json, math, sys, tempfile
+import argparse, gzip, json, math, sys, tempfile
 from pathlib import Path
 import numpy as np
 np.in1d = np.isin
@@ -52,6 +55,15 @@ OBRES = Path("data/catalunya/obres/c{:03d}.json")
 ACA = Path("data/catalunya/obres/aca_pse.json")
 MAXIMS = Path("data/catalunya/xema/maxims_diaris.json")
 SORT = Path("data/catalunya/estrenyiments")
+CAD_IDX = Path("data/catalunya/cadastre/municipis.json")
+CAD_URL = "https://github.com/correvents/inundacions/releases/download/cadastre-cat/edificis_{}.json.gz"
+CAD_TMP = Path("/tmp/cadastre_cat")
+RIU_GRAN = 1000.0                           # km²: a l'informe de Catalunya, a part (estudi ACA)
+CONQUES_WEB = Path("data/catalunya/conques/web/conques_100.json")
+CABAL_BASE = Path("data/catalunya/cabal_base/aforadors.json")
+AIGUA = (20, 36, 37, 38, 39, 40, 41)       # cobertes ICGC: zones humides, embassaments, llacs, cursos d'aigua, basses, canals, mar
+PARET = 1.0                                 # m: la façana fa de paret fins a 1 m d'aigua; per sobre entra a les plantes baixes (desborda)
+SECCIONS = Path("/tmp/estrenyiments_seccions")
 PILOTS = {124: "ridaura", 125: "ridaura", 188: "granollers", 199: "cabrera"}
 TS = (2, 5, 10, 25, 50, 100, 200, 500)
 N_MANNING = 0.035
@@ -113,7 +125,19 @@ def q52ic(area, l_km, j, p24, p0):
 
 
 # ---------- drenatge (MDT 5 m) ----------
-def drenatge(cami_mdt, cami_cob):
+def entrades(cid):
+    """Conques del tall de 100 km² que desguassen a la conca cid: [(lon, lat, km2_amunt)] dels seus punts de sortida.
+    L'MDT de cada conca només cobreix la seva superfície: sense això, un riu que hi entra d'aigües amunt (Ter, Llobregat,
+    Congost...) hi tindria només la conca local."""
+    F = json.loads(CONQUES_WEB.read_text())["features"]
+    return [(f["properties"]["sortida_lon"], f["properties"]["sortida_lat"], f["properties"]["km2_amunt"])
+            for f in F if f["properties"].get("avall") == cid]
+
+
+def drenatge(cami_mdt, cami_cob, entra=()):
+    """Drenatge de l'MDT. entra: [(x, y, km2)] (coordenades de l'MDT) on entra un riu de conques d'aigües amunt; s'hi
+    suma la superfície que falta fins a km2 a la cel·la de més acumulació a menys de 300 m. La llargada que hi falta
+    s'estima per la llei de Hack (L = 1,4·A^0,6 km) i el desnivell amb un pendent mitjà de l'1 %."""
     import numba
     from pysheds.grid import Grid
     with rasterio.open(cami_mdt) as f:
@@ -126,6 +150,23 @@ def drenatge(cami_mdt, cami_cob):
     gr = Grid.from_raster(str(tmp)); dem = gr.read_raster(str(tmp))
     fd = gr.flowdir(gr.resolve_flats(gr.fill_depressions(gr.fill_pits(dem))))
     acc = np.asarray(gr.accumulation(fd), dtype="float64")
+    acc_loc = acc.copy(); cel = abs(tr.a * tr.e); pas = abs(tr.a)
+    extra = []
+    for x, y, km2 in entra:
+        c, r = ~tr * (x, y); r, c = int(r), int(c); n = int(300 / pas)
+        r0, r1, c0, c1 = max(r - n, 0), min(r + n + 1, z.shape[0]), max(c - n, 0), min(c + n + 1, z.shape[1])
+        if r0 >= r1 or c0 >= c1:
+            continue
+        sub = acc[r0:r1, c0:c1]; k = np.unravel_index(np.argmax(sub), sub.shape); r, c = r0 + k[0], c0 + k[1]
+        falta = km2 * 1e6 / cel - acc[r, c]
+        if falta > 0:
+            extra.append((r, c, falta, km2))
+    if extra:
+        w = np.where(np.isfinite(z), 1.0, 0.0)
+        for r, c, falta, _ in extra:
+            w[r, c] += falta
+        from pysheds.sview import Raster
+        acc = np.asarray(gr.accumulation(fd, weights=Raster(w, viewfinder=dem.viewfinder)), dtype="float64")
     fd = np.asarray(fd).astype("int64")
 
     @numba.njit(cache=True)
@@ -147,6 +188,9 @@ def drenatge(cami_mdt, cami_cob):
             w[r2, c2] += w[r, c]
 
     lup = np.zeros(z.shape, "float32"); zmax = np.where(np.isfinite(z), z, -1e9).astype("float32")
+    for r, c, _, km2 in extra:
+        L = 1.4 * km2 ** 0.6 * 1000
+        lup[r, c] = max(lup[r, c], L / pas); zmax[r, c] = max(zmax[r, c], z[r, c] + 0.01 * L)
     S = np.zeros(z.shape, "float64"); urba = np.zeros(z.shape, bool)
     if cami_cob and Path(cami_cob).exists():
         sys.path.insert(0, str(Path(__file__).parent))
@@ -160,7 +204,8 @@ def drenatge(cami_mdt, cami_cob):
         urba = ndimage.binary_dilation(tt == 1, iterations=6)          # cel·la urbana a menys de 30 m
         S = np.where(np.isfinite(z), 25400 / np.clip(cn, 1, 100) - 254, 0).astype("float64")
     passa(np.argsort(acc, axis=None, kind="stable"), fd, lup, zmax, S, *z.shape)
-    return {"z": z, "tr": tr, "crs": crs, "acc": acc, "lup": lup, "zmax": zmax, "S": S, "urba": urba}
+    return {"z": z, "tr": tr, "crs": crs, "acc": acc, "acc_loc": acc_loc, "lup": lup, "zmax": zmax, "S": S, "urba": urba,
+            "entrades": len(extra)}
 
 
 def punt_drenatge(D, x, y, radi_cel=3):
@@ -176,7 +221,7 @@ def punt_drenatge(D, x, y, radi_cel=3):
         return None
     l_km = max(float(D["lup"][r, c]) * abs(tr.a) / 1000, 0.05)
     j = (float(D["zmax"][r, c]) - float(D["z"][r, c])) / (l_km * 1000)
-    return {"km2": acc * cel / 1e6, "l_km": l_km, "j": j, "S": float(D["S"][r, c]) / max(acc, 1), "urba": bool(D["urba"][r, c])}
+    return {"km2": acc * cel / 1e6, "l_km": l_km, "j": j, "S": float(D["S"][r, c]) / max(float(D["acc_loc"][r, c]), 1), "urba": bool(D["urba"][r, c])}
 
 
 # ---------- secció transversal (MET) ----------
@@ -190,6 +235,49 @@ class Relleu:
         self.inv = ~self.tr
         self.nan = np.isnan(self.a)
         self.a[self.nan] = -9999
+        self.edif = None
+
+    def edificis(self, cad_idx=CAD_IDX):
+        """Màscara dels edificis del Cadastre (parts amb ≥ 1 planta sobre rasant; Release cadastre-cat) a la reixa del
+        relleu. El MET és terreny nu: sense això l'aigua s'escamparia per dins de les illes de cases."""
+        import gzip, requests
+        from rasterio import features
+        if not Path(cad_idx).exists() or not str(self.crs).endswith("25831"):
+            return 0
+        h, w = self.a.shape
+        x0, y1 = self.tr.c, self.tr.f; x1, y0 = x0 + w * self.tr.a, y1 + h * self.tr.e
+        formes = []
+        CAD_TMP.mkdir(parents=True, exist_ok=True)
+        for codi, m in json.loads(Path(cad_idx).read_text()).items():
+            b = m["bbox"]
+            if b[2] < x0 or b[0] > x1 or b[3] < y0 or b[1] > y1:
+                continue
+            f = CAD_TMP / f"edificis_{codi}.json.gz"
+            if not f.exists():
+                for intent in range(4):
+                    try:
+                        r = requests.get(CAD_URL.format(codi), timeout=300); r.raise_for_status(); f.write_bytes(r.content); break
+                    except requests.RequestException as e:
+                        print(f"  Cadastre {codi}: {e}")
+                else:
+                    raise RuntimeError(f"no puc baixar els edificis de {codi}")
+            for ref, sobre, sota, an in json.loads(gzip.open(f, "rt").read())["parts"]:
+                if sobre < 1:
+                    continue
+                xa, ya = np.min(an[0], axis=0); xb, yb = np.max(an[0], axis=0)
+                if xb < x0 or xa > x1 or yb < y0 or ya > y1:
+                    continue
+                formes.append(({"type": "Polygon", "coordinates": an}, 1))
+        if formes:
+            self.edif = features.rasterize(formes, out_shape=self.a.shape, transform=self.tr, fill=0, dtype="uint8").astype(bool)
+        return len(formes)
+
+    def es_edifici(self, xs, ys):
+        if self.edif is None:
+            return np.zeros(len(xs), bool)
+        c, r = self.inv * (np.asarray(xs), np.asarray(ys))
+        r = np.clip(r.astype(int), 0, self.a.shape[0] - 1); c = np.clip(c.astype(int), 0, self.a.shape[1] - 1)
+        return self.edif[r, c]
 
     def mostra(self, xs, ys):
         c, r = self.inv * (np.asarray(xs), np.asarray(ys))
@@ -291,8 +379,21 @@ def densifica(xy, pas):
 def conca(cid, a):
     Cq = {f["properties"]["id"]: f for f in json.loads(CONQUES.read_text())["features"]}
     geom = shape(Cq[cid]["geometry"])
-    D = drenatge(a.mdt, a.cobertes)
+    t_mdt = Transformer.from_crs(4326, rasterio.open(a.mdt).crs, always_xy=True).transform
+    D = drenatge(a.mdt, a.cobertes, [(*t_mdt(lo, la), k) for lo, la, k in entrades(cid)])
+    if D["entrades"]:
+        print(f"Rius que entren d'aigües amunt: {D['entrades']}")
     met = Relleu(a.met, a.font_met) if a.met and Path(a.met).exists() else None
+    n_edif = met.edificis() if (met is not None and a.edificis) else 0
+    if n_edif:
+        print(f"Edificis del Cadastre: {n_edif} parts, {met.edif.sum() * abs(met.tr.a * met.tr.e) / 1e6:.2f} km²")
+    base = json.loads(CABAL_BASE.read_text())["aforadors"] if CABAL_BASE.exists() else []
+    # fora sortides d'embassament i valors que no poden ser (aforador mal situat o conca mal trobada)
+    base = [b for b in base if b.get("l_s_km2") is not None and 0 <= b["l_s_km2"] <= 50 and b["km2"] >= 5
+            and "embassament" not in b["nom"].lower()]
+    qb_mediana = float(np.median([b["l_s_km2"] for b in base])) if base else 0.0
+    if base:
+        print(f"Cabal base: {len(base)} aforadors ACA")
     mdt = Relleu(a.mdt, "MDT 5 m IGN (metres enters)")
     cobs = None
     if a.cobertes and Path(a.cobertes).exists():
@@ -359,6 +460,7 @@ def conca(cid, a):
     j = json.loads(Path(str(RIERETES).format(cid)).read_text())
     esc = j["escala"]
     seccions = []
+    n_coberta = 0
     for it, tr in enumerate(j["trams"]):
         if tr[1] / 100 < a.area_min:
             continue
@@ -406,16 +508,31 @@ def conca(cid, a):
                 llit = np.isin(cl, LLIT)
                 nv = cobs[2][cl]
             cen = np.where(np.abs(s) <= ws)[0]
-            i0 = int(cen[np.argmin(zs[cen])])
-            res = omple(s, zs, i0, llit)
+            eb = font.es_edifici(pt.x + ux * s, pt.y + uy * s) if font is met and met.edif is not None else np.zeros(len(s), bool)
+            zc = np.where(eb, np.inf, zs)
+            i0 = int(cen[np.argmin(zc[cen])])
+            if not np.isfinite(zc[i0]):
+                n_coberta += 1                                      # llera coberta per edificis: el tall no la veu
+                continue
+            # làmina d'aigua: franja plana (± 5 cm) al fons, sobre cobertes d'aigua, de ≥ 4 m. El LiDAR no hi entra.
+            ll_, rr_ = i0, i0
+            while ll_ > 0 and abs(zs[ll_ - 1] - zs[i0]) <= 0.05 and not eb[ll_ - 1]:
+                ll_ -= 1
+            while rr_ < len(zs) - 1 and abs(zs[rr_ + 1] - zs[i0]) <= 0.05 and not eb[rr_ + 1]:
+                rr_ += 1
+            Ww = (rr_ - ll_ + 1) * 1.0
+            aigua = Ww >= 4 and cobs is not None and bool(np.isin(cl[ll_:rr_ + 1], AIGUA).any())
+            res = omple(s, np.where(eb, zs + PARET, zs), i0, llit)
             if not res:
                 continue
+            res["Ww"] = Ww if aigua else 0.0
+            res["parets"] = int(eb[res["l"]:res["r"] + 1].sum() == 0 and eb.any())
             xf, yf = pt.x + ux * s[i0], pt.y + uy * s[i0]
             # n de Manning: mitjana de les cobertes mullades (Chow, config/cobertes_parametres.json, com la simulació 2D)
             res["n"] = float(np.mean(nv[res["l"]:res["r"] + 1])) if nv is not None else N_MANNING
             seccions.append({"tram": it, "k": k, "d": float(d), "x": xf, "y": yf, "zf": float(zs[i0]), "km2": A,
                              "l_km": dr["l_km"], "j": dr["j"], "S": dr["S"], "urba": dr["urba"], "font": font.nom, **res})
-    print(f"{len(seccions)} seccions")
+    print(f"{len(seccions)} seccions ({n_coberta} sota edificis, {sum(1 for sc in seccions if sc['Ww'] > 0)} amb làmina d'aigua)")
     if not seccions:
         return desa(cid, {"km2": Cq[cid]["properties"]["km2"], "seccions": 0}, [], [])
 
@@ -435,6 +552,17 @@ def conca(cid, a):
             seccions[i]["pend"] = float(np.clip(-b, 5e-4, 0.3))
     for sc in seccions:
         R = sc["A"] / max(sc["P"], 1e-6)
+        if sc["Ww"] > 0 and base:
+            # sota la làmina: fondària que fa córrer el cabal base (mediana diària dels aforadors ACA, per km² de
+            # conca, del més proper a menys de 40 km) amb Manning en un canal ample de l'amplada de la làmina (n de curs d'aigua 0,03)
+            lon, lat = met_a_ll(sc["x"], sc["y"])
+            dk, g = min(((111.2 * math.hypot((b["lon"] - lon) * math.cos(math.radians(lat)), b["lat"] - lat), b)
+                         for b in base), key=lambda t: t[0])
+            qb = (g["l_s_km2"] if dk <= 40 else qb_mediana) / 1000 * sc["km2"]   # a més de 40 km, la mediana
+            dsub = (qb * 0.03 / (sc["Ww"] * math.sqrt(sc["pend"]))) ** 0.6 if qb > 0 else 0.0
+            sc["A"] += sc["Ww"] * dsub; sc["P"] += 2 * dsub
+            sc["d_sota_lamina"] = dsub; sc["q_base"] = qb
+            R = sc["A"] / max(sc["P"], 1e-6)
         sc["q_cap"] = float(sc["A"] * R ** (2 / 3) * math.sqrt(sc["pend"]) / sc["n"])
         pp0 = p0 if p0 else 0.2 * sc["S"]
         sc["p0"] = pp0
@@ -569,7 +697,12 @@ def conca(cid, a):
              "p24_mm": {T: round(p24[T]) for T in (10, 100, 500)},
              "n_manning_mitja": round(float(np.mean([sc["n"] for sc in seccions])), 3),
              "llera_desborda_abans_T10": sum(1 for sc in seccions if (sc["T_llera"] or 501) < 10),
-             "estrenyiments": len(llista), "estrenyiments_urbans": sum(f["urba"] for f in llista)}
+             "estrenyiments": len(llista), "estrenyiments_urbans": sum(f["urba"] for f in llista),
+             "edificis_cadastre": n_edif, "seccions_sota_edificis": n_coberta,
+             "seccions_lamina_aigua": sum(1 for sc in seccions if sc["Ww"] > 0),
+             "seccions_corregides_lamina": sum(1 for sc in seccions if sc.get("d_sota_lamina")),
+             "fondaria_sota_lamina_mediana_m": round(float(np.median([sc["d_sota_lamina"] for sc in seccions
+                                                                      if sc.get("d_sota_lamina")] or [0])), 3)}
     print(json.dumps(resum, ensure_ascii=False))
     for f in llista[:15]:
         print(f"  {'U' if f['urba'] else ' '} T{str(f['T_desborda']):>4} {f['tipus'][:22]:22s} cap {f['capacitat_m3s']:7.1f}  Q10 {f['Q10']:6.1f} Q100 {f['Q100']:6.1f}"
@@ -582,12 +715,32 @@ def conca(cid, a):
 
 
 def desa(cid, resum, llista, secs, comp=(), ponts=(), epsg=None):
-    SORT.mkdir(parents=True, exist_ok=True)
+    """cNNN.json (resum, estrenyiments i ponts: va al repositori i a la web) i les seccions a part, comprimides
+    (SECCIONS/cNNN.json.gz: van a la Release estrenyiments-cat, que tot Catalunya fa ~100 MB)."""
+    SORT.mkdir(parents=True, exist_ok=True); SECCIONS.mkdir(parents=True, exist_ok=True)
     (SORT / f"c{cid:03d}.json").write_text(json.dumps(
-        {"resum": resum, "estrenyiments": llista, "ponts_aca": list(ponts), "comprovacio_cabals_aca": list(comp),
-         "seccions": {"epsg": epsg, "camps": ["x", "y", "conca_km2", "capacitat_m3s", "T_desborda", "nivell_m", "vall_conte", "amplada_m", "Q10", "Q100", "urba"],
-                      "files": secs}}, ensure_ascii=False, separators=(",", ":")))
+        {"resum": resum, "estrenyiments": llista, "ponts_aca": list(ponts), "comprovacio_cabals_aca": list(comp)},
+        ensure_ascii=False, separators=(",", ":")))
+    with gzip.open(SECCIONS / f"c{cid:03d}.json.gz", "wt") as f:
+        json.dump({"epsg": epsg, "camps": ["x", "y", "conca_km2", "capacitat_m3s", "T_desborda", "nivell_m", "vall_conte",
+                                           "amplada_m", "Q10", "Q100", "urba"], "files": secs}, f, separators=(",", ":"))
     return 0
+
+
+def zones(cid, sortida):
+    """Zones inundables de l'ACA (T10, T50, T100, T500) a la caixa de la conca (WFS, com prepara_zones.py)."""
+    sys.path.insert(0, str(Path(__file__).parent))
+    import prepara_zones as PZ
+    Cq = {f["properties"]["id"]: f for f in json.loads(CONQUES.read_text())["features"]}
+    bbox = list(shape(Cq[cid]["geometry"]).bounds)
+    d = Path(sortida); d.mkdir(parents=True, exist_ok=True); n = 0
+    for T in (10, 50, 100, 500):
+        j = PZ.wfs(PZ.ACA, f"vishid:Zones_inundables_T{T}", bbox)
+        if j is None:
+            return 1
+        (d / f"aca_T{T}.geojson").write_text(json.dumps(j, separators=(",", ":"))); n += len(j.get("features", []))
+    print(f"c{cid:03d}: {n} polígons de zones inundables ACA")
+    return 0 if n else 2
 
 
 def valida(cid, dir_zones):
@@ -596,7 +749,9 @@ def valida(cid, dir_zones):
     from shapely.ops import transform as stransform
     from shapely.prepared import prep
     j = json.loads((SORT / f"c{cid:03d}.json").read_text())
-    ep = j["seccions"]["epsg"]; cp = j["seccions"]["camps"]
+    with gzip.open(SECCIONS / f"c{cid:03d}.json.gz", "rt") as f:
+        sec = json.load(f)
+    ep = sec["epsg"]; cp = sec["camps"]
     a = Transformer.from_crs(4326, ep, always_xy=True).transform
     zs = {}
     for T in (10, 50, 100, 500):
@@ -605,7 +760,9 @@ def valida(cid, dir_zones):
             from shapely.ops import unary_union
             zs[T] = unary_union([stransform(a, shape(g["geometry"])) for g in json.loads(f.read_text())["features"]]).buffer(0)
     taula, n = {}, 0
-    for fila in j["seccions"]["files"]:
+    if not zs or all(z.is_empty for z in zs.values()):
+        print(f"c{cid:03d}: sense zones inundables ACA"); return 0
+    for fila in sec["files"]:
         r = dict(zip(cp, fila))
         R = r["amplada_m"] / 2 + 30
         disc = Point(r["x"], r["y"]).buffer(R, 16)
@@ -651,6 +808,8 @@ def informe(ids, sortida):
         if not f.exists():
             continue
         j = json.loads(f.read_text()); r = j["resum"]
+        if not r.get("seccions"):
+            continue
         o += [f"## {NOMS.get(cid, 'Conca')} (c{cid:03d})", "",
               f"{r['seccions']} seccions; {r['llera_desborda_abans_T10']} amb la llera desbordant abans de T10. Pluja: {r['pluja']}. "
               f"{r['estrenyiments']} estrenyiments, {r['estrenyiments_urbans']} dins o a tocar de nucli.", ""]
@@ -683,6 +842,51 @@ def informe(ids, sortida):
                   "| T desborda | Pont | Capacitat m³/s | Q10 / Q100 / Q500 |", "|---|---|---|---|"]
             o += [f"| {p['T_desborda']} | {p['nom'][:70]} | {p['capacitat_m3s']} | {' / '.join(str(x) for x in p['Q10_100_500'])} |" for p in P[:20]]
         o.append("")
+    if len(ids) > 10:
+        # tot Catalunya: només el resum i els estrenyiments urbans que desborden abans
+        o = o[:3] + [""]
+        tots = []
+        for cid in ids:
+            f = SORT / f"c{cid:03d}.json"
+            if f.exists():
+                for e in json.loads(f.read_text())["estrenyiments"]:
+                    if e["urba"]:
+                        tots.append((cid, e))
+        clau = lambda ce: ((-1 if ce[1]["qT_font"].startswith("ACA") and ce[1]["capacitat_m3s"] < ce[1]["Q10"] else
+                            ce[1]["T_desborda"] if ce[1]["T_desborda"] != ">500" else 999), -ce[1]["conca_km2"])
+        tots.sort(key=clau)
+        # rius grans: el mètode hi agafa el canal de baix cabal i no la llera entre motes (capacitat massa baixa); tenen
+        # estudi propi de l'ACA. Van a part, no a la llista principal (RIU_GRAN = 0 els hi torna).
+        grans = [ce for ce in tots if RIU_GRAN and ce[1]["conca_km2"] > RIU_GRAN]
+        tots = [ce for ce in tots if not (RIU_GRAN and ce[1]["conca_km2"] > RIU_GRAN)]
+        val = [json.loads((SORT / f"c{c:03d}.json").read_text()).get("validacio_zones_aca") for c in ids if (SORT / f"c{c:03d}.json").exists()]
+        val = [v for v in val if v and v.get("seccions")]
+        ns = sum(v["seccions"] for v in val)
+        o += [f"{len(ids)} conques; {len(tots) + len(grans)} estrenyiments dins o a tocar de nucli, {len(grans)} d'ells en "
+              f"rius de més de {RIU_GRAN:.0f} km² (a part, al final).", ""]
+        if ns:
+            o += [f"Comparació amb les zones inundables de l'ACA a {len(val)} conques ({ns} seccions dins dels trams estudiats): "
+                  f"{round(100 * sum(v['mateixa_classe'] for v in val) / ns)} % a la mateixa classe de període i "
+                  f"{round(100 * sum(v['classe_veina_o_mateixa'] for v in val) / ns)} % a la mateixa o la veïna.", ""]
+        o += ["Els 200 primers (els que desborden abans; a igualtat, els de més conca):", "",
+              "| Conca | T desborda | Què | Capacitat m³/s | Q10 | Q100 | Conca km² | Lloc |", "|---|---|---|---|---|---|---|---|"]
+        for cid, e in tots[:200]:
+            ob = e["obra"]
+            que = f"llera, {e['llarg_m']:.0f} m" if not ob else f"{ob['tipus']}: {ob['nom'][:45]}"
+            T = "<10" if e["qT_font"].startswith("ACA") and e["capacitat_m3s"] < e["Q10"] else ("≤2" if e["T_desborda"] == 2 else e["T_desborda"])
+            la, lo = e["lonlat"][1], e["lonlat"][0]
+            o.append(f"| c{cid:03d} | {T} | {que} | {e['capacitat_m3s']} | {e['Q10']} | {e['Q100']} | {e['conca_km2']} | "
+                     f"[{la}, {lo}](https://www.openstreetmap.org/?mlat={la}&mlon={lo}#map=18/{la}/{lo}) |")
+        if grans:
+            o += ["", f"## Rius de més de {RIU_GRAN:.0f} km² (estudi ACA)", "",
+                  "Aquí el mètode agafa el canal de baix cabal i no la llera sencera entre motes, i la capacitat surt massa "
+                  "baixa. Aquests rius tenen estudi propi de l'ACA (zones inundables T10-T500): cal mirar-ho amb aquell "
+                  "estudi. Trams urbans per conca:", "", "| Conca | Trams | Conca km² màx. |", "|---|---|---|"]
+            per = {}
+            for cid, e in grans:
+                n, k = per.get(cid, (0, 0)); per[cid] = (n + 1, max(k, e["conca_km2"]))
+            for cid, (n, k) in sorted(per.items(), key=lambda t: -t[1][1]):
+                o.append(f"| c{cid:03d} | {n} | {k:.0f} |")
     Path(sortida).write_text("\n".join(o) + "\n")
     print(f"{sortida}: {len(o)} línies")
 
@@ -694,7 +898,9 @@ def index():
 
 
 def main():
+    global SECCIONS
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--seccions", default=str(SECCIONS), help="carpeta de les seccions (cNNN.json.gz)")
     sub = ap.add_subparsers(dest="ordre", required=True)
     c = sub.add_parser("conca")
     c.add_argument("--id", type=int, required=True)
@@ -703,16 +909,24 @@ def main():
     c.add_argument("--font-met", default="MET 2 m ICGC (LiDAR 2021-2023)")
     c.add_argument("--cobertes")
     c.add_argument("--area-min", type=float, default=0.5)
+    c.add_argument("--sense-edificis", dest="edificis", action="store_false", help="sense els edificis del Cadastre")
+    z = sub.add_parser("zones")
+    z.add_argument("--id", type=int, required=True)
+    z.add_argument("--sortida", required=True)
     v = sub.add_parser("valida")
     v.add_argument("--id", type=int, required=True)
     v.add_argument("--zones", required=True, help="carpeta amb aca_T10/T50/T100/T500.geojson (prepara_zones.py)")
     i = sub.add_parser("informe")
-    i.add_argument("--ids", default="125,188,199,124")
+    i.add_argument("--ids", default="125,188,199,124", help="ids separats per comes o «totes» (resum de tot Catalunya)")
     i.add_argument("--sortida", default="docs/estrenyiments.md")
     sub.add_parser("index")
     a = ap.parse_args()
+    SECCIONS = Path(a.seccions)
+    if a.ordre == "zones":
+        return zones(a.id, a.sortida)
     if a.ordre == "informe":
-        return informe([int(x) for x in a.ids.split(",")], a.sortida)
+        ids = (sorted(int(f.stem[1:]) for f in SORT.glob("c*.json")) if a.ids == "totes" else [int(x) for x in a.ids.split(",")])
+        return informe(ids, a.sortida)
     return conca(a.id, a) if a.ordre == "conca" else valida(a.id, a.zones) if a.ordre == "valida" else index()
 
 
