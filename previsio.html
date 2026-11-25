@@ -173,12 +173,13 @@ const NIVELL = [['Sense crescuda prevista', '#2e8b57'], ['Crescuda ordinària', 
 async function previsio() {
   if (!cfg) cfg = await fetch('config/ridaura.json').then(r => r.json());
   const darrer = await sb('previsions_cabal', { select: 'run', conca: 'eq.ridaura', order: 'run.desc', limit: 1 });
-  if (!darrer.length) { document.getElementById('previsio').innerHTML = '<h2>Previsió 3 h</h2><div class="nota">Encara no hi ha cap previsió.</div>'; return; }
+  if (!darrer.length) { document.getElementById('previsio').innerHTML = '<h2>Previsió</h2><div class="nota">Encara no hi ha cap previsió.</div>'; return; }
   const run = darrer[0].run;
-  const [files, obs, avis] = await Promise.all([
+  const [files, obs, avis, possible] = await Promise.all([
     sb('previsions_cabal', { select: 'punt,temps,cabal_m3s', conca: 'eq.ridaura', run: 'eq.' + run, order: 'temps' }),
     sb('observacions', { select: 'temps,valor', conca: 'eq.ridaura', var: 'eq.cabal_m3s', temps: 'gte.' + new Date(new Date(run) - 6 * 3600e3).toISOString(), order: 'temps' }),
     sb('avisos', { select: 'temps,nivell,motiu', conca: 'eq.ridaura', order: 'temps.desc', limit: 1 }),
+    sb('avisos', { select: 'temps,nivell,motiu', conca: 'eq.ridaura:possible', order: 'temps.desc', limit: 1 }).catch(() => []),
   ]);
   const punt = n => files.filter(f => f.punt === n);
   const t0 = new Date(run), fut = n => punt(n).filter(f => new Date(f.temps) > t0);
@@ -187,11 +188,17 @@ async function previsio() {
   const T = (q, qt) => trT(periodeRetorn(q, qt));
   const FEN = { QMCO: 15.6, Q10: 40.52, Q50: 71.35, Q100: 86.74, Q500: 126.52 };
   const nv = avis.length ? avis[0].nivell : 0;
-  let html = `<h2>Previsió 3 h</h2><div class="avis" style="background:${NIVELL[nv][1]}">${NIVELL[nv][0]}</div>
+  const ambPrev = punt('aforador_previst').length > 0, hores = ambPrev ? 6 : 3;
+  const np = possible.length ? possible[0].nivell : 0;
+  // avís possible: el que afegeix la pluja prevista (AROME + radar), menys segur; només si supera l'avís principal
+  const htmlPossible = np > nv ? `<div class="avis" style="background:#fff;color:${NIVELL[np][1]};border:2px dashed ${NIVELL[np][1]}">Possible: ${NIVELL[np][0].replace('Avís ', '')} si cau la pluja prevista</div>
+    <div class="nota">${possible[0].motiu}</div>` : '';
+  let html = `<h2>Previsió ${hores} h</h2><div class="avis" style="background:${NIVELL[nv][1]}">${NIVELL[nv][0]}</div>${htmlPossible}
     <canvas id="grafprev"></canvas>
-    <div class="nota" style="margin-bottom:6px"><span class="xip" style="background:#1b2733"></span>mesurat <span class="xip" style="background:#2b7bba"></span>previst sense més pluja <span class="xip" style="background:#c0392b"></span>si plou 1 h més com l'última hora</div>
+    <div class="nota" style="margin-bottom:6px"><span class="xip" style="background:#1b2733"></span>mesurat <span class="xip" style="background:#2b7bba"></span>previst sense més pluja <span class="xip" style="background:#c0392b"></span>si plou 1 h més com l'última hora${ambPrev ? ' <span class="xip" style="background:#8e44ad"></span>amb la pluja prevista' : ''}</div>
     <div class="fila"><span>Ridaura a l'aforador, màxim previst</span><span>${max('aforador').toFixed(0)} m³/s · ${T(max('aforador'), cfg.cabals_T.aforador)}</span></div>
     <div class="fila"><span>&nbsp;&nbsp;si continua plovent</span><span>${max('aforador_continua').toFixed(0)} m³/s · ${T(max('aforador_continua'), cfg.cabals_T.aforador)}</span></div>
+    ${ambPrev ? `<div class="fila"><span>&nbsp;&nbsp;amb la pluja prevista (radar i AROME)</span><span>${max('aforador_previst').toFixed(0)} m³/s · ${T(max('aforador_previst'), cfg.cabals_T.aforador)}</span></div>` : ''}
     <div class="fila"><span>Ridaura al mar</span><span>${max('desembocadura').toFixed(0)} m³/s · ${T(max('desembocadura'), cfg.cabals_T.desembocadura)}</span></div>
     <div class="fila"><span>Riera de Fenals (centre)</span><span>${max('fenals').toFixed(0)} m³/s · ${T(max('fenals'), FEN)}</span></div>
     <div class="nota">${avis.length ? avis[0].motiu + '<br>' : ''}Càlcul de les ${hora(run)} amb el pluviòmetre de l'ACA i el model calibrat amb l'episodi del 4/10 (provisional: només un episodi).</div>`;
@@ -199,7 +206,7 @@ async function previsio() {
   // gràfica
   const cv = document.getElementById('grafprev'), dpr = devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
   cv.width = W * dpr; cv.height = H * dpr; const cx = cv.getContext('2d'); cx.scale(dpr, dpr);
-  const tmin = +t0 - 6 * 3600e3, tmax = +t0 + 3 * 3600e3;
+  const tmin = +t0 - 6 * 3600e3, tmax = +t0 + hores * 3600e3;
   const qmax = Math.max(10, cfg.cabals_T.aforador.QMCO, ...files.filter(f => f.punt.startsWith('aforador')).map(f => f.cabal_m3s), ...obs.map(o => o.valor)) * 1.1;
   const X = t => 30 + (new Date(t) - tmin) / (tmax - tmin) * (W - 34), Y = q => H - 14 - q / qmax * (H - 20);
   cx.font = '10px system-ui'; cx.fillStyle = '#5b6b7b';
@@ -214,6 +221,7 @@ async function previsio() {
   cx.fillText(hora(tmin), 40, H - 2); cx.fillText(hora(tmax), W - 20, H - 2);
   cx.textAlign = 'right'; cx.fillText(Math.round(qmax / 1.1), 27, 12); cx.fillText('0', 27, H - 14);
   const linia = (pts, c, w) => { if (!pts.length) return; cx.strokeStyle = c; cx.lineWidth = w; cx.beginPath(); pts.forEach(([t, q], i) => i ? cx.lineTo(X(t), Y(q)) : cx.moveTo(X(t), Y(q))); cx.stroke(); cx.lineWidth = 1; };
+  linia(fut('aforador_previst').map(f => [f.temps, f.cabal_m3s]), '#8e44ad', 1.5);
   linia(fut('aforador_continua').map(f => [f.temps, f.cabal_m3s]), '#c0392b', 1.5);
   linia(punt('aforador').map(f => [f.temps, f.cabal_m3s]), '#2b7bba', 2);
   linia(obs.map(o => [o.temps, o.valor]), '#1b2733', 2);
@@ -221,7 +229,7 @@ async function previsio() {
   const Tp = periodeRetorn(Math.max(max('aforador'), max('aforador_continua')), cfg.cabals_T.aforador);
   if (Tp && Tp >= 10 && capaZones) mostra([...TS].reverse().find(t => t <= Tp));
 }
-const previsioSegur = () => previsio().catch(() => { document.getElementById('previsio').innerHTML = '<h2>Previsió 3 h</h2><div class="nota">No s\'ha pogut carregar la previsió.</div>'; });
+const previsioSegur = () => previsio().catch(() => { document.getElementById('previsio').innerHTML = '<h2>Previsió</h2><div class="nota">No s\'ha pogut carregar la previsió.</div>'; });
 previsioSegur(); setInterval(previsioSegur, 5 * 60 * 1000);
 </script>
 <script src="nav.js"></script>
